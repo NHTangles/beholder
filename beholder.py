@@ -1,4 +1,3 @@
-#!/usr/bin python
 """
 deathbot.py - a game-reporting IRC bot for AceHack
 Copyright (c) 2011, Edoardo Spadolini
@@ -59,9 +58,9 @@ xlogfile_parse["endtime"] = fromtimestamp_int
 xlogfile_parse["realtime"] = timedelta_int
 #xlogfile_parse["deathdate"] = xlogfile_parse["birthdate"] = isodate
 
-def parse_xlogfile_line(line):
+def parse_xlogfile_line(line, delim):
     record = {}
-    for field in line.strip().split(":"):
+    for field in line.strip().split(delim):
         key, _, value = field.partition("=")
         if key in xlogfile_parse:
             value = xlogfile_parse[key](value)
@@ -87,14 +86,14 @@ class DeathBotProtocol(irc.IRCClient):
     versionName = "deathbot.py"
     versionNum = "0.1"
 
-    xlogfiles = {filepath.FilePath("/opt/nethack/hardfought.org/nh343/var/xlogfile"): "nh",
-                 filepath.FilePath("/opt/nethack/hardfought.org/nhdev/var/xlogfile"): "nd",
-                 filepath.FilePath("/opt/nethack/hardfought.org/gh020/var/xlogfile"): "gh",
-                 filepath.FilePath("/opt/nethack/hardfought.org/un531/var/unnethack/xlogfile"): "un"}
-    livelogs  = {filepath.FilePath("/opt/nethack/hardfought.org/nh343/var/livelog"): "nh",
-                 filepath.FilePath("/opt/nethack/hardfought.org/nhdev/var/livelog"): "nd",
-                 filepath.FilePath("/opt/nethack/hardfought.org/gh020/var/livelog"): "gh",
-                 filepath.FilePath("/opt/nethack/hardfought.org/un531/var/unnethack/livelog"): "un"}
+    xlogfiles = {filepath.FilePath("/opt/nethack/hardfought.org/nh343/var/xlogfile"): ("nh", ":"),
+                 filepath.FilePath("/opt/nethack/hardfought.org/nhdev/var/xlogfile"): ("nd", "\t"),
+                 filepath.FilePath("/opt/nethack/hardfought.org/gh020/var/xlogfile"): ("gh", ":"),
+                 filepath.FilePath("/opt/nethack/hardfought.org/un531/var/unnethack/xlogfile"): ("un", ":")}
+    livelogs  = {filepath.FilePath("/opt/nethack/hardfought.org/nh343/var/livelog"): ("nh", ":"),
+                 filepath.FilePath("/opt/nethack/hardfought.org/nhdev/var/livelog"): ("nd", "\t:"),
+                 filepath.FilePath("/opt/nethack/hardfought.org/gh020/var/livelog"): ("gh", ":"),
+                 filepath.FilePath("/opt/nethack/hardfought.org/un531/var/unnethack/livelog"): ("un", ":")}
 
     looping_calls = None
 
@@ -104,10 +103,10 @@ class DeathBotProtocol(irc.IRCClient):
         self.join(CHANNEL)
 
         self.logs = {}
-        for xlogfile, variant in self.xlogfiles.iteritems():
-            self.logs[xlogfile] = (self.xlogfileReport, variant)
-        for livelog, variant in self.livelogs.iteritems():
-            self.logs[livelog] = (self.livelogReport, variant)
+        for xlogfile, (variant, delim) in self.xlogfiles.iteritems():
+            self.logs[xlogfile] = (self.xlogfileReport, variant, delim)
+        for livelog, (variant, delim) in self.livelogs.iteritems():
+            self.logs[livelog] = (self.livelogReport, variant, delim)
 
         self.logs_seek = {}
         self.looping_calls = {}
@@ -187,7 +186,8 @@ class DeathBotProtocol(irc.IRCClient):
             handle.seek(self.logs_seek[filepath])
 
             for line in handle:
-                game = parse_xlogfile_line(line)
+                delim = self.logs[filepath][2]
+                game = parse_xlogfile_line(line, delim)
                 game["variant"] = self.logs[filepath][1]
                 for line in self.logs[filepath][0](game):
                     self.say(CHANNEL, line)
