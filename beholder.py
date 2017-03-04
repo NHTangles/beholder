@@ -91,7 +91,7 @@ class DeathBotProtocol(irc.IRCClient):
                  filepath.FilePath("/opt/nethack/hardfought.org/gh020/var/xlogfile"): ("gh", ":"),
                  filepath.FilePath("/opt/nethack/hardfought.org/un531/var/unnethack/xlogfile"): ("un", ":")}
     livelogs  = {filepath.FilePath("/opt/nethack/hardfought.org/nh343/var/livelog"): ("nh", ":"),
-                 filepath.FilePath("/opt/nethack/hardfought.org/nhdev/var/livelog"): ("nd", "\t:"),
+                 filepath.FilePath("/opt/nethack/hardfought.org/nhdev/var/livelog"): ("nd", "\t"),
                  filepath.FilePath("/opt/nethack/hardfought.org/gh020/var/livelog"): ("gh", ":"),
                  filepath.FilePath("/opt/nethack/hardfought.org/un531/var/unnethack/livelog"): ("un", ":")}
 
