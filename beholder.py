@@ -132,6 +132,9 @@ class DeathBotProtocol(irc.IRCClient):
             else:
                 game["name"] = game["charname"]
 
+        if game.get("while", False) and game["while"] != "":
+            game["death"] += (", while " + game["while"])
+
         if (game.get("mode", "normal") == "normal" and
               game.get("modes", "normal") == "normal"):
             yield ("[{variant}] {name} ({role} {race} {gender} {align}), "
