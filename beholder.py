@@ -34,9 +34,11 @@ from twisted.application import internet, service
 import datetime
 import ast
 
-# znc
+# fn
 HOST, PORT = "chat.us.freenode.net", 6697
 CHANNEL = "#hardfought"
+NICK = "Beholder"
+#NICK = "BeerHolder" ##testing
 
 def fromtimestamp_int(s):
     return datetime.datetime.fromtimestamp(int(s))
@@ -74,13 +76,14 @@ def xlogfile_entries(fp):
             yield parse_xlogfile_line(line)
 
 class DeathBotProtocol(irc.IRCClient):
-    nickname = "Beholder"
+    nickname = NICK
     username = "beholder"
     realname = "Beholder"
     try:
         password = open("/opt/beholder/pw", "r").read().strip()
     except:
         pass
+    # password = "NotTHEPassword" ##testing
 
     sourceURL = "https://ascension.run/deathbot.py"
     versionName = "deathbot.py"
@@ -118,6 +121,21 @@ class DeathBotProtocol(irc.IRCClient):
 
             self.looping_calls[filepath] = task.LoopingCall(self.logReport, filepath)
             self.looping_calls[filepath].start(3)
+
+        # Additionally, keep an eye on our nick to make sure it's right.
+        # Perhaps we only need to set this up if the nick was originally
+        # in use when we signed on, but a 30-second looping call won't kill us
+        self.looping_calls["nick"] = task.LoopingCall(self.nickCheck)
+        self.looping_calls["nick"].start(30)
+
+    def nickCheck(self):
+        if (self.nickname != NICK):
+            self.setNick(NICK)
+
+    def nickChanged(self, nn):
+        # catch successful changing of nick from above and identify with nickserv
+        #self.msg("Tangles", "identify " + nn + " " + self.password ) ##testing
+        self.msg("NickServ", "identify " + nn + " " + self.password )
 
     def startscummed(self, game):
         return game["death"] in ("quit", "escaped") and game["points"] < 1000
