@@ -33,6 +33,7 @@ from twisted.python import filepath
 from twisted.application import internet, service
 import datetime
 import ast
+import os
 
 # fn
 HOST, PORT = "chat.us.freenode.net", 6697
@@ -54,10 +55,10 @@ xlogfile_parse = dict.fromkeys(
      "uid", "turns", "xplevel", "exp"), int)
 xlogfile_parse.update(dict.fromkeys(
     ("conduct", "event", "carried", "flags", "achieve"), ast.literal_eval))
-xlogfile_parse["starttime"] = fromtimestamp_int
-xlogfile_parse["curtime"] = fromtimestamp_int
-xlogfile_parse["endtime"] = fromtimestamp_int
-xlogfile_parse["realtime"] = timedelta_int
+#xlogfile_parse["starttime"] = fromtimestamp_int
+#xlogfile_parse["curtime"] = fromtimestamp_int
+#xlogfile_parse["endtime"] = fromtimestamp_int
+#xlogfile_parse["realtime"] = timedelta_int
 #xlogfile_parse["deathdate"] = xlogfile_parse["birthdate"] = isodate
 
 def parse_xlogfile_line(line, delim):
@@ -83,19 +84,22 @@ class DeathBotProtocol(irc.IRCClient):
         password = open("/opt/beholder/pw", "r").read().strip()
     except:
         pass
-    # password = "NotTHEPassword" ##testing
+#    password = "NotTHEPassword" ##testing
 
     sourceURL = "https://ascension.run/deathbot.py"
     versionName = "deathbot.py"
-    versionNum = "0.1"
+    versionNum = "0.2"
 
-    xlogfiles = {filepath.FilePath("/opt/nethack/hardfought.org/nh343/var/xlogfile"): ("nh", ":"),
-                 filepath.FilePath("/opt/nethack/hardfought.org/nhdev/var/xlogfile"): ("nd", "\t"),
-                 filepath.FilePath("/opt/nethack/hardfought.org/gh020/var/xlogfile"): ("gh", ":"),
-                 filepath.FilePath("/opt/nethack/hardfought.org/un531/var/unnethack/xlogfile"): ("un", ":")}
+    dump_url_prefix = "https://hardfought.org/userdata/{name[0]}/{name}/"
+    dump_file_prefix = "/opt/nethack/hardfought.org/dgldir/userdata/{name[0]}/{name}/"
+
+    xlogfiles = {filepath.FilePath("/opt/nethack/hardfought.org/nh343/var/xlogfile"): ("nh", ":", "nh343/dumplog/{starttime}.nh343.txt"),
+                 filepath.FilePath("/opt/nethack/hardfought.org/nhdev/var/xlogfile"): ("nd", "\t", "nhdev/dumplog/{starttime}.nhdev.txt"),
+                 filepath.FilePath("/opt/nethack/hardfought.org/gh/var/xlogfile"): ("gh", ":", "gh/dumplog/{starttime}.gh.txt"),
+                 filepath.FilePath("/opt/nethack/hardfought.org/un531/var/unnethack/xlogfile"): ("un", ":", "un531/dumplog/{starttime}.un531.txt.html")}
     livelogs  = {filepath.FilePath("/opt/nethack/hardfought.org/nh343/var/livelog"): ("nh", ":"),
                  filepath.FilePath("/opt/nethack/hardfought.org/nhdev/var/livelog"): ("nd", "\t"),
-                 filepath.FilePath("/opt/nethack/hardfought.org/gh020/var/livelog"): ("gh", ":"),
+                 filepath.FilePath("/opt/nethack/hardfought.org/gh/var/livelog"): ("gh", ":"),
                  filepath.FilePath("/opt/nethack/hardfought.org/un531/var/unnethack/livelog"): ("un", ":")}
 
     looping_calls = None
@@ -106,10 +110,10 @@ class DeathBotProtocol(irc.IRCClient):
         self.join(CHANNEL)
 
         self.logs = {}
-        for xlogfile, (variant, delim) in self.xlogfiles.iteritems():
-            self.logs[xlogfile] = (self.xlogfileReport, variant, delim)
+        for xlogfile, (variant, delim, dumpfmt) in self.xlogfiles.iteritems():
+            self.logs[xlogfile] = (self.xlogfileReport, variant, delim, dumpfmt)
         for livelog, (variant, delim) in self.livelogs.iteritems():
-            self.logs[livelog] = (self.livelogReport, variant, delim)
+            self.logs[livelog] = (self.livelogReport, variant, delim, "")
 
         self.logs_seek = {}
         self.looping_calls = {}
@@ -143,6 +147,17 @@ class DeathBotProtocol(irc.IRCClient):
     def xlogfileReport(self, game):
         if self.startscummed(game): return
 
+        # Need to figure out the dump path before messing with the name below
+        if game["death"] in ("ascended"):
+            dumpfile = (self.dump_file_prefix + game["dumpfmt"]).format(**game)
+            if os.path.exists(dumpfile):
+                dumpurl = (self.dump_url_prefix + game["dumpfmt"]).format(**game)
+            else:
+                dumpurl = "(sorry, no dump for this game)"
+            game["ascsuff"] = "\n" + dumpurl
+        else:
+            game["ascsuff"] = ""
+
         if game.get("charname", False):
             if game.get("name", False):
                 if game["name"] != game["charname"]:
@@ -156,7 +171,7 @@ class DeathBotProtocol(irc.IRCClient):
         if (game.get("mode", "normal") == "normal" and
               game.get("modes", "normal") == "normal"):
             yield ("[{variant}] {name} ({role} {race} {gender} {align}), "
-                   "{points} points, T:{turns}, {death}").format(**game)
+                   "{points} points, T:{turns}, {death}{ascsuff}").format(**game)
         else:
             if "modes" in game:
                 if game["modes"].startswith("normal,"):
@@ -165,7 +180,7 @@ class DeathBotProtocol(irc.IRCClient):
                     game["mode"] = game["modes"]
             yield ("[{variant}] {name} ({role} {race} {gender} {align}), "
                    "{points} points, T:{turns}, {death}, "
-                   "in {mode} mode").format(**game)
+                   "in {mode} mode{ascsuff}").format(**game)
 
     def livelogReport(self, event):
         if event.get("charname", False):
@@ -210,6 +225,7 @@ class DeathBotProtocol(irc.IRCClient):
                 delim = self.logs[filepath][2]
                 game = parse_xlogfile_line(line, delim)
                 game["variant"] = self.logs[filepath][1]
+                game["dumpfmt"] = self.logs[filepath][3]
                 for line in self.logs[filepath][0](game):
                     self.say(CHANNEL, line)
 
