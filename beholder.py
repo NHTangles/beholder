@@ -32,12 +32,14 @@ from twisted.words.protocols import irc
 from twisted.python import filepath
 from twisted.application import internet, service
 import datetime
+import time
 import ast
 import os
 
 # fn
 HOST, PORT = "chat.us.freenode.net", 6697
 CHANNEL = "#hardfought"
+#CHANNEL = "#hftest" ##testing
 NICK = "Beholder"
 #NICK = "BeerHolder" ##testing
 
@@ -70,11 +72,11 @@ def parse_xlogfile_line(line, delim):
         record[key] = value
     return record
 
-def xlogfile_entries(fp):
-    if fp is None: return
-    with fp.open("rt") as handle:
-        for line in handle:
-            yield parse_xlogfile_line(line)
+#def xlogfile_entries(fp):
+#    if fp is None: return
+#    with fp.open("rt") as handle:
+#        for line in handle:
+#            yield parse_xlogfile_line(line)
 
 class DeathBotProtocol(irc.IRCClient):
     nickname = NICK
@@ -84,7 +86,7 @@ class DeathBotProtocol(irc.IRCClient):
         password = open("/opt/beholder/pw", "r").read().strip()
     except:
         pass
-#    password = "NotTHEPassword" ##testing
+    #password = "NotTHEPassword" ##testing
 
     sourceURL = "https://ascension.run/deathbot.py"
     versionName = "deathbot.py"
@@ -118,6 +120,19 @@ class DeathBotProtocol(irc.IRCClient):
         self.logs_seek = {}
         self.looping_calls = {}
 
+        #lastgame shite
+        self.lastgame = "No last game recorded"
+        self.lg = {}
+        self.lastasc = "No last ascension recorded"
+        self.la = {}
+
+        self.commands = {"ping"     : self.doPing,
+                         "time"     : self.doTime,
+                         "hello"    : self.doHello,
+                         "beer"     : self.doBeer,
+                         "lastgame" : self.lastGame,
+                         "lastasc"  : self.lastAsc}
+
         for filepath in self.logs:
             with filepath.open("r") as handle:
                 handle.seek(0, 2)
@@ -141,6 +156,66 @@ class DeathBotProtocol(irc.IRCClient):
         #self.msg("Tangles", "identify " + nn + " " + self.password ) ##testing
         self.msg("NickServ", "identify " + nn + " " + self.password )
 
+
+    # implement commands here
+    def doPing(self, sender, replyto, msgwords):
+        self.msg(replyto, sender + ": Pong! " + " ".join(msgwords[1:]))
+
+    def doTime(self, sender, replyto, msgwords):
+        self.msg(replyto, sender + ": " + time.strftime("%c %Z"))
+
+    def doHello(self, sender, replyto, msgwords):
+        self.msg(replyto, "Hello " + sender + ", Welcome to " + CHANNEL)
+
+    def doBeer(self, sender, replyto, msgwords):
+        self.msg(replyto, sender + ": It's your shout!")
+
+    def lastGame(self, sender, replyto, msgwords):
+        if (len(msgwords) >= 3): #var, plr, any order.
+            dl = self.lg.get(":".join(msgwords[1:3]).lower(), False)
+            if (dl == False):
+                dl = self.lg.get(":".join(msgwords[2:0:-1]).lower(),
+                                 "No last game for (" + ",".join(msgwords[1:3]) + ")")
+            self.msg(replyto, sender + ": " + dl)
+            return
+        if (len(msgwords) == 2): #var OR plr - don't care which
+            dl = self.lg.get(msgwords[1].lower(),"No last game for " + msgwords[1])
+            self.msg(replyto, sender + ": " + dl)
+            return
+        self.msg(replyto, sender + ": " + self.lastgame)
+
+    def lastAsc(self, sender, replyto, msgwords):
+        if (len(msgwords) >= 3): #var, plr, any order.
+            dl = self.la.get(":".join(msgwords[1:3]).lower(),False)
+            if (dl == False):
+                dl = self.la.get(":".join(msgwords[2:0:-1]).lower(),
+                                 "No last ascension for (" + ",".join(msgwords[1:3]) + ")")
+            self.msg(replyto, sender + ": " + dl)
+            return
+        if (len(msgwords) == 2): #var OR plr - don't care which
+            dl = self.la.get(msgwords[1].lower(),"No last ascension for " + msgwords[1])
+            self.msg(replyto, sender + ": " + dl)
+            return
+        self.msg(replyto, sender + ": " + self.lastasc)
+
+    # Listen to the chatter
+    def privmsg(self, sender, dest, message):
+        sender = sender.partition("!")[0]
+        if (dest == CHANNEL): #public message
+            # do not speak unless we are spoken to
+            if (message[0] != '!'): return
+            replyto = CHANNEL
+        else: #private msg
+            # message is for us, so don't care if it starts with ! or not
+            replyto = sender
+        # pop the '!'
+        if (message[0] == '!'):
+            message = message[1:]
+        msgwords = message.split(" ")
+        if self.commands.get(msgwords[0], False):
+            self.commands[msgwords[0]](sender, replyto, msgwords)
+
+
     def startscummed(self, game):
         return game["death"] in ("quit", "escaped") and game["points"] < 1000
 
@@ -148,13 +223,20 @@ class DeathBotProtocol(irc.IRCClient):
         if self.startscummed(game): return
 
         # Need to figure out the dump path before messing with the name below
+        dumpfile = (self.dump_file_prefix + game["dumpfmt"]).format(**game)
+        dumpurl = "(sorry, no dump exists for {variant}:{name})".format(**game)
+        if os.path.exists(dumpfile):
+            dumpurl = (self.dump_url_prefix + game["dumpfmt"]).format(**game)
+        self.lg["{variant}:{name}".format(**game).lower()] = dumpurl
+        self.lg[game["name"].lower()] = dumpurl
+        self.lg[game["variant"].lower()] = dumpurl
+        self.lastgame = dumpurl
         if game["death"] in ("ascended"):
-            dumpfile = (self.dump_file_prefix + game["dumpfmt"]).format(**game)
-            if os.path.exists(dumpfile):
-                dumpurl = (self.dump_url_prefix + game["dumpfmt"]).format(**game)
-            else:
-                dumpurl = "(sorry, no dump for this game)"
             game["ascsuff"] = "\n" + dumpurl
+            self.la["{variant}:{name}".format(**game).lower()] = dumpurl
+            self.la[game["name"].lower()] = dumpurl
+            self.la[game["variant"].lower()] = dumpurl
+            self.lastasc = dumpurl
         else:
             game["ascsuff"] = ""
 
