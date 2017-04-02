@@ -134,10 +134,14 @@ class DeathBotProtocol(irc.IRCClient):
         self.lae = {}
         self.tlastasc = 0
 
+        # for !tell
+        self.tellbuf = {}
+
         self.commands = {"ping"     : self.doPing,
                          "time"     : self.doTime,
                          "hello"    : self.doHello,
                          "beer"     : self.doBeer,
+                         "tell"     : self.takeMessage,
                          "lastgame" : self.lastGame,
                          "lastasc"  : self.lastAsc}
 
@@ -192,6 +196,25 @@ class DeathBotProtocol(irc.IRCClient):
     def doBeer(self, sender, replyto, msgwords):
         self.msg(replyto, sender + ": It's your shout!")
 
+    def takeMessage(self, sender, replyto, msgwords):
+        rcpt = msgwords[1]
+        if (replyto == sender): #this was a privmsg
+            forwardto = rcpt # so we pass a privmsg
+        else: # !tell on channel
+            forwardto = replyto # so pass to channel
+        if not self.tellbuf.get(rcpt,False):
+            self.tellbuf[rcpt] = []
+        self.tellbuf[rcpt].append((forwardto,sender," ".join(msgwords[2:])))
+        self.msg(replyto,"Will do, " + sender + "!")
+
+    def checkMessages(self, user):
+        # this runs every time someone speaks on the channel,
+        # so return quickly if there's nothing to do
+        if not self.tellbuf.get(user,False): return
+        for (forwardto,sender,message) in self.tellbuf[user]:
+            self.msg(forwardto, user + ": Message from " + sender + ": " + message)
+        self.tellbuf[user] = []
+
     def lastGame(self, sender, replyto, msgwords):
         if (len(msgwords) >= 3): #var, plr, any order.
             dl = self.lg.get(":".join(msgwords[1:3]).lower(), False)
@@ -230,8 +253,9 @@ class DeathBotProtocol(irc.IRCClient):
         # Hello processing first.
         if re.match(r'^(hello|hi|hey)[!?. ]*$', message.lower()):
             self.doHello(sender, replyto)
-            return
-        # ignore channel noise
+        # Message checks next.
+        self.checkMessages(sender)
+        # ignore other channel noise
         if (message[0] != '!'):
             if (dest == CHANNEL): return
         else: # pop the '!'
