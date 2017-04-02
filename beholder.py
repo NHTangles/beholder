@@ -35,12 +35,13 @@ import datetime
 import time
 import ast
 import os
+import re
 
 # fn
 HOST, PORT = "chat.us.freenode.net", 6697
 CHANNEL = "#hardfought"
-#CHANNEL = "#hftest" ##testing
 NICK = "Beholder"
+#CHANNEL = "#hftest" ##testing
 #NICK = "BeerHolder" ##testing
 
 def fromtimestamp_int(s):
@@ -125,6 +126,13 @@ class DeathBotProtocol(irc.IRCClient):
         self.lg = {}
         self.lastasc = "No last ascension recorded"
         self.la = {}
+        # for populating lg/la per player at boot, we need to track game end times
+        # variant and variant:player don't need this if we assume the xlogfiles are
+        # ordered within variant.
+        self.lge = {}
+        self.tlastgame = 0
+        self.lae = {}
+        self.tlastasc = 0
 
         self.commands = {"ping"     : self.doPing,
                          "time"     : self.doTime,
@@ -133,11 +141,25 @@ class DeathBotProtocol(irc.IRCClient):
                          "lastgame" : self.lastGame,
                          "lastasc"  : self.lastAsc}
 
-        for filepath in self.logs:
+        # seek to end of livelogs
+        for filepath in self.livelogs:
             with filepath.open("r") as handle:
                 handle.seek(0, 2)
                 self.logs_seek[filepath] = handle.tell()
 
+        # sequentially read xlogfiles from beginning to pre-populate lastgame data.
+        for filepath in self.xlogfiles:
+            with filepath.open("r") as handle:
+                for line in handle:
+                    delim = self.logs[filepath][2]
+                    game = parse_xlogfile_line(line, delim)
+                    game["variant"] = self.logs[filepath][1]
+                    game["dumpfmt"] = self.logs[filepath][3]
+                    for line in self.logs[filepath][0](game,False):
+                        pass
+                self.logs_seek[filepath] = handle.tell()
+
+        for filepath in self.logs:
             self.looping_calls[filepath] = task.LoopingCall(self.logReport, filepath)
             self.looping_calls[filepath].start(3)
 
@@ -164,7 +186,7 @@ class DeathBotProtocol(irc.IRCClient):
     def doTime(self, sender, replyto, msgwords):
         self.msg(replyto, sender + ": " + time.strftime("%c %Z"))
 
-    def doHello(self, sender, replyto, msgwords):
+    def doHello(self, sender, replyto, msgwords = 0):
         self.msg(replyto, "Hello " + sender + ", Welcome to " + CHANNEL)
 
     def doBeer(self, sender, replyto, msgwords):
@@ -202,43 +224,57 @@ class DeathBotProtocol(irc.IRCClient):
     def privmsg(self, sender, dest, message):
         sender = sender.partition("!")[0]
         if (dest == CHANNEL): #public message
-            # do not speak unless we are spoken to
-            if (message[0] != '!'): return
             replyto = CHANNEL
         else: #private msg
-            # message is for us, so don't care if it starts with ! or not
             replyto = sender
-        # pop the '!'
-        if (message[0] == '!'):
+        # Hello processing first.
+        if re.match(r'^(hello|hi|hey)[!?. ]*$', message.lower()):
+            self.doHello(sender, replyto)
+            return
+        # ignore channel noise
+        if (message[0] != '!'):
+            if (dest == CHANNEL): return
+        else: # pop the '!'
             message = message[1:]
         msgwords = message.split(" ")
-        if self.commands.get(msgwords[0], False):
-            self.commands[msgwords[0]](sender, replyto, msgwords)
+        if self.commands.get(msgwords[0].lower(), False):
+            self.commands[msgwords[0].lower()](sender, replyto, msgwords)
 
 
     def startscummed(self, game):
         return game["death"] in ("quit", "escaped") and game["points"] < 1000
 
-    def xlogfileReport(self, game):
+    def xlogfileReport(self, game, report = True):
         if self.startscummed(game): return
 
         # Need to figure out the dump path before messing with the name below
         dumpfile = (self.dump_file_prefix + game["dumpfmt"]).format(**game)
         dumpurl = "(sorry, no dump exists for {variant}:{name})".format(**game)
         if os.path.exists(dumpfile):
+        #if True: ##testing
             dumpurl = (self.dump_url_prefix + game["dumpfmt"]).format(**game)
         self.lg["{variant}:{name}".format(**game).lower()] = dumpurl
-        self.lg[game["name"].lower()] = dumpurl
+        if (game["endtime"] > self.lge.get(game["name"].lower(), 0)):
+            self.lge[game["name"].lower()] = game["endtime"]
+            self.lg[game["name"].lower()] = dumpurl
         self.lg[game["variant"].lower()] = dumpurl
-        self.lastgame = dumpurl
+        if (game["endtime"] > self.tlastgame):
+            self.lastgame = dumpurl
+            self.tlastgame = game["endtime"]
         if game["death"] in ("ascended"):
             game["ascsuff"] = "\n" + dumpurl
             self.la["{variant}:{name}".format(**game).lower()] = dumpurl
-            self.la[game["name"].lower()] = dumpurl
+            if (game["endtime"] > self.lae.get(game["name"].lower(), 0)):
+                self.lae[game["name"].lower()] = game["endtime"]
+                self.la[game["name"].lower()] = dumpurl
             self.la[game["variant"].lower()] = dumpurl
-            self.lastasc = dumpurl
+            if (game["endtime"] > self.tlastasc):
+                self.lastasc = dumpurl
+                self.tlastasc = game["endtime"]
         else:
             game["ascsuff"] = ""
+
+        if (not report): return
 
         if game.get("charname", False):
             if game.get("name", False):
