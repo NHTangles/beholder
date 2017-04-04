@@ -31,18 +31,23 @@ from twisted.internet import reactor, protocol, ssl, task
 from twisted.words.protocols import irc
 from twisted.python import filepath
 from twisted.application import internet, service
-import datetime
-import time
-import ast
-import os
-import re
+import datetime # for timestamp stuff - Not used?
+import time     # for !time
+import ast      # for conduct/achievement bitfields - not really used
+import os       # for check path exists (dumplogs)
+import re       # for hello.
+import urllib   # for dealing with NH4 variants' #&$#@ spaces in filenames.
+
+TEST= False
+#TEST = True  # uncomment for testing
 
 # fn
 HOST, PORT = "chat.us.freenode.net", 6697
 CHANNEL = "#hardfought"
 NICK = "Beholder"
-#CHANNEL = "#hftest" ##testing
-#NICK = "BeerHolder" ##testing
+if TEST:
+    CHANNEL = "#hftest"
+    NICK = "BeerHolder"
 
 def fromtimestamp_int(s):
     return datetime.datetime.fromtimestamp(int(s))
@@ -87,7 +92,7 @@ class DeathBotProtocol(irc.IRCClient):
         password = open("/opt/beholder/pw", "r").read().strip()
     except:
         pass
-    #password = "NotTHEPassword" ##testing
+    if TEST: password = "NotTHEPassword"
 
     sourceURL = "https://ascension.run/deathbot.py"
     versionName = "deathbot.py"
@@ -99,6 +104,7 @@ class DeathBotProtocol(irc.IRCClient):
     xlogfiles = {filepath.FilePath("/opt/nethack/hardfought.org/nh343/var/xlogfile"): ("nh", ":", "nh343/dumplog/{starttime}.nh343.txt"),
                  filepath.FilePath("/opt/nethack/hardfought.org/nhdev/var/xlogfile"): ("nd", "\t", "nhdev/dumplog/{starttime}.nhdev.txt"),
                  filepath.FilePath("/opt/nethack/hardfought.org/gh/var/xlogfile"): ("gh", ":", "gh/dumplog/{starttime}.gh.txt"),
+                 filepath.FilePath("/opt/nethack/hardfought.org/fiqhackdir/data/xlogfile"): ("fh", ":", "fiqhack/dumplog/{dumplog}"),
                  filepath.FilePath("/opt/nethack/hardfought.org/un531/var/unnethack/xlogfile"): ("un", ":", "un531/dumplog/{starttime}.un531.txt.html")}
     livelogs  = {filepath.FilePath("/opt/nethack/hardfought.org/nh343/var/livelog"): ("nh", ":"),
                  filepath.FilePath("/opt/nethack/hardfought.org/nhdev/var/livelog"): ("nd", "\t"),
@@ -179,8 +185,8 @@ class DeathBotProtocol(irc.IRCClient):
 
     def nickChanged(self, nn):
         # catch successful changing of nick from above and identify with nickserv
-        #self.msg("Tangles", "identify " + nn + " " + self.password ) ##testing
-        self.msg("NickServ", "identify " + nn + " " + self.password )
+        if TEST: self.msg("Tangles", "identify " + nn + " " + self.password)
+        else: self.msg("NickServ", "identify " + nn + " " + self.password)
 
 
     # implement commands here
@@ -218,7 +224,7 @@ class DeathBotProtocol(irc.IRCClient):
     def lastGame(self, sender, replyto, msgwords):
         if (len(msgwords) >= 3): #var, plr, any order.
             dl = self.lg.get(":".join(msgwords[1:3]).lower(), False)
-            if (dl == False):
+            if not dl:
                 dl = self.lg.get(":".join(msgwords[2:0:-1]).lower(),
                                  "No last game for (" + ",".join(msgwords[1:3]) + ")")
             self.msg(replyto, sender + ": " + dl)
@@ -274,9 +280,12 @@ class DeathBotProtocol(irc.IRCClient):
         # Need to figure out the dump path before messing with the name below
         dumpfile = (self.dump_file_prefix + game["dumpfmt"]).format(**game)
         dumpurl = "(sorry, no dump exists for {variant}:{name})".format(**game)
-        if os.path.exists(dumpfile):
-        #if True: ##testing
-            dumpurl = (self.dump_url_prefix + game["dumpfmt"]).format(**game)
+        if os.path.exists(dumpfile) or TEST: # dump files may not exist on test system
+            # quote only the game-specific part, not the prefix.
+            # Otherwise it qutes the : in https://
+            # assume the rest of the url prefix is safe.
+            dumpurl = urllib.quote(game["dumpfmt"].format(**game))
+            dumpurl = self.dump_url_prefix.format(**game) + dumpurl
         self.lg["{variant}:{name}".format(**game).lower()] = dumpurl
         if (game["endtime"] > self.lge.get(game["name"].lower(), 0)):
             self.lge[game["name"].lower()] = game["endtime"]
