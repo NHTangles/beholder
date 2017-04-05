@@ -58,6 +58,9 @@ def timedelta_int(s):
 def isodate(s):
     return datetime.datetime.strptime(s, "%Y%m%d").date()
 
+def fixdump(s):
+    return s.replace("_",":")
+
 xlogfile_parse = dict.fromkeys(
     ("points", "deathdnum", "deathlev", "maxlvl", "hp", "maxhp", "deaths",
      "uid", "turns", "xplevel", "exp"), int)
@@ -68,6 +71,7 @@ xlogfile_parse.update(dict.fromkeys(
 #xlogfile_parse["endtime"] = fromtimestamp_int
 #xlogfile_parse["realtime"] = timedelta_int
 #xlogfile_parse["deathdate"] = xlogfile_parse["birthdate"] = isodate
+xlogfile_parse["dumplog"] = fixdump
 
 def parse_xlogfile_line(line, delim):
     record = {}
