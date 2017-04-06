@@ -146,7 +146,7 @@ class DeathBotProtocol(irc.IRCClient):
         self.tlastasc = 0
 
         # for !tell
-        self.tellbuf = shelve.open("tellmsg.db", writeback=True)
+        self.tellbuf = shelve.open("/opt/beholder/tellmsg.db", writeback=True)
 
         self.commands = {"ping"     : self.doPing,
                          "time"     : self.doTime,
