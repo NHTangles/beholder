@@ -152,6 +152,7 @@ class DeathBotProtocol(irc.IRCClient):
                          "time"     : self.doTime,
                          "hello"    : self.doHello,
                          "beer"     : self.doBeer,
+                         "goat"     : self.doGoat,
                          "tell"     : self.takeMessage,
                          "lastgame" : self.lastGame,
                          "lastasc"  : self.lastAsc}
@@ -204,6 +205,9 @@ class DeathBotProtocol(irc.IRCClient):
     def doHello(self, sender, replyto, msgwords = 0):
         self.msg(replyto, "Hello " + sender + ", Welcome to " + CHANNEL)
 
+    def doGoat(self, sender, replyto, msgwords):
+        self.msg(replyto, sender + "'s goat runs up and rams " + sender + " in the arse! Baaaaaa!")
+        
     def doBeer(self, sender, replyto, msgwords):
         self.msg(replyto, sender + ": It's your shout!")
 
