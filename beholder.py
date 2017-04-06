@@ -37,6 +37,7 @@ import ast      # for conduct/achievement bitfields - not really used
 import os       # for check path exists (dumplogs)
 import re       # for hello.
 import urllib   # for dealing with NH4 variants' #&$#@ spaces in filenames.
+import shelve   # for perstistent !tell messages
 
 TEST= False
 #TEST = True  # uncomment for testing
@@ -145,7 +146,7 @@ class DeathBotProtocol(irc.IRCClient):
         self.tlastasc = 0
 
         # for !tell
-        self.tellbuf = {}
+        self.tellbuf = shelve.open("tellmsg.db", writeback=True)
 
         self.commands = {"ping"     : self.doPing,
                          "time"     : self.doTime,
@@ -212,18 +213,20 @@ class DeathBotProtocol(irc.IRCClient):
             forwardto = rcpt # so we pass a privmsg
         else: # !tell on channel
             forwardto = replyto # so pass to channel
-        if not self.tellbuf.get(rcpt,False):
-            self.tellbuf[rcpt] = []
-        self.tellbuf[rcpt].append((forwardto,sender," ".join(msgwords[2:])))
+        if not self.tellbuf.get(rcpt.lower(),False):
+            self.tellbuf[rcpt.lower()] = []
+        self.tellbuf[rcpt.lower()].append((forwardto,sender," ".join(msgwords[2:])))
+        self.tellbuf.sync()
         self.msg(replyto,"Will do, " + sender + "!")
 
     def checkMessages(self, user):
         # this runs every time someone speaks on the channel,
         # so return quickly if there's nothing to do
-        if not self.tellbuf.get(user,False): return
-        for (forwardto,sender,message) in self.tellbuf[user]:
+        if not self.tellbuf.get(user.lower(),False): return
+        for (forwardto,sender,message) in self.tellbuf[user.lower()]:
             self.msg(forwardto, user + ": Message from " + sender + ": " + message)
-        self.tellbuf[user] = []
+        del self.tellbuf[user.lower()]
+        self.tellbuf.sync()
 
     def lastGame(self, sender, replyto, msgwords):
         if (len(msgwords) >= 3): #var, plr, any order.
