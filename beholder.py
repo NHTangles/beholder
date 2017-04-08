@@ -38,6 +38,7 @@ import os       # for check path exists (dumplogs)
 import re       # for hello.
 import urllib   # for dealing with NH4 variants' #&$#@ spaces in filenames.
 import shelve   # for perstistent !tell messages
+import random   # for !goat, and future things.
 
 TEST= False
 #TEST = True  # uncomment for testing
@@ -110,10 +111,12 @@ class DeathBotProtocol(irc.IRCClient):
                  filepath.FilePath("/opt/nethack/hardfought.org/nhdev/var/xlogfile"): ("nd", "\t", "nhdev/dumplog/{starttime}.nhdev.txt"),
                  filepath.FilePath("/opt/nethack/hardfought.org/gh/var/xlogfile"): ("gh", ":", "gh/dumplog/{starttime}.gh.txt"),
                  filepath.FilePath("/opt/nethack/hardfought.org/fiqhackdir/data/xlogfile"): ("fh", ":", "fiqhack/dumplog/{dumplog}"),
+                 filepath.FilePath("/opt/nethack/hardfought.org/fourkdir/save/xlogfile"): ("4k", "\t", "nhfourk/dumps/{dumplog}"),
                  filepath.FilePath("/opt/nethack/hardfought.org/un531/var/unnethack/xlogfile"): ("un", ":", "un531/dumplog/{starttime}.un531.txt.html")}
     livelogs  = {filepath.FilePath("/opt/nethack/hardfought.org/nh343/var/livelog"): ("nh", ":"),
                  filepath.FilePath("/opt/nethack/hardfought.org/nhdev/var/livelog"): ("nd", "\t"),
                  filepath.FilePath("/opt/nethack/hardfought.org/gh/var/livelog"): ("gh", ":"),
+                 filepath.FilePath("/opt/nethack/hardfought.org/fourkdir/save/livelog"): ("4k", "\t"),
                  filepath.FilePath("/opt/nethack/hardfought.org/un531/var/unnethack/livelog"): ("un", ":")}
 
     looping_calls = None
@@ -206,7 +209,9 @@ class DeathBotProtocol(irc.IRCClient):
         self.msg(replyto, "Hello " + sender + ", Welcome to " + CHANNEL)
 
     def doGoat(self, sender, replyto, msgwords):
-        self.msg(replyto, sender + "'s goat runs up and rams " + sender + " in the arse! Baaaaaa!")
+        act = random.SystemRandom().choice(['kicks', 'rams', 'headbutts'])
+        part = random.SystemRandom().choice(['arse', 'nose', 'face', 'kneecap'])
+        self.msg(replyto, sender + "'s goat runs up and " + act + " " + msgwords[1] + " in the " + part + "! Baaaaaa!")
         
     def doBeer(self, sender, replyto, msgwords):
         self.msg(replyto, sender + ": It's your shout!")
