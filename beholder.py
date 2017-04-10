@@ -41,7 +41,7 @@ import shelve   # for perstistent !tell messages
 import random   # for !rng and friends
 
 TEST= False
-TEST = True  # uncomment for testing
+# TEST = True  # uncomment for testing
 
 # fn
 HOST, PORT = "chat.us.freenode.net", 6697
