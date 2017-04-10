@@ -38,17 +38,17 @@ import os       # for check path exists (dumplogs)
 import re       # for hello.
 import urllib   # for dealing with NH4 variants' #&$#@ spaces in filenames.
 import shelve   # for perstistent !tell messages
-import random   # for !goat, and future things.
+import random   # for !rng and friends
 
 TEST= False
-#TEST = True  # uncomment for testing
+TEST = True  # uncomment for testing
 
 # fn
 HOST, PORT = "chat.us.freenode.net", 6697
 CHANNEL = "#hardfought"
 NICK = "Beholder"
 if TEST:
-    CHANNEL = "#hftest"
+    CHANNEL = "#hfdev"
     NICK = "BeerHolder"
 
 def fromtimestamp_int(s):
@@ -119,7 +119,42 @@ class DeathBotProtocol(irc.IRCClient):
                  filepath.FilePath("/opt/nethack/hardfought.org/fourkdir/save/livelog"): ("4k", "\t"),
                  filepath.FilePath("/opt/nethack/hardfought.org/un531/var/unnethack/livelog"): ("un", ":")}
 
+    # variant related stuff that does not relate to xlogfile processing
+    rolename = {"arc": "archeologist", "bar": "barbarian", "cav": "caveman",
+                "hea": "healer",       "kni": "knight",    "mon": "monk",
+                "pri": "priest",       "ran": "ranger",    "rog": "rogue",
+                "sam": "samurai",      "tou": "tourist",   "val": "valkyrie",
+                "wiz": "wizard",
+                "con": "convict"} #unnethack
+    racename = {"dwa": "dwarf", "elf": "elf", "gno": "gnome", "hum": "human",
+                "orc": "orc",
+                "gia": "giant", "kob": "kobold", "ogr": "ogre", #grunt
+                "scu": "scurrier", "syl": "sylph"} #fourk
+
+    vanilla_roles = ["arc","bar","cav","hea","kni","mon","pri",
+                     "ran","rog","sam","tou","val","wiz"]
+    vanilla_races = ["dwa","elf","gno","hum","orc"]
+    # varname: ([aliases],[roles],[races])
+    # first alias will be used for !variant
+    # note this breaks if a player has the same name as an alias
+    # so don't do that (I'm looking at you, FIQ)
+    variants = {"nh": (["nh343", "nethack", "343"],
+                       vanilla_roles, vanilla_races),
+                "nd": (["nhdev", "nh361", "361dev", "361", "dev"],
+                       vanilla_roles, vanilla_races),
+                "gh": (["grunt", "grunthack"],
+                       vanilla_roles, vanilla_races + ["gia", "kob", "ogr"]),
+                "un": (["unnethack", "unh"],
+                       vanilla_roles + ["con"], vanilla_races),
+                "fh": (["fiqhack"], # not "fiq" see comment above
+                       vanilla_roles, vanilla_races),
+                "4k": (["nhfourk", "nhf", "fourk"],
+                       vanilla_roles, vanilla_races + ["gia", "scu", "syl"])}
+
     looping_calls = None
+
+    # Nobody will disagree the RNG is evil
+    evil_rng = random.SystemRandom()
 
     def signedOn(self):
         self.factory.resetDelay()
@@ -156,6 +191,10 @@ class DeathBotProtocol(irc.IRCClient):
                          "hello"    : self.doHello,
                          "beer"     : self.doBeer,
                          "goat"     : self.doGoat,
+                         "rng"      : self.doRng,
+                         "role"     : self.doRole,
+                         "race"     : self.doRace,
+                         "variant"  : self.doVariant,
                          "tell"     : self.takeMessage,
                          "lastgame" : self.lastGame,
                          "lastasc"  : self.lastAsc}
@@ -198,6 +237,13 @@ class DeathBotProtocol(irc.IRCClient):
         else: self.msg("NickServ", "identify " + nn + " " + self.password)
 
 
+    def varalias(self,alias):
+        alias = alias.lower()
+        if alias in self.variants.keys(): return alias
+        for v in self.variants.keys():
+            if alias in self.variants[v][0]: return v
+        return alias # not found, errhandling elsewhere.
+
     # implement commands here
     def doPing(self, sender, replyto, msgwords):
         self.msg(replyto, sender + ": Pong! " + " ".join(msgwords[1:]))
@@ -209,10 +255,46 @@ class DeathBotProtocol(irc.IRCClient):
         self.msg(replyto, "Hello " + sender + ", Welcome to " + CHANNEL)
 
     def doGoat(self, sender, replyto, msgwords):
-        act = random.SystemRandom().choice(['kicks', 'rams', 'headbutts'])
-        part = random.SystemRandom().choice(['arse', 'nose', 'face', 'kneecap'])
-        self.msg(replyto, sender + "'s goat runs up and " + act + " " + msgwords[1] + " in the " + part + "! Baaaaaa!")
-        
+        act = self.evil_rng.choice(['kicks', 'rams', 'headbutts'])
+        part = self.evil_rng.choice(['arse', 'nose', 'face', 'kneecap'])
+        if len(msgwords) > 1:
+            self.msg(replyto, sender + "'s goat runs up and " + act + " " + msgwords[1] + " in the " + part + "! Baaaaaa!")
+        else:
+            self.msg(replyto, NICK + "'s goat runs up and " + act + " " + sender + " in the " + part + "! Baaaaaa!")
+
+    def doRng(self, sender, replyto, msgwords):
+        if len(msgwords) == 1:
+            if (sender[0:11].lower()) == "grasshopper":
+                self.msg(replyto, sender + ": The RNG only has eyes for you, " + sender)
+            else:
+                self.msg(replyto, sender + ": The RNG " + self.evil_rng.choice(["hates you.","is evil.","REALLY hates you.","is thinking of Grasshopper <3"]))
+        elif len(msgwords) == 2:
+            rngrange = msgwords[1].split('-')
+            self.msg(replyto, sender + ": " + str(self.evil_rng.randrange(int(rngrange[0]), int(rngrange[-1]))))
+        else:
+            self.msg(replyto, sender + ": " + self.evil_rng.choice(msgwords[1:]))
+
+    def doRole(self, sender, replyto, msgwords):
+        if len(msgwords) > 1:
+           v = self.varalias(msgwords[1])
+           #default to vanilla if variant not found
+           self.msg(replyto, sender + ": " + self.rolename[self.evil_rng.choice(self.variants.get(v,self.variants["nh"])[1])])
+        else:
+           #any role from any variant
+           self.msg(replyto, sender + ": " + self.rolename[self.evil_rng.choice(self.rolename.keys())])
+
+    def doRace(self, sender, replyto, msgwords):
+        if len(msgwords) > 1:
+           v = self.varalias(msgwords[1])
+           #default to vanilla if variant not found
+           self.msg(replyto, sender + ": " + self.racename[self.evil_rng.choice(self.variants.get(v,self.variants["nh"])[2])])
+        else:
+           #any race from any variant
+           self.msg(replyto, sender + ": " + self.racename[self.evil_rng.choice(self.racename.keys())])
+
+    def doVariant(self, sender, replyto, msgwords):
+        self.msg(replyto, sender + ": " + self.variants[self.evil_rng.choice(self.variants.keys())][0][0])
+
     def doBeer(self, sender, replyto, msgwords):
         self.msg(replyto, sender + ": It's your shout!")
 
@@ -239,28 +321,36 @@ class DeathBotProtocol(irc.IRCClient):
 
     def lastGame(self, sender, replyto, msgwords):
         if (len(msgwords) >= 3): #var, plr, any order.
-            dl = self.lg.get(":".join(msgwords[1:3]).lower(), False)
+            vp = self.varalias(msgwords[1])
+            pv = self.varalias(msgwords[2])
+            #dl = self.lg.get(":".join(msgwords[1:3]).lower(), False)
+            dl = self.lg.get(":".join([vp,pv]).lower(), False)
             if not dl:
-                dl = self.lg.get(":".join(msgwords[2:0:-1]).lower(),
+                #dl = self.lg.get(":".join(msgwords[2:0:-1]).lower(),
+                dl = self.lg.get(":".join([pv,vp]).lower(),
                                  "No last game for (" + ",".join(msgwords[1:3]) + ")")
             self.msg(replyto, sender + ": " + dl)
             return
         if (len(msgwords) == 2): #var OR plr - don't care which
-            dl = self.lg.get(msgwords[1].lower(),"No last game for " + msgwords[1])
+            vp = self.varalias(msgwords[1])
+            dl = self.lg.get(vp,"No last game for " + msgwords[1])
             self.msg(replyto, sender + ": " + dl)
             return
         self.msg(replyto, sender + ": " + self.lastgame)
 
     def lastAsc(self, sender, replyto, msgwords):
         if (len(msgwords) >= 3): #var, plr, any order.
-            dl = self.la.get(":".join(msgwords[1:3]).lower(),False)
+            vp = self.varalias(msgwords[1])
+            pv = self.varalias(msgwords[2])
+            dl = self.la.get(":".join(pv,vp).lower(),False)
             if (dl == False):
-                dl = self.la.get(":".join(msgwords[2:0:-1]).lower(),
+                dl = self.la.get(":".join(vp,pv).lower(),
                                  "No last ascension for (" + ",".join(msgwords[1:3]) + ")")
             self.msg(replyto, sender + ": " + dl)
             return
         if (len(msgwords) == 2): #var OR plr - don't care which
-            dl = self.la.get(msgwords[1].lower(),"No last ascension for " + msgwords[1])
+            vp = self.varalias(msgwords[1])
+            dl = self.la.get(vp,"No last ascension for " + msgwords[1])
             self.msg(replyto, sender + ": " + dl)
             return
         self.msg(replyto, sender + ": " + self.lastasc)
