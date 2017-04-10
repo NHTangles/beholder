@@ -277,20 +277,25 @@ class DeathBotProtocol(irc.IRCClient):
     def doRole(self, sender, replyto, msgwords):
         if len(msgwords) > 1:
            v = self.varalias(msgwords[1])
-           #default to vanilla if variant not found
-           self.msg(replyto, sender + ": " + self.rolename[self.evil_rng.choice(self.variants.get(v,self.variants["nh"])[1])])
+           #error if variant not found
+           if not self.variants.get(v,False):
+               self.msg(replyto, sender + ": No variant " + msgwords[1] + " on server.")
+           self.msg(replyto, sender + ": " + self.rolename[self.evil_rng.choice(self.variants[v][1])])
         else:
-           #any role from any variant
-           self.msg(replyto, sender + ": " + self.rolename[self.evil_rng.choice(self.rolename.keys())])
+           #pick variant first
+           v = self.evil_rng.choice(self.variants.keys())
+           self.msg(replyto, sender + ": " + self.variants[v][0][0] + " " + self.rolename[self.evil_rng.choice(self.variants[v][1])])
 
     def doRace(self, sender, replyto, msgwords):
         if len(msgwords) > 1:
            v = self.varalias(msgwords[1])
-           #default to vanilla if variant not found
-           self.msg(replyto, sender + ": " + self.racename[self.evil_rng.choice(self.variants.get(v,self.variants["nh"])[2])])
+           #error if variant not found
+           if not self.variants.get(v,False):
+               self.msg(replyto, sender + ": No variant " + msgwords[1] + " on server.")
+           self.msg(replyto, sender + ": " + self.racename[self.evil_rng.choice(self.variants.get[v][2])])
         else:
-           #any race from any variant
-           self.msg(replyto, sender + ": " + self.racename[self.evil_rng.choice(self.racename.keys())])
+           v = self.evil_rng.choice(self.variants.keys())
+           self.msg(replyto, sender + ": " + self.variants[v][0][0] + " " + self.racename[self.evil_rng.choice(self.variants[v][2])])
 
     def doVariant(self, sender, replyto, msgwords):
         self.msg(replyto, sender + ": " + self.variants[self.evil_rng.choice(self.variants.keys())][0][0])
@@ -299,7 +304,7 @@ class DeathBotProtocol(irc.IRCClient):
         self.msg(replyto, sender + ": It's your shout!")
 
     def takeMessage(self, sender, replyto, msgwords):
-        rcpt = msgwords[1]
+        rcpt = msgwords[1].split(":")[0] # remove any trailing colon - could check for other things here.
         if (replyto == sender): #this was a privmsg
             forwardto = rcpt # so we pass a privmsg
         else: # !tell on channel
