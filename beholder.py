@@ -41,7 +41,7 @@ import shelve   # for perstistent !tell messages
 import random   # for !rng and friends
 
 TEST= False
-TEST = True  # uncomment for testing
+#TEST = True  # uncomment for testing
 
 # fn
 HOST, PORT = "chat.us.freenode.net", 6697
@@ -94,6 +94,7 @@ class DeathBotProtocol(irc.IRCClient):
     nickname = NICK
     username = "beholder"
     realname = "Beholder"
+    admin = ["K2", "K2-work", "Tangles"]  # for plr_tc maintenance. NOT SECURE obviously.
     try:
         password = open("/opt/beholder/pw", "r").read().strip()
     except:
@@ -151,6 +152,8 @@ class DeathBotProtocol(irc.IRCClient):
                 "4k": (["nhfourk", "nhf", "fourk"],
                        vanilla_roles, vanilla_races + ["gia", "scu", "syl"])}
 
+    #who is making tea? - bots of the nethack community who have influenced this project.
+    brethren = ["Rodney", "Athame", "Arsinoe", "Izchak", "TheresaMayBot", "the late Pinobot"]
     looping_calls = None
 
     # Nobody will disagree the RNG is evil
@@ -185,11 +188,18 @@ class DeathBotProtocol(irc.IRCClient):
 
         # for !tell
         self.tellbuf = shelve.open("/opt/beholder/tellmsg.db", writeback=True)
+        self.plr_tc = shelve.open("/opt/beholder/plrtc.db", writeback=True)
 
         self.commands = {"ping"     : self.doPing,
                          "time"     : self.doTime,
                          "hello"    : self.doHello,
                          "beer"     : self.doBeer,
+                         "tea"      : self.doTea,
+                         "coffee"   : self.doTea,
+                         "whiskey"  : self.doTea,
+                         "whisky"   : self.doTea,
+                         "vodka"    : self.doTea,
+                         "rum"      : self.doTea,
                          "goat"     : self.doGoat,
                          "rng"      : self.doRng,
                          "role"     : self.doRole,
@@ -197,7 +207,8 @@ class DeathBotProtocol(irc.IRCClient):
                          "variant"  : self.doVariant,
                          "tell"     : self.takeMessage,
                          "lastgame" : self.lastGame,
-                         "lastasc"  : self.lastAsc}
+                         "lastasc"  : self.lastAsc,
+                         "setmintc" : self.setPlrTC}
 
         # seek to end of livelogs
         for filepath in self.livelogs:
@@ -217,6 +228,7 @@ class DeathBotProtocol(irc.IRCClient):
                         pass
                 self.logs_seek[filepath] = handle.tell()
 
+        # poll logs for updates every 3 seconds
         for filepath in self.logs:
             self.looping_calls[filepath] = task.LoopingCall(self.logReport, filepath)
             self.looping_calls[filepath].start(3)
@@ -236,20 +248,32 @@ class DeathBotProtocol(irc.IRCClient):
         if TEST: self.msg("Tangles", "identify " + nn + " " + self.password)
         else: self.msg("NickServ", "identify " + nn + " " + self.password)
 
-
+    #helper functions
+    #lookup canonical variant id from alias
     def varalias(self,alias):
         alias = alias.lower()
         if alias in self.variants.keys(): return alias
         for v in self.variants.keys():
             if alias in self.variants[v][0]: return v
-        return alias # not found, errhandling elsewhere.
+        # return original (lowercase) if not found.
+        # this is used for variant/player agnosticism in !lastgame
+        return alias
+
+    # construct and send response.
+    # replyto is channel, or private nick
+    # sender is original sender of query
+    def respond(self, replyto, sender, message):
+        if (replyto.lower() == sender.lower()): #private
+            self.msg(replyto, message)
+        else: #channel - prepend "Nick: " to message
+            self.msg(replyto, sender + ": " + message)
 
     # implement commands here
     def doPing(self, sender, replyto, msgwords):
-        self.msg(replyto, sender + ": Pong! " + " ".join(msgwords[1:]))
+        self.respond(replyto, sender, "Pong! " + " ".join(msgwords[1:]))
 
     def doTime(self, sender, replyto, msgwords):
-        self.msg(replyto, sender + ": " + time.strftime("%c %Z"))
+        self.respond(replyto, sender, time.strftime("%c %Z"))
 
     def doHello(self, sender, replyto, msgwords = 0):
         self.msg(replyto, "Hello " + sender + ", Welcome to " + CHANNEL)
@@ -265,43 +289,83 @@ class DeathBotProtocol(irc.IRCClient):
     def doRng(self, sender, replyto, msgwords):
         if len(msgwords) == 1:
             if (sender[0:11].lower()) == "grasshopper":
-                self.msg(replyto, sender + ": The RNG only has eyes for you, " + sender)
+                self.respond(replyto, sender, "The RNG only has eyes for you, " + sender)
             else:
-                self.msg(replyto, sender + ": The RNG " + self.evil_rng.choice(["hates you.","is evil.","REALLY hates you.","is thinking of Grasshopper <3"]))
+                self.respond(replyto, sender, "The RNG " + self.evil_rng.choice(["hates you.","is evil.","REALLY hates you.","is thinking of Grasshopper <3"]))
         elif len(msgwords) == 2:
             rngrange = msgwords[1].split('-')
-            self.msg(replyto, sender + ": " + str(self.evil_rng.randrange(int(rngrange[0]), int(rngrange[-1]))))
+            self.respond(replyto, sender, str(self.evil_rng.randrange(int(rngrange[0]), int(rngrange[-1]+1))))
         else:
-            self.msg(replyto, sender + ": " + self.evil_rng.choice(msgwords[1:]))
+            self.respond(replyto, sender, self.evil_rng.choice(msgwords[1:]))
+
+    def rollDice(self, sender, replyto, msgwords):
+        if re.match(r'^\d*d$', msgwords[0]): # !d, !4d is rubbish input.
+            self.respond(replyto, sender, "No dice!")
+            return
+        dice = msgwords[0].split('d')
+        if len(dice) == 1:
+            (d0,d1) = (1,int(dice[0])) #d6 -> 1d6
+        else: (d0,d1) = (int(dice[0]),int(dice[1]))
+        if d0 > 20:
+            self.respond(replyto, sender, "Sorry, I don't have that many dice.")
+            return
+        if d1 > 100:
+            self.respond(replyto, sender, "Those dice are too big!")
+            return
+        (s, tot) = (None, 0)
+        for i in range(0,d0):
+            d = self.evil_rng.randrange(1,d1+1)
+            if s: s += " + " + str(d)
+            else: s = str(d)
+            tot += d
+        s += " = " + str(tot)
+        self.respond(replyto, sender, s)
 
     def doRole(self, sender, replyto, msgwords):
         if len(msgwords) > 1:
            v = self.varalias(msgwords[1])
            #error if variant not found
            if not self.variants.get(v,False):
-               self.msg(replyto, sender + ": No variant " + msgwords[1] + " on server.")
-           self.msg(replyto, sender + ": " + self.rolename[self.evil_rng.choice(self.variants[v][1])])
+               self.respond(replyto, sender, "No variant " + msgwords[1] + " on server.")
+               return
+           self.respond(replyto, sender, self.rolename[self.evil_rng.choice(self.variants[v][1])])
         else:
            #pick variant first
            v = self.evil_rng.choice(self.variants.keys())
-           self.msg(replyto, sender + ": " + self.variants[v][0][0] + " " + self.rolename[self.evil_rng.choice(self.variants[v][1])])
+           self.respond(replyto, sender, self.variants[v][0][0] + " " + self.rolename[self.evil_rng.choice(self.variants[v][1])])
 
     def doRace(self, sender, replyto, msgwords):
         if len(msgwords) > 1:
            v = self.varalias(msgwords[1])
            #error if variant not found
            if not self.variants.get(v,False):
-               self.msg(replyto, sender + ": No variant " + msgwords[1] + " on server.")
-           self.msg(replyto, sender + ": " + self.racename[self.evil_rng.choice(self.variants.get[v][2])])
+               self.respond(replyto, sender, "No variant " + msgwords[1] + " on server.")
+           self.respond(replyto, sender, self.racename[self.evil_rng.choice(self.variants.get[v][2])])
         else:
            v = self.evil_rng.choice(self.variants.keys())
-           self.msg(replyto, sender + ": " + self.variants[v][0][0] + " " + self.racename[self.evil_rng.choice(self.variants[v][2])])
+           self.respond(replyto, sender, self.variants[v][0][0] + " " + self.racename[self.evil_rng.choice(self.variants[v][2])])
 
     def doVariant(self, sender, replyto, msgwords):
-        self.msg(replyto, sender + ": " + self.variants[self.evil_rng.choice(self.variants.keys())][0][0])
+        self.respond(replyto, sender, self.variants[self.evil_rng.choice(self.variants.keys())][0][0])
 
     def doBeer(self, sender, replyto, msgwords):
-        self.msg(replyto, sender + ": It's your shout!")
+        self.respond(replyto, sender, self.evil_rng.choice(["It's your shout!", "I thought you'd never ask!",
+                                                           "Burrrrp!", "We're not here to f#%k spiders, mate!",
+                                                           "One Darwin stubby, coming up!"]))
+    def doTea(self, sender, replyto, msgwords):
+        self.describe(replyto, self.evil_rng.choice(["delivers", "tosses", "passes", "pours", "hands", "throws"]) + " " + sender
+                + " a "  + self.evil_rng.choice(["cup", "mug", "shot glass", "tall glass", "tumbler", "glass", "schooner", "pint"])
+                + " of " + self.evil_rng.choice([msgwords[0], msgwords[0], msgwords[0], # chance to actually get what they ask for
+                                                self.evil_rng.choice(["black", "white", "green", "polka-dot", ""]) + " tea",
+                                                self.evil_rng.choice(["coffee", "espresso", "cafe latte", "blend 43"]), #coffee
+                                                "beer", # ironically not in response to !beer
+                                                "vodka", self.evil_rng.choice(["Irish", "Scotch", "Tennessee", ""]) + " whiskey",
+                                                self.evil_rng.choice(["Bundy", "Jamaican", "White", "Dark", "Spiced"]) + " rum", #for K2
+                                                "blended kale"])  # some weird healthy shit that tastes disgusting
+                + ", "   + self.evil_rng.choice(["brewed", "distilled", "fermented", "decanted"]) #suggestions welcome.
+                + " by " + self.evil_rng.choice(self.brethren) 
+                + " at " + str(self.evil_rng.randrange(0, 500))
+                + " degrees " + self.evil_rng.choice(["fahrenheit", "celsius", "kelvin"]) + ".")
 
     def takeMessage(self, sender, replyto, msgwords):
         rcpt = msgwords[1].split(":")[0] # remove any trailing colon - could check for other things here.
@@ -320,7 +384,7 @@ class DeathBotProtocol(irc.IRCClient):
         # so return quickly if there's nothing to do
         if not self.tellbuf.get(user.lower(),False): return
         for (forwardto,sender,message) in self.tellbuf[user.lower()]:
-            self.msg(forwardto, user + ": Message from " + sender + ": " + message)
+            self.respond(forwardto, user, "Message from " + sender + ": " + message)
         del self.tellbuf[user.lower()]
         self.tellbuf.sync()
 
@@ -334,14 +398,14 @@ class DeathBotProtocol(irc.IRCClient):
                 #dl = self.lg.get(":".join(msgwords[2:0:-1]).lower(),
                 dl = self.lg.get(":".join([pv,vp]).lower(),
                                  "No last game for (" + ",".join(msgwords[1:3]) + ")")
-            self.msg(replyto, sender + ": " + dl)
+            self.respond(replyto, sender, dl)
             return
         if (len(msgwords) == 2): #var OR plr - don't care which
             vp = self.varalias(msgwords[1])
             dl = self.lg.get(vp,"No last game for " + msgwords[1])
-            self.msg(replyto, sender + ": " + dl)
+            self.respond(replyto, sender, dl)
             return
-        self.msg(replyto, sender + ": " + self.lastgame)
+        self.respond(replyto, sender, self.lastgame)
 
     def lastAsc(self, sender, replyto, msgwords):
         if (len(msgwords) >= 3): #var, plr, any order.
@@ -351,14 +415,48 @@ class DeathBotProtocol(irc.IRCClient):
             if (dl == False):
                 dl = self.la.get(":".join(vp,pv).lower(),
                                  "No last ascension for (" + ",".join(msgwords[1:3]) + ")")
-            self.msg(replyto, sender + ": " + dl)
+            self.respond(replyto, sender, dl)
             return
         if (len(msgwords) == 2): #var OR plr - don't care which
             vp = self.varalias(msgwords[1])
             dl = self.la.get(vp,"No last ascension for " + msgwords[1])
-            self.msg(replyto, sender + ": " + dl)
+            self.respond(replyto, sender, dl)
             return
-        self.msg(replyto, sender + ": " + self.lastasc)
+        self.respond(replyto, sender, self.lastasc)
+
+    # Allows players to set minimum turncount of their games to be reported
+    # so they can manage their own deathspam
+    # turncount may not be the best metric for this - open to suggestions
+    # player name must match nick, or can be set by an admin.
+    def setPlrTC(self, sender, replyto, msgwords):
+        if len(msgwords) == 2:
+            if re.match(r'^\d+$',msgwords[1]):
+                self.plr_tc[sender.lower()] = int(msgwords[1])
+                self.respond(replyto, sender, "Min reported turncount for " + sender.lower()
+                                              + " set to " + msgwords[1])
+                return
+        if len(msgwords) == 1:
+            if sender.lower() in self.plr_tc.keys():
+                del self.plr_tc[sender.lower()]
+                self.respond(replyto, sender, "Min reported turncount for " + sender.lower()
+                                              + " removed.")
+                return
+        if sender in self.admin:
+            if len(msgwords) == 3:
+                if re.match(r'^\d+$',msgwords[2]):
+                    self.plr_tc[msgwords[1].lower()] = int(msgwords[2])
+                    self.respond(replyto, sender, "Min reported turncount for " + msgwords[1].lower()
+                                                  + " set to " + msgwords[2])
+                    return
+            if len(msgwords) == 2:
+                if msgwords[1].lower() in self.plr_tc.keys():
+                    del self.plr_tc[msgwords[1].lower()]
+                    self.respond(replyto, sender, "Min reported turncount for " + msgwords[1].lower()
+                                                 + " removed.")
+                else: self.respond(replyto, sender, "No min turncount for " + msgwords[1].lower())
+                return
+        else:
+            self.respond(replyto, sender, "Usage: !" + msgwords[0] + " [turncount]")
 
     # Listen to the chatter
     def privmsg(self, sender, dest, message):
@@ -372,12 +470,15 @@ class DeathBotProtocol(irc.IRCClient):
             self.doHello(sender, replyto)
         # Message checks next.
         self.checkMessages(sender)
-        # ignore other channel noise
+        # ignore other channel noise unless !command
         if (message[0] != '!'):
             if (dest == CHANNEL): return
         else: # pop the '!'
             message = message[1:]
         msgwords = message.split(" ")
+        if re.match(r'^\d*d\d*$', msgwords[0]):
+            self.rollDice(sender, replyto, msgwords)
+            return
         if self.commands.get(msgwords[0].lower(), False):
             self.commands[msgwords[0].lower()](sender, replyto, msgwords)
 
@@ -385,8 +486,15 @@ class DeathBotProtocol(irc.IRCClient):
     def startscummed(self, game):
         return game["death"] in ("quit", "escaped") and game["points"] < 1000
 
+    # players can request that their deaths not be reported if less than x turns
+    def plr_tc_notreached(self, game):
+        return (game["death"] not in ("ascended") #report these anyway!
+           and game["name"].lower() in self.plr_tc.keys()
+           and game["turns"] < self.plr_tc[game["name"].lower()])
+
     def xlogfileReport(self, game, report = True):
         if self.startscummed(game): return
+        if self.plr_tc_notreached(game): return
 
         # Need to figure out the dump path before messing with the name below
         dumpfile = (self.dump_file_prefix + game["dumpfmt"]).format(**game)
