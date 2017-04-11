@@ -12,12 +12,7 @@ notice, this list of conditions and the following disclaimer.
 
 2. Redistributions in binary form must reproduce the above copyright
 notice, this list of conditions and the following disclaimer in the
-documentation and/or other materials provided with the distribution.D
-#TEST = True  # uncomment for testing
-=======
-# TEST = True  # uncomment for testing
->>>>>>> 64a2ab1deda82e608ba0e54a061b85b7d7e353e2
-
+documentation and/or other materials provided with the distribution.
 
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS
 IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -345,7 +340,7 @@ class DeathBotProtocol(irc.IRCClient):
            #error if variant not found
            if not self.variants.get(v,False):
                self.respond(replyto, sender, "No variant " + msgwords[1] + " on server.")
-           self.respond(replyto, sender, self.racename[self.evil_rng.choice(self.variants.get[v][2])])
+           self.respond(replyto, sender, self.racename[self.evil_rng.choice(self.variants[v][2])])
         else:
            v = self.evil_rng.choice(self.variants.keys())
            self.respond(replyto, sender, self.variants[v][0][0] + " " + self.racename[self.evil_rng.choice(self.variants[v][2])])
