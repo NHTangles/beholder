@@ -515,7 +515,6 @@ class DeathBotProtocol(irc.IRCClient):
 
     def xlogfileReport(self, game, report = True):
         if self.startscummed(game): return
-        if self.plr_tc_notreached(game): return
 
         # Need to figure out the dump path before messing with the name below
         dumpfile = (self.dump_file_prefix + game["dumpfmt"]).format(**game)
@@ -548,6 +547,7 @@ class DeathBotProtocol(irc.IRCClient):
             game["ascsuff"] = ""
 
         if (not report): return
+        if self.plr_tc_notreached(game): return
 
         if game.get("charname", False):
             if game.get("name", False):
