@@ -364,13 +364,16 @@ class DeathBotProtocol(irc.IRCClient):
                                                            "One Darwin stubby, coming up!"]))
     def doTea(self, sender, replyto, msgwords):
         self.describe(replyto, random.choice(["delivers", "tosses", "passes", "pours", "hands", "throws"]) + " " + sender
-                + " a "  + random.choice(["cup", "mug", "shot glass", "tall glass", "tumbler", "glass", "schooner", "pint"])
+                + " a "  + random.choice(["cup", "mug", "shot glass", "tall glass", "tumbler", "glass", "schooner", "pint", "fifth"])
                 + " of " + random.choice([msgwords[0], msgwords[0], msgwords[0], # chance to actually get what they ask for
-                                                random.choice(["black", "white", "green", "polka-dot", ""]) + " tea",
+                                                random.choice(["black", "white", "green", "polka-dot", "earl grey", ""]) + " tea",
                                                 random.choice(["coffee", "espresso", "cafe latte", "blend 43"]), #coffee
                                                 "beer", # ironically not in response to !beer
-                                                "vodka", random.choice(["Irish", "Scotch", "Tennessee", ""]) + " whiskey",
+                                                random.choice(["Stolichnaya", "Absolut", "Grey Goose", "Ketel One", "Belvedere", "Luksusowa", "SKYY", "Finlandia", "Smirnoff"]) + " vodka", #K2 add
+                                                random.choice(["Irish", "Jack Daniels", "Evan Williams", "Crown Royal", "Crown Royal Reserve", "Jonnie Walker Black", "Jonnie Walker Red", "Jonnie Walker Blue"]) + " whiskey", #K2 add
                                                 random.choice(["Bundy", "Jamaican", "White", "Dark", "Spiced"]) + " rum", #for K2
+                                                random.choice(["blanco", "oro", "reposado", "añejo", "extra añejo", "Patron Silver", "Jose Cuervo 1800"]) + " tequila", #K2 add
+                                                random.choice(["single malt", "single grain", "blended malt", "blended grain", "blended", "Glenfiddich", "Glenlivet", "Dalwhinnie"]) + " scotch", #K2 add
                                                 "blended kale"])  # some weird healthy shit that tastes disgusting
                 + ", "   + random.choice(["brewed", "distilled", "fermented", "decanted"]) #suggestions welcome.
                 + " by " + random.choice(self.brethren) 
