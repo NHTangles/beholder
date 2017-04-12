@@ -203,6 +203,8 @@ class DeathBotProtocol(irc.IRCClient):
                          "whisky"   : self.doTea,
                          "vodka"    : self.doTea,
                          "rum"      : self.doTea,
+                         "tequila"  : self.doTea,
+                         "scotch"   : self.doTea,
                          "goat"     : self.doGoat,
                          "rng"      : self.doRng,
                          "role"     : self.doRole,
