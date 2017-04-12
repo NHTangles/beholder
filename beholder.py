@@ -366,8 +366,8 @@ class DeathBotProtocol(irc.IRCClient):
                                                            "One Darwin stubby, coming up!"]))
     def doTea(self, sender, replyto, msgwords):
         if len(msgwords) > 1: target = msgwords[1] 
-            else: target = sender
-        self.describe(replyto, random.choice(["delivers", "tosses", "passes", "pours", "hands", "throws"]) + " " + sender
+        else: target = sender
+        self.describe(replyto, random.choice(["delivers", "tosses", "passes", "pours", "hands", "throws"]) + " " + target
                 + " a "  + random.choice(["cup", "mug", "shot glass", "tall glass", "tumbler", "glass", "schooner", "pint", "fifth"])
                 + " of " + random.choice([msgwords[0], msgwords[0], msgwords[0], # chance to actually get what they ask for
                                                 random.choice(["black", "white", "green", "polka-dot", "earl grey", ""]) + " tea",
