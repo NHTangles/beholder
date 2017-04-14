@@ -195,6 +195,7 @@ class DeathBotProtocol(irc.IRCClient):
 
         self.commands = {"ping"     : self.doPing,
                          "time"     : self.doTime,
+                         "pom"      : self.doPom,
                          "hello"    : self.doHello,
                          "beer"     : self.doBeer,
                          "tea"      : self.doTea,
@@ -279,6 +280,22 @@ class DeathBotProtocol(irc.IRCClient):
 
     def doTime(self, sender, replyto, msgwords):
         self.respond(replyto, sender, time.strftime("%c %Z"))
+
+    def doPom(self, sender, replyto, msgwords):
+        # this is a direct translation of the NetHack method of working out pom.
+        # I'm SURE there's easier ways to do this, but they may not give perfectly
+        # consistent results.
+        # only info we have is that this yields 0..7, with 0 = new, 4 = full.
+        # the rest is assumption.
+        mp = ["new", "a waxing crescent", "at first quarter", "a waxing gibbous", 
+              "full", "a waning gibbious", "at last quarter", "a waning crescent"]
+        (year,m,d,H,M,S,diw,diy,ds) = datetime.datetime.now().timetuple()
+        goldn = (year % 19) + 1
+        epact = (11 * goldn + 18) % 30
+        if ((epact == 25 and goldn > 11) or epact == 24):
+            epact += 1
+        #return ((((((diy + epact) * 6) + 11) % 177) / 22) & 7);
+        self.respond(replyto, sender, "The moon is " + mp[((((((diy + epact) * 6) + 11) % 177) // 22) & 7)])
 
     def doHello(self, sender, replyto, msgwords = 0):
         self.msg(replyto, "Hello " + sender + ", Welcome to " + CHANNEL)
