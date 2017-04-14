@@ -287,8 +287,8 @@ class DeathBotProtocol(irc.IRCClient):
         # consistent results.
         # only info we have is that this yields 0..7, with 0 = new, 4 = full.
         # the rest is assumption.
-        mp = ["new", "a waxing crescent", "at first quarter", "a waxing gibbous", 
-              "full", "a waning gibbous", "at last quarter", "a waning crescent"]
+        mp = ["new", "waxing crescent", "at first quarter", "waxing gibbous", 
+              "full", "waning gibbous", "at last quarter", "waning crescent"]
         (year,m,d,H,M,S,diw,diy,ds) = datetime.datetime.now().timetuple()
         goldn = (year % 19) + 1
         epact = (11 * goldn + 18) % 30
