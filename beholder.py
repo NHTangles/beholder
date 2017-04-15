@@ -196,6 +196,7 @@ class DeathBotProtocol(irc.IRCClient):
         self.commands = {"ping"     : self.doPing,
                          "time"     : self.doTime,
                          "pom"      : self.doPom,
+                         "porn"     : self.doPom,    #for Elronnd
                          "hello"    : self.doHello,
                          "beer"     : self.doBeer,
                          "tea"      : self.doTea,
@@ -281,21 +282,47 @@ class DeathBotProtocol(irc.IRCClient):
     def doTime(self, sender, replyto, msgwords):
         self.respond(replyto, sender, time.strftime("%c %Z"))
 
-    def doPom(self, sender, replyto, msgwords):
+    def getPom(self, dt):
         # this is a direct translation of the NetHack method of working out pom.
         # I'm SURE there's easier ways to do this, but they may not give perfectly
-        # consistent results.
-        # only info we have is that this yields 0..7, with 0 = new, 4 = full.
-        # the rest is assumption.
-        mp = ["new", "waxing crescent", "at first quarter", "waxing gibbous", 
-              "full", "waning gibbous", "at last quarter", "waning crescent"]
-        (year,m,d,H,M,S,diw,diy,ds) = datetime.datetime.now().timetuple()
+        # consistent results with nh.
+        (year,m,d,H,M,S,diw,diy,ds) = dt.timetuple()
         goldn = (year % 19) + 1
         epact = (11 * goldn + 18) % 30
         if ((epact == 25 and goldn > 11) or epact == 24):
             epact += 1
-        #return ((((((diy + epact) * 6) + 11) % 177) / 22) & 7);
-        self.respond(replyto, sender, "The moon is " + mp[((((((diy + epact) * 6) + 11) % 177) // 22) & 7)])
+        return ((((((diy + epact) * 6) + 11) % 177) // 22) & 7)
+
+
+    def doPom(self, sender, replyto, msgwords):
+        # only info we have is that this yields 0..7, with 0 = new, 4 = full.
+        # the rest is assumption.
+        mp = ["new", "waxing crescent", "at first quarter", "waxing gibbous", 
+              "full", "waning gibbous", "at last quarter", "waning crescent"]
+        dt = datetime.datetime.now()
+        nowphase = self.getPom(dt)
+        resp = "The moon is " + mp[nowphase]
+        aday = datetime.timedelta(days=1)
+        if nowphase in [0, 4]:
+            daysleft = 1 # counting today
+            dt += aday
+            while self.getPom(dt) == nowphase:
+                daysleft += 1
+                dt += aday
+            days = "days."
+            if daysleft == 1: days = "day."
+            resp += "for " + str(daysleft) + " more " + days
+        else:
+            daysuntil = 1 # again, we are counting today    
+            dt += aday
+            while (self.getPom(dt)) not in [0, 4]: #not strictly NEXTphase
+               daysuntil += 1
+               dt += aday
+            days = " days."
+            if daysuntil == 1: days = " day."
+            resp += "; " + mp[self.getPom(dt)] + " moon in " + str(daysuntil) + days
+
+        self.respond(replyto, sender, resp)
 
     def doHello(self, sender, replyto, msgwords = 0):
         self.msg(replyto, "Hello " + sender + ", Welcome to " + CHANNEL)
