@@ -111,12 +111,14 @@ class DeathBotProtocol(irc.IRCClient):
     xlogfiles = {filepath.FilePath("/opt/nethack/hardfought.org/nh343/var/xlogfile"): ("nh", ":", "nh343/dumplog/{starttime}.nh343.txt"),
                  filepath.FilePath("/opt/nethack/hardfought.org/nhdev/var/xlogfile"): ("nd", "\t", "nhdev/dumplog/{starttime}.nhdev.txt"),
                  filepath.FilePath("/opt/nethack/hardfought.org/gh/var/xlogfile"): ("gh", ":", "gh/dumplog/{starttime}.gh.txt"),
+                 filepath.FilePath("/opt/nethack/hardfought.org/dnethackdir/xlogfile"): ("dnh", ":", "dnethack/dumplog/{starttime}.dnh.txt"),
                  filepath.FilePath("/opt/nethack/hardfought.org/fiqhackdir/data/xlogfile"): ("fh", ":", "fiqhack/dumplog/{dumplog}"),
                  filepath.FilePath("/opt/nethack/hardfought.org/fourkdir/save/xlogfile"): ("4k", "\t", "nhfourk/dumps/{dumplog}"),
                  filepath.FilePath("/opt/nethack/hardfought.org/un531/var/unnethack/xlogfile"): ("un", ":", "un531/dumplog/{starttime}.un531.txt.html")}
     livelogs  = {filepath.FilePath("/opt/nethack/hardfought.org/nh343/var/livelog"): ("nh", ":"),
                  filepath.FilePath("/opt/nethack/hardfought.org/nhdev/var/livelog"): ("nd", "\t"),
                  filepath.FilePath("/opt/nethack/hardfought.org/gh/var/livelog"): ("gh", ":"),
+                 filepath.FilePath("/opt/nethack/hardfought.org/dnethackdir/livelog"): ("dnh", ":"),
                  filepath.FilePath("/opt/nethack/hardfought.org/fourkdir/save/livelog"): ("4k", "\t"),
                  filepath.FilePath("/opt/nethack/hardfought.org/un531/var/unnethack/livelog"): ("un", ":")}
 
@@ -125,11 +127,16 @@ class DeathBotProtocol(irc.IRCClient):
                 "hea": "healer",       "kni": "knight",    "mon": "monk",
                 "pri": "priest",       "ran": "ranger",    "rog": "rogue",
                 "sam": "samurai",      "tou": "tourist",   "val": "valkyrie",
-                "wiz": "wizard",
+                "wiz": "wizard", #all
+                "ana": "anachronaut",  "bin": "binder",    "nob": "Noble",
+                "pir": "pirate",       "brd": "troubadour", #dnh
                 "con": "convict"} #unnethack
     racename = {"dwa": "dwarf", "elf": "elf", "gno": "gnome", "hum": "human",
-                "orc": "orc",
+                "orc": "orc", #all
                 "gia": "giant", "kob": "kobold", "ogr": "ogre", #grunt
+                "clk": "clockwork automaton",    "bat": "chiropteran",
+                "dro": "drow", "hlf": "half-dragon", "inc": "incantifier",
+                "vam": "vampire", "swn": "yuki-onna", #dnh
                 "scu": "scurrier", "syl": "sylph"} #fourk
 
     # save typing these out in multiple places
@@ -147,6 +154,11 @@ class DeathBotProtocol(irc.IRCClient):
                        vanilla_roles, vanilla_races),
                 "gh": (["grunt", "grunthack"],
                        vanilla_roles, vanilla_races + ["gia", "kob", "ogr"]),
+               "dnh": (["dnethack", "dn"], 
+                       vanilla_roles
+                         + ["ana", "bin", "nob", "pir", "brd", "con"],
+                       vanilla_races
+                         + ["clk", "bat", "dro", "hlf", "inc", "vam", "swn"]),
                 "un": (["unnethack", "unh"],
                        vanilla_roles + ["con"], vanilla_races),
                 "fh": (["fiqhack"], # not "fiq" see comment above
@@ -155,7 +167,7 @@ class DeathBotProtocol(irc.IRCClient):
                        vanilla_roles, vanilla_races + ["gia", "scu", "syl"])}
 
     #who is making tea? - bots of the nethack community who have influenced this project.
-    brethren = ["Rodney", "Athame", "Arsinoe", "Izchak", "TheresaMayBot", "the late Pinobot", "Announcy", "the /dev/null/Oracle"]
+    brethren = ["Rodney", "Athame", "Arsinoe", "Izchak", "TheresaMayBot", "the late Pinobot", "Announcy", "the /dev/null/oracle"]
     looping_calls = None
 
 
@@ -191,6 +203,7 @@ class DeathBotProtocol(irc.IRCClient):
 
         # for !tell
         self.tellbuf = shelve.open("/opt/beholder/tellmsg.db", writeback=True)
+        # for !setmintc
         self.plr_tc = shelve.open("/opt/beholder/plrtc.db", writeback=True)
 
         self.commands = {"ping"     : self.doPing,
