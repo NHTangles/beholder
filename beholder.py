@@ -41,7 +41,7 @@ import shelve   # for perstistent !tell messages
 import random   # for !rng and friends
 
 TEST= False
-TEST = True  # uncomment for testing
+#TEST = True  # uncomment for testing
 
 # fn
 HOST, PORT = "chat.us.freenode.net", 6697
@@ -420,25 +420,37 @@ class DeathBotProtocol(irc.IRCClient):
         self.respond(replyto, sender, random.choice(["It's your shout!", "I thought you'd never ask!",
                                                            "Burrrrp!", "We're not here to f#%k spiders, mate!",
                                                            "One Darwin stubby, coming up!"]))
+    bev = { "serves": ["delivers", "tosses", "passes", "pours", "hands", "throws"],
+            "vessel": ["cup", "mug", "shot glass", "tall glass", "tumbler", "glass", "schooner", "pint", "fifth"],
+            "drink" : {"tea"   : ["black", "white", "green", "polka-dot", "earl grey", "darjeeling"],
+                       "coffee": ["coffee", "espresso", "cafe latte", "blend 43"],
+                       "vodka" : ["Stolichnaya", "Absolut", "Grey Goose", "Ketel One", "Belvedere", "Luksusowa", "SKYY", "Finlandia", "Smirnoff"],
+                       "whiskey":["Irish", "Jack Daniels", "Evan Williams", "Crown Royal", "Crown Royal Reserve", "Jonnie Walker Black", "Jonnie Walker Red", "Jonnie Walker Blue"],
+                       "rum"   : ["Bundy", "Jamaican", "White", "Dark", "Spiced"],
+                       "tequila":["blanco", "oro", "reposado", "añejo", "extra añejo", "Patron Silver", "Jose Cuervo 1800"],
+                       "scotch": ["single malt", "single grain", "blended malt", "blended grain", "blended", "Glenfiddich", "Glenlivet", "Dalwhinnie"],
+                       "junk"  : ["blended kale", "pickle juice", "poorly-distilled rocket fuel"]},
+            "prepared":["brewed", "distilled", "fermented", "decanted"],
+            "degrees" :{"kelvin": [0, 500], "celcius": [-200,300], "fahrenheit": [-300,500]}, #sane-ish ranges
+            "suppress": ["coffee", "junk"] } # do not append these to the random description
+
+
     def doTea(self, sender, replyto, msgwords):
         if len(msgwords) > 1: target = msgwords[1] 
         else: target = sender
-        self.describe(replyto, random.choice(["delivers", "tosses", "passes", "pours", "hands", "throws"]) + " " + target
-                + " a "  + random.choice(["cup", "mug", "shot glass", "tall glass", "tumbler", "glass", "schooner", "pint", "fifth"])
-                + " of " + random.choice([msgwords[0], msgwords[0], msgwords[0], # chance to actually get what they ask for
-                                                random.choice(["black", "white", "green", "polka-dot", "earl grey", ""]) + " tea",
-                                                random.choice(["coffee", "espresso", "cafe latte", "blend 43"]), #coffee
-                                                "beer", # ironically not in response to !beer
-                                                random.choice(["Stolichnaya", "Absolut", "Grey Goose", "Ketel One", "Belvedere", "Luksusowa", "SKYY", "Finlandia", "Smirnoff"]) + " vodka", #K2 add
-                                                random.choice(["Irish", "Jack Daniels", "Evan Williams", "Crown Royal", "Crown Royal Reserve", "Jonnie Walker Black", "Jonnie Walker Red", "Jonnie Walker Blue"]) + " whiskey", #K2 add
-                                                random.choice(["Bundy", "Jamaican", "White", "Dark", "Spiced"]) + " rum", #for K2
-                                                random.choice(["blanco", "oro", "reposado", "añejo", "extra añejo", "Patron Silver", "Jose Cuervo 1800"]) + " tequila", #K2 add
-                                                random.choice(["single malt", "single grain", "blended malt", "blended grain", "blended", "Glenfiddich", "Glenlivet", "Dalwhinnie"]) + " scotch", #K2 add
-                                                "blended kale"])  # some weird healthy shit that tastes disgusting
-                + ", "   + random.choice(["brewed", "distilled", "fermented", "decanted"]) #suggestions welcome.
+        drink = random.choice([msgwords[0]] * 10 + self.bev["drink"].keys())
+        fulldrink = random.choice(self.bev["drink"][drink])
+        if drink not in self.bev["suppress"]: fulldrink += " " + drink
+        tempunit = random.choice(self.bev["degrees"].keys())
+        [tmin,tmax] = self.bev["degrees"][tempunit]
+        temp = random.randrange(tmin,tmax)
+        self.describe(replyto, random.choice(self.bev["serves"]) + " " + target
+                + " a "  + random.choice(self.bev["vessel"])
+                + " of " + fulldrink
+                + ", "   + random.choice(self.bev["prepared"])
                 + " by " + random.choice(self.brethren) 
-                + " at " + str(random.randrange(0, 500))
-                + " degrees " + random.choice(["fahrenheit", "celsius", "kelvin"]) + ".")
+                + " at " + str(temp)
+                + " degrees " + tempunit + ".")
 
     def takeMessage(self, sender, replyto, msgwords):
         rcpt = msgwords[1].split(":")[0] # remove any trailing colon - could check for other things here.
