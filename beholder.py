@@ -41,7 +41,7 @@ import shelve   # for perstistent !tell messages
 import random   # for !rng and friends
 
 TEST= False
-#TEST = True  # uncomment for testing
+TEST = True  # uncomment for testing
 
 # fn
 HOST, PORT = "chat.us.freenode.net", 6697
@@ -169,7 +169,6 @@ class DeathBotProtocol(irc.IRCClient):
     #who is making tea? - bots of the nethack community who have influenced this project.
     brethren = ["Rodney", "Athame", "Arsinoe", "Izchak", "TheresaMayBot", "the late Pinobot", "Announcy", "the /dev/null/oracle"]
     looping_calls = None
-
 
 
     def signedOn(self):
@@ -328,7 +327,7 @@ class DeathBotProtocol(irc.IRCClient):
         else:
             daysuntil = 1 # again, we are counting today    
             dt += aday
-            while (self.getPom(dt)) not in [0, 4]: #not strictly NEXTphase
+            while (self.getPom(dt)) not in [0, 4]:
                daysuntil += 1
                dt += aday
             days = " days."
@@ -449,16 +448,21 @@ class DeathBotProtocol(irc.IRCClient):
             forwardto = replyto # so pass to channel
         if not self.tellbuf.get(rcpt.lower(),False):
             self.tellbuf[rcpt.lower()] = []
-        self.tellbuf[rcpt.lower()].append((forwardto,sender," ".join(msgwords[2:])))
+        self.tellbuf[rcpt.lower()].append((forwardto,sender,time.time()," ".join(msgwords[2:])))
         self.tellbuf.sync()
         self.msg(replyto,"Will do, " + sender + "!")
+
+    def msgTime(self, stamp):
+        # Timezone handling is not great, but the following seems to work.
+        # assuming TZ has not changed between leaving & taking the message.
+        return datetime.datetime.fromtimestamp(stamp).strftime("%c") + time.strftime(" %Z")
 
     def checkMessages(self, user):
         # this runs every time someone speaks on the channel,
         # so return quickly if there's nothing to do
         if not self.tellbuf.get(user.lower(),False): return
-        for (forwardto,sender,message) in self.tellbuf[user.lower()]:
-            self.respond(forwardto, user, "Message from " + sender + ": " + message)
+        for (forwardto,sender,ts,message) in self.tellbuf[user.lower()]:
+            self.respond(forwardto, user, "Message from " + sender + " at " + self.msgTime(ts) + ": " + message)
         del self.tellbuf[user.lower()]
         self.tellbuf.sync()
 
