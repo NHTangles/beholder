@@ -31,7 +31,7 @@ from twisted.internet import reactor, protocol, ssl, task
 from twisted.words.protocols import irc
 from twisted.python import filepath
 from twisted.application import internet, service
-import datetime # for timestamp stuff - Not used?
+import datetime # for timestamp stuff
 import time     # for !time
 import ast      # for conduct/achievement bitfields - not really used
 import os       # for check path exists (dumplogs)
@@ -225,6 +225,7 @@ class DeathBotProtocol(irc.IRCClient):
                          "race"     : self.doRace,
                          "variant"  : self.doVariant,
                          "tell"     : self.takeMessage,
+                         "source"   : self.doSource,
                          "lastgame" : self.lastGame,
                          "lastasc"  : self.lastAsc,
                          "setmintc" : self.setPlrTC}
@@ -293,6 +294,9 @@ class DeathBotProtocol(irc.IRCClient):
 
     def doTime(self, sender, replyto, msgwords):
         self.respond(replyto, sender, time.strftime("%c %Z"))
+
+    def doSource(self, sender, replyto, msgwords):
+        self.respond(replyto, sender, "https://github.com/NHTangles/beholder" )
 
     def getPom(self, dt):
         # this is a direct translation of the NetHack method of working out pom.
@@ -422,23 +426,23 @@ class DeathBotProtocol(irc.IRCClient):
                                                            "One Darwin stubby, coming up!"]))
     bev = { "serves": ["delivers", "tosses", "passes", "pours", "hands", "throws"],
             "vessel": ["cup", "mug", "shot glass", "tall glass", "tumbler", "glass", "schooner", "pint", "fifth"],
-            "drink" : {"tea"   : ["black", "white", "green", "polka-dot", "earl grey", "darjeeling"],
-                       "coffee": ["coffee", "espresso", "cafe latte", "blend 43"],
+            "drink" : {"tea"   : ["black", "white", "green", "polka-dot", "Earl Grey", "darjeeling"],
+                       "coffee": ["coffee", "espresso", "cafe latte", "Blend 43"],
                        "vodka" : ["Stolichnaya", "Absolut", "Grey Goose", "Ketel One", "Belvedere", "Luksusowa", "SKYY", "Finlandia", "Smirnoff"],
                        "whiskey":["Irish", "Jack Daniels", "Evan Williams", "Crown Royal", "Crown Royal Reserve", "Jonnie Walker Black", "Jonnie Walker Red", "Jonnie Walker Blue"],
-                       "rum"   : ["Bundy", "Jamaican", "White", "Dark", "Spiced"],
+                       "rum"   : ["Bundy", "Jamaican", "white", "dark", "spiced"],
                        "tequila":["blanco", "oro", "reposado", "añejo", "extra añejo", "Patron Silver", "Jose Cuervo 1800"],
                        "scotch": ["single malt", "single grain", "blended malt", "blended grain", "blended", "Glenfiddich", "Glenlivet", "Dalwhinnie"],
                        "junk"  : ["blended kale", "pickle juice", "poorly-distilled rocket fuel"]},
             "prepared":["brewed", "distilled", "fermented", "decanted"],
-            "degrees" :{"kelvin": [0, 500], "celcius": [-200,300], "fahrenheit": [-300,500]}, #sane-ish ranges
+            "degrees" :{"Kelvin": [0, 500], "degrees Celcius": [-200,300], "degrees Fahrenheit": [-300,500]}, #sane-ish ranges
             "suppress": ["coffee", "junk"] } # do not append these to the random description
 
 
     def doTea(self, sender, replyto, msgwords):
         if len(msgwords) > 1: target = msgwords[1] 
         else: target = sender
-        drink = random.choice([msgwords[0]] * 10 + self.bev["drink"].keys())
+        drink = random.choice([msgwords[0]] * 20 + self.bev["drink"].keys())
         fulldrink = random.choice(self.bev["drink"][drink])
         if drink not in self.bev["suppress"]: fulldrink += " " + drink
         tempunit = random.choice(self.bev["degrees"].keys())
@@ -450,7 +454,7 @@ class DeathBotProtocol(irc.IRCClient):
                 + ", "   + random.choice(self.bev["prepared"])
                 + " by " + random.choice(self.brethren) 
                 + " at " + str(temp)
-                + " degrees " + tempunit + ".")
+                + " " + tempunit + ".")
 
     def takeMessage(self, sender, replyto, msgwords):
         rcpt = msgwords[1].split(":")[0] # remove any trailing colon - could check for other things here.
@@ -467,7 +471,7 @@ class DeathBotProtocol(irc.IRCClient):
     def msgTime(self, stamp):
         # Timezone handling is not great, but the following seems to work.
         # assuming TZ has not changed between leaving & taking the message.
-        return datetime.datetime.fromtimestamp(stamp).strftime("%c") + time.strftime(" %Z")
+        return datetime.datetime.fromtimestamp(stamp).strftime("%Y-%m-%d %H:%M") + time.strftime(" %Z")
 
     def checkMessages(self, user):
         # this runs every time someone speaks on the channel,
