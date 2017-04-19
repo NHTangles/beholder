@@ -101,9 +101,9 @@ class DeathBotProtocol(irc.IRCClient):
         pass
     if TEST: password = "NotTHEPassword"
 
-    sourceURL = "https://ascension.run/deathbot.py"
-    versionName = "deathbot.py"
-    versionNum = "0.2"
+    sourceURL = "https://github.com/NHTangles/beholder"
+    versionName = "beholder.py"
+    versionNum = "0.1"
 
     dump_url_prefix = "https://hardfought.org/userdata/{name[0]}/{name}/"
     dump_file_prefix = "/opt/nethack/hardfought.org/dgldir/userdata/{name[0]}/{name}/"
@@ -296,7 +296,7 @@ class DeathBotProtocol(irc.IRCClient):
         self.respond(replyto, sender, time.strftime("%c %Z"))
 
     def doSource(self, sender, replyto, msgwords):
-        self.respond(replyto, sender, "https://github.com/NHTangles/beholder" )
+        self.respond(replyto, sender, self.sourceURL )
 
     def getPom(self, dt):
         # this is a direct translation of the NetHack method of working out pom.
