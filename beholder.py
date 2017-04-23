@@ -327,7 +327,7 @@ class DeathBotProtocol(irc.IRCClient):
                 dt += aday
             days = "days."
             if daysleft == 1: days = "day."
-            resp += "for " + str(daysleft) + " more " + days
+            resp += " for " + str(daysleft) + " more " + days
         else:
             daysuntil = 1 # again, we are counting today    
             dt += aday
