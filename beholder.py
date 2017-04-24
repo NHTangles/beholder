@@ -302,13 +302,14 @@ class DeathBotProtocol(irc.IRCClient):
         # this is a direct translation of the NetHack method of working out pom.
         # I'm SURE there's easier ways to do this, but they may not give perfectly
         # consistent results with nh.
+        # Note that timetuple gives diy 1..366, C/Perl libs give 0..365,
+        # so need to adjust in final calculation.
         (year,m,d,H,M,S,diw,diy,ds) = dt.timetuple()
         goldn = (year % 19) + 1
         epact = (11 * goldn + 18) % 30
         if ((epact == 25 and goldn > 11) or epact == 24):
             epact += 1
-        return ((((((diy + epact) * 6) + 11) % 177) // 22) & 7)
-
+        return ((((((diy-1 + epact) * 6) + 11) % 177) // 22) & 7)
 
     def doPom(self, sender, replyto, msgwords):
         # only info we have is that this yields 0..7, with 0 = new, 4 = full.
