@@ -105,7 +105,7 @@ class DeathBotProtocol(irc.IRCClient):
     versionName = "beholder.py"
     versionNum = "0.1"
 
-    dump_url_prefix = "https://hardfought.org/userdata/{name[0]}/{name}/"
+    dump_url_prefix = "https://www.hardfought.org/userdata/{name[0]}/{name}/"
     dump_file_prefix = "/opt/nethack/hardfought.org/dgldir/userdata/{name[0]}/{name}/"
 
     xlogfiles = {filepath.FilePath("/opt/nethack/hardfought.org/nh343/var/xlogfile"): ("nh", ":", "nh343/dumplog/{starttime}.nh343.txt"),
