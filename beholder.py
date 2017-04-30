@@ -113,6 +113,7 @@ class DeathBotProtocol(irc.IRCClient):
                  filepath.FilePath("/opt/nethack/hardfought.org/gh/var/xlogfile"): ("gh", ":", "gh/dumplog/{starttime}.gh.txt"),
                  filepath.FilePath("/opt/nethack/hardfought.org/dnethackdir/xlogfile"): ("dnh", ":", "dnethack/dumplog/{starttime}.dnh.txt"),
                  filepath.FilePath("/opt/nethack/hardfought.org/fiqhackdir/data/xlogfile"): ("fh", ":", "fiqhack/dumplog/{dumplog}"),
+                 filepath.FilePath("/opt/nethack/hardfought.org/nh4dir/save/xlogfile"): ("nh4", ":", "nethack4/dumplog/{dumplog}"),
                  filepath.FilePath("/opt/nethack/hardfought.org/fourkdir/save/xlogfile"): ("4k", "\t", "nhfourk/dumps/{dumplog}"),
                  filepath.FilePath("/opt/nethack/hardfought.org/un531/var/unnethack/xlogfile"): ("un", ":", "un531/dumplog/{starttime}.un531.txt.html")}
     livelogs  = {filepath.FilePath("/opt/nethack/hardfought.org/nh343/var/livelog"): ("nh", ":"),
@@ -151,6 +152,8 @@ class DeathBotProtocol(irc.IRCClient):
     variants = {"nh": (["nh343", "nethack", "343"],
                        vanilla_roles, vanilla_races),
                 "nd": (["nhdev", "nh361", "361dev", "361", "dev"],
+                       vanilla_roles, vanilla_races),
+                "nh4": (["nethack4", "n4"],
                        vanilla_roles, vanilla_races),
                 "gh": (["grunt", "grunthack"],
                        vanilla_roles, vanilla_races + ["gia", "kob", "ogr"]),
