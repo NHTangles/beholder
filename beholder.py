@@ -236,6 +236,7 @@ class DeathBotProtocol(irc.IRCClient):
                          "lastasc"  : self.lastAsc,
                          "scores"   : self.doScoreboard,
                          "sb"       : self.doScoreboard,
+                         "commands" : self.doCommands,
                          "setmintc" : self.setPlrTC}
 
         # seek to end of livelogs
@@ -308,6 +309,9 @@ class DeathBotProtocol(irc.IRCClient):
         
     def doScoreboard(self, sender, replyto, msgwords):
         self.respond(replyto, sender, self.scoresURL )
+        
+    def doCommands(self, sender, replyto, msgwords):
+        self.respond(replyto, sender, "Commands are !ping, !time, !pom, !hello, !beer, !tea, !coffee, !whiskey, !vodka, !rum, !tequila, !scotch, !goat, !lotg, !rng, !role, !race, !variant, !tell, !source, !lastgame, !lastasc, !scores, !sb, !setmintc, and !commands")
 
     def getPom(self, dt):
         # this is a direct translation of the NetHack method of working out pom.
