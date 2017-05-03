@@ -107,6 +107,8 @@ class DeathBotProtocol(irc.IRCClient):
 
     dump_url_prefix = "https://www.hardfought.org/userdata/{name[0]}/{name}/"
     dump_file_prefix = "/opt/nethack/hardfought.org/dgldir/userdata/{name[0]}/{name}/"
+    
+    scoresURL = "https://www.hardfought.org/nethack/scoreboard"
 
     xlogfiles = {filepath.FilePath("/opt/nethack/hardfought.org/nh343/var/xlogfile"): ("nh", ":", "nh343/dumplog/{starttime}.nh343.txt"),
                  filepath.FilePath("/opt/nethack/hardfought.org/nhdev/var/xlogfile"): ("nd", "\t", "nhdev/dumplog/{starttime}.nhdev.txt"),
@@ -232,6 +234,8 @@ class DeathBotProtocol(irc.IRCClient):
                          "source"   : self.doSource,
                          "lastgame" : self.lastGame,
                          "lastasc"  : self.lastAsc,
+                         "scores"   : self.doScoreboard,
+                         "sb"       : self.doScoreboard,
                          "setmintc" : self.setPlrTC}
 
         # seek to end of livelogs
@@ -301,6 +305,9 @@ class DeathBotProtocol(irc.IRCClient):
 
     def doSource(self, sender, replyto, msgwords):
         self.respond(replyto, sender, self.sourceURL )
+        
+    def doScoreboard(self, sender, replyto, msgwords):
+        self.respond(replyto, sender, self.scoresURL )
 
     def getPom(self, dt):
         # this is a direct translation of the NetHack method of working out pom.
