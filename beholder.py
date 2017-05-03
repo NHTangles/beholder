@@ -311,7 +311,7 @@ class DeathBotProtocol(irc.IRCClient):
         self.respond(replyto, sender, self.scoresURL )
         
     def doCommands(self, sender, replyto, msgwords):
-        self.respond(replyto, sender, "Commands are !ping, !time, !pom, !hello, !beer, !tea, !coffee, !whiskey, !vodka, !rum, !tequila, !scotch, !goat, !lotg, !rng, !role, !race, !variant, !tell, !source, !lastgame, !lastasc, !scores, !sb, !setmintc, and !commands")
+        self.respond(replyto, sender, "available commands are !ping !time !pom !hello !beer !tea !coffee !whiskey !vodka !rum !tequila !scotch !goat !lotg !rng !role !race !variant !tell !source !lastgame !lastasc !scores !sb !setmintc !commands")
 
     def getPom(self, dt):
         # this is a direct translation of the NetHack method of working out pom.
