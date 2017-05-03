@@ -223,6 +223,7 @@ class DeathBotProtocol(irc.IRCClient):
                          "tequila"  : self.doTea,
                          "scotch"   : self.doTea,
                          "goat"     : self.doGoat,
+                         "lotg"     : self.doLotg,
                          "rng"      : self.doRng,
                          "role"     : self.doRole,
                          "race"     : self.doRace,
@@ -347,6 +348,11 @@ class DeathBotProtocol(irc.IRCClient):
     def doHello(self, sender, replyto, msgwords = 0):
         self.msg(replyto, "Hello " + sender + ", Welcome to " + CHANNEL)
 
+    def doLotg(self, sender, replyto, msgwords):
+        if len(msgwords) > 1: target = msgwords[1] 
+        else: target = sender
+        self.msg(replyto, "May the Luck of the Grasshopper be with you always, " + target + "!")
+
     def doGoat(self, sender, replyto, msgwords):
         act = random.choice(['kicks', 'rams', 'headbutts'])
         part = random.choice(['arse', 'nose', 'face', 'kneecap'])
@@ -358,7 +364,7 @@ class DeathBotProtocol(irc.IRCClient):
     def doRng(self, sender, replyto, msgwords):
         if len(msgwords) == 1:
             if (sender[0:11].lower()) == "grasshopper":
-                self.respond(replyto, sender, "The RNG only has eyes for you, " + sender)
+                self.msg(replyto, "The RNG only has eyes for you, " + sender)
             elif not random.randrange(5):
                 self.respond(replyto, sender, "How doth the RNG hate thee? Let me count the ways...")
             else:
