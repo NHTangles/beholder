@@ -73,7 +73,7 @@ xlogfile_parse.update(dict.fromkeys(
 #xlogfile_parse["endtime"] = fromtimestamp_int
 #xlogfile_parse["realtime"] = timedelta_int
 #xlogfile_parse["deathdate"] = xlogfile_parse["birthdate"] = isodate
-xlogfile_parse["dumplog"] = fixdump
+#xlogfile_parse["dumplog"] = fixdump
 
 def parse_xlogfile_line(line, delim):
     record = {}
@@ -117,6 +117,7 @@ class DeathBotProtocol(irc.IRCClient):
                  filepath.FilePath("/opt/nethack/hardfought.org/gh/var/xlogfile"): ("gh", ":", "gh/dumplog/{starttime}.gh.txt"),
                  filepath.FilePath("/opt/nethack/hardfought.org/dnethackdir/xlogfile"): ("dnh", ":", "dnethack/dumplog/{starttime}.dnh.txt"),
                  filepath.FilePath("/opt/nethack/hardfought.org/fiqhackdir/data/xlogfile"): ("fh", ":", "fiqhack/dumplog/{dumplog}"),
+                 filepath.FilePath("/opt/nethack/hardfought.org/dynahack/dynahack-data/var/xlogfile"): ("dyn", ":", "dynahack/dumps/{dumplog}"),
                  filepath.FilePath("/opt/nethack/hardfought.org/nh4dir/save/xlogfile"): ("nh4", ":", "nethack4/dumplog/{dumplog}"),
                  filepath.FilePath("/opt/nethack/hardfought.org/fourkdir/save/xlogfile"): ("4k", "\t", "nhfourk/dumps/{dumplog}"),
                  filepath.FilePath("/opt/nethack/hardfought.org/un531/var/unnethack/xlogfile"): ("un", ":", "un531/dumplog/{starttime}.un531.txt.html")}
@@ -255,6 +256,8 @@ class DeathBotProtocol(irc.IRCClient):
                     delim = self.logs[filepath][2]
                     game = parse_xlogfile_line(line, delim)
                     game["variant"] = self.logs[filepath][1]
+                    if game["variant"] == "fh":
+                        game["dumplog"] = fixdump(game["dumplog"])
                     game["dumpfmt"] = self.logs[filepath][3]
                     for line in self.logs[filepath][0](game,False):
                         pass
@@ -623,7 +626,7 @@ class DeathBotProtocol(irc.IRCClient):
         # Need to figure out the dump path before messing with the name below
         dumpfile = (self.dump_file_prefix + game["dumpfmt"]).format(**game)
         dumpurl = "(sorry, no dump exists for {variant}:{name})".format(**game)
-        if os.path.exists(dumpfile) or TEST: # dump files may not exist on test system
+        if TEST or os.path.exists(dumpfile): # dump files may not exist on test system
             # quote only the game-specific part, not the prefix.
             # Otherwise it qutes the : in https://
             # assume the rest of the url prefix is safe.
