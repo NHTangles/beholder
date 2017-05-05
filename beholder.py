@@ -230,6 +230,7 @@ class DeathBotProtocol(irc.IRCClient):
                          "tequila"  : self.doTea,
                          "scotch"   : self.doTea,
                          "booze"    : self.doTea,
+                         "potion"   : self.doTea,
                          "goat"     : self.doGoat,
                          "lotg"     : self.doLotg,
                          "rng"      : self.doRng,
@@ -323,7 +324,7 @@ class DeathBotProtocol(irc.IRCClient):
         self.respond(replyto, sender, self.helpURL )
         
     def doCommands(self, sender, replyto, msgwords):
-        self.respond(replyto, sender, "available commands are !help !ping !time !pom !hello !booze !beer !tea !coffee !whiskey !vodka !rum !tequila !scotch !goat !lotg !d(1-1000) !(1-50)d(1-1000) !rng !role !race !variant !tell !source !lastgame !lastasc !scores !sb !setmintc !commands")
+        self.respond(replyto, sender, "available commands are !help !ping !time !pom !hello !booze !beer !potion !tea !coffee !whiskey !vodka !rum !tequila !scotch !goat !lotg !d(1-1000) !(1-50)d(1-1000) !rng !role !race !variant !tell !source !lastgame !lastasc !scores !sb !setmintc !commands")
 
     def getPom(self, dt):
         # this is a direct translation of the NetHack method of working out pom.
@@ -460,6 +461,7 @@ class DeathBotProtocol(irc.IRCClient):
     bev = { "serves": ["delivers", "tosses", "passes", "pours", "hands", "throws"],
             "vessel": ["cup", "mug", "shot glass", "tall glass", "tumbler", "glass", "schooner", "pint", "fifth"],
             "drink" : {"tea"   : ["black", "white", "green", "polka-dot", "Earl Grey", "oolong", "darjeeling"],
+                       "potion": ["water", "fruit juice", "see invisible", "sickness", "confusion", "extra healing", "hallucination", "healing", "holy water", "unholy water", "restore ability", "sleeping", "blindness", "gain energy", "invisibility", "monster detection", "object detection", "booze", "enlightenment", "full healing", "levitation", "polymorph", "speed", "acid", "oil", "gain ability", "gain level", "paralysis"], 
                        "booze" : ["booze", "the hooch", "moonshine", "the sauce", "grog", "suds", "the hard stuff", "liquid courage", "grappa"],
                        "coffee": ["coffee", "espresso", "cafe latte", "Blend 43"],
                        "vodka" : ["Stolichnaya", "Absolut", "Grey Goose", "Ketel One", "Belvedere", "Luksusowa", "SKYY", "Finlandia", "Smirnoff"],
@@ -471,7 +473,7 @@ class DeathBotProtocol(irc.IRCClient):
                        "junk"  : ["blended kale", "pickle juice", "poorly-distilled rocket fuel"]},
             "prepared":["brewed", "distilled", "fermented", "decanted"],
             "degrees" :{"Kelvin": [0, 500], "degrees Celsius": [-20,95], "degrees Fahrenheit": [-20,200]}, #sane-ish ranges
-            "suppress": ["coffee", "junk", "booze", "fictional"] } # do not append these to the random description
+            "suppress": ["coffee", "junk", "booze", "potion", "fictional"] } # do not append these to the random description
 
 
     def doTea(self, sender, replyto, msgwords):
