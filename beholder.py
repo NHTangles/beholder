@@ -469,7 +469,7 @@ class DeathBotProtocol(irc.IRCClient):
                        "scotch": ["single malt", "single grain", "blended malt", "blended grain", "blended", "Glenfiddich", "Glenlivet", "Dalwhinnie"],
                        "junk"  : ["blended kale", "pickle juice", "poorly-distilled rocket fuel"]},
             "prepared":["brewed", "distilled", "fermented", "decanted"],
-            "degrees" :{"Kelvin": [0, 500], "degrees Celcius": [-200,300], "degrees Fahrenheit": [-300,500]}, #sane-ish ranges
+            "degrees" :{"Kelvin": [0, 500], "degrees Celcius": [-20,85], "degrees Fahrenheit": [-20,185]}, #sane-ish ranges
             "suppress": ["coffee", "junk", "booze"] } # do not append these to the random description
 
 
