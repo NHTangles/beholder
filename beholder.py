@@ -458,7 +458,7 @@ class DeathBotProtocol(irc.IRCClient):
                                                            "Burrrrp!", "We're not here to f#%k spiders, mate!",
                                                            "One Darwin stubby, coming up!"]))
     bev = { "serves": ["delivers", "tosses", "passes", "pours", "hands", "throws"],
-            "vessel": ["cup", "mug", "shot glass", "tall glass", "tumbler", "glass", "schooner", "pint", "fifth"],
+            "vessel": ["cup", "mug", "shot glass", "tall glass", "tumbler", "glass", "schooner", "pint", "fifth", "barrel", "droplet"],
             "drink" : {"tea"   : ["black", "white", "green", "polka-dot", "Earl Grey", "darjeeling"],
                        "booze" : ["booze", "the hooch", "moonshine", "the sauce", "suds", "the hard stuff", "liquid courage", "grappa"],
                        "coffee": ["coffee", "espresso", "cafe latte", "Blend 43"],
@@ -467,8 +467,8 @@ class DeathBotProtocol(irc.IRCClient):
                        "rum"   : ["Bundy", "Jamaican", "white", "dark", "spiced"],
                        "tequila":["blanco", "oro", "reposado", "añejo", "extra añejo", "Patron Silver", "Jose Cuervo 1800"],
                        "scotch": ["single malt", "single grain", "blended malt", "blended grain", "blended", "Glenfiddich", "Glenlivet", "Dalwhinnie"],
-                       "junk"  : ["blended kale", "pickle juice", "poorly-distilled rocket fuel"]},
-            "prepared":["brewed", "distilled", "fermented", "decanted"],
+                       "junk"  : ["blended kale", "pickle juice", "poorly-distilled rocket fuel", "caustic gas", "liquid smoke", "protein shake", "wheatgrass nonsense"]},
+            "prepared":["brewed", "distilled", "fermented", "decanted", "prayed over", "replicated", "conjured"],
             "degrees" :{"Kelvin": [0, 500], "degrees Celcius": [-20,85], "degrees Fahrenheit": [-20,185]}, #sane-ish ranges
             "suppress": ["coffee", "junk", "booze"] } # do not append these to the random description
 
