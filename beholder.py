@@ -177,7 +177,7 @@ class DeathBotProtocol(irc.IRCClient):
                        vanilla_roles, vanilla_races + ["gia", "scu", "syl"])}
 
     #who is making tea? - bots of the nethack community who have influenced this project.
-    brethren = ["Rodney", "Athame", "Arsinoe", "Izchak", "TheresaMayBot", "the late Pinobot", "Announcy", "the /dev/null/oracle"]
+    brethren = ["Rodney", "Athame", "Arsinoe", "Izchak", "TheresaMayBot", "the late Pinobot", "Announcy", "demogorgon", "the /dev/null/oracle"]
     looping_calls = None
 
 
@@ -229,6 +229,7 @@ class DeathBotProtocol(irc.IRCClient):
                          "rum"      : self.doTea,
                          "tequila"  : self.doTea,
                          "scotch"   : self.doTea,
+                         "booze"    : self.doTea,
                          "goat"     : self.doGoat,
                          "lotg"     : self.doLotg,
                          "rng"      : self.doRng,
@@ -322,7 +323,7 @@ class DeathBotProtocol(irc.IRCClient):
         self.respond(replyto, sender, self.helpURL )
         
     def doCommands(self, sender, replyto, msgwords):
-        self.respond(replyto, sender, "available commands are !help !ping !time !pom !hello !beer !tea !coffee !whiskey !vodka !rum !tequila !scotch !goat !lotg !rng !role !race !variant !tell !source !lastgame !lastasc !scores !sb !setmintc !commands")
+        self.respond(replyto, sender, "available commands are !help !ping !time !pom !hello !booze !beer !tea !coffee !whiskey !vodka !rum !tequila !scotch !goat !lotg !d(1-1000) !(1-50)d(1-1000) !rng !role !race !variant !tell !source !lastgame !lastasc !scores !sb !setmintc !commands")
 
     def getPom(self, dt):
         # this is a direct translation of the NetHack method of working out pom.
