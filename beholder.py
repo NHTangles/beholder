@@ -169,6 +169,8 @@ class DeathBotProtocol(irc.IRCClient):
                          + ["clk", "bat", "dro", "hlf", "inc", "vam", "swn"]),
                 "un": (["unnethack", "unh"],
                        vanilla_roles + ["con"], vanilla_races),
+                "dyn": (["dynahack", "dyna"],
+                       vanilla_roles + ["con"], vanilla_races + ["vam"]),
                 "fh": (["fiqhack"], # not "fiq" see comment above
                        vanilla_roles, vanilla_races),
                 "4k": (["nhfourk", "nhf", "fourk"],
