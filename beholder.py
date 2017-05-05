@@ -460,7 +460,7 @@ class DeathBotProtocol(irc.IRCClient):
     bev = { "serves": ["delivers", "tosses", "passes", "pours", "hands", "throws"],
             "vessel": ["cup", "mug", "shot glass", "tall glass", "tumbler", "glass", "schooner", "pint", "fifth"],
             "drink" : {"tea"   : ["black", "white", "green", "polka-dot", "Earl Grey", "darjeeling"],
-                       "booze" : ["booze", "hooch", "moonshine", "toddy", "sauce", "suds", "hard stuff", "liquid courage", "grappa"],
+                       "booze" : ["booze", "the hooch", "moonshine", "the sauce", "suds", "the hard stuff", "liquid courage", "grappa"],
                        "coffee": ["coffee", "espresso", "cafe latte", "Blend 43"],
                        "vodka" : ["Stolichnaya", "Absolut", "Grey Goose", "Ketel One", "Belvedere", "Luksusowa", "SKYY", "Finlandia", "Smirnoff"],
                        "whiskey":["Irish", "Jack Daniels", "Evan Williams", "Crown Royal", "Crown Royal Reserve", "Jonnie Walker Black", "Jonnie Walker Red", "Jonnie Walker Blue"],
