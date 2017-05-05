@@ -460,14 +460,13 @@ class DeathBotProtocol(irc.IRCClient):
     bev = { "serves": ["delivers", "tosses", "passes", "pours", "hands", "throws"],
             "vessel": ["cup", "mug", "shot glass", "tall glass", "tumbler", "glass", "schooner", "pint", "fifth"],
             "drink" : {"tea"   : ["black", "white", "green", "polka-dot", "Earl Grey", "darjeeling"],
-                       "booze" : ["booze", "hooch", "moonshine", "toddy", "sauce", "suds", "hard stuff", "liquid courage", "grappa"],
                        "coffee": ["coffee", "espresso", "cafe latte", "Blend 43"],
                        "vodka" : ["Stolichnaya", "Absolut", "Grey Goose", "Ketel One", "Belvedere", "Luksusowa", "SKYY", "Finlandia", "Smirnoff"],
                        "whiskey":["Irish", "Jack Daniels", "Evan Williams", "Crown Royal", "Crown Royal Reserve", "Jonnie Walker Black", "Jonnie Walker Red", "Jonnie Walker Blue"],
                        "rum"   : ["Bundy", "Jamaican", "white", "dark", "spiced"],
                        "tequila":["blanco", "oro", "reposado", "añejo", "extra añejo", "Patron Silver", "Jose Cuervo 1800"],
                        "scotch": ["single malt", "single grain", "blended malt", "blended grain", "blended", "Glenfiddich", "Glenlivet", "Dalwhinnie"],
-                       "junk"  : ["blended kale", "pickle juice", "poorly-distilled rocket fuel"]},
+                       "junk"  : ["blended kale", "pickle juice", "booze", "hooch", "moonshine", "toddy", "sauce", "suds", "hard stuff", "liquid courage", "grappa", "poorly-distilled rocket fuel"]},
             "prepared":["brewed", "distilled", "fermented", "decanted"],
             "degrees" :{"Kelvin": [0, 500], "degrees Celcius": [-200,300], "degrees Fahrenheit": [-300,500]}, #sane-ish ranges
             "suppress": ["coffee", "junk"] } # do not append these to the random description
