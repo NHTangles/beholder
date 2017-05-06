@@ -94,7 +94,7 @@ class DeathBotProtocol(irc.IRCClient):
     nickname = NICK
     username = "beholder"
     realname = "Beholder"
-    admin = ["K2", "K2-work", "Tangles"]  # for plr_tc maintenance. NOT SECURE obviously.
+    admin = ["K2", "Tangles"]  # for plr_tc maintenance. NOT SECURE obviously.
     try:
         password = open("/opt/beholder/pw", "r").read().strip()
     except:
@@ -108,7 +108,7 @@ class DeathBotProtocol(irc.IRCClient):
     dump_url_prefix = "https://www.hardfought.org/userdata/{name[0]}/{name}/"
     dump_file_prefix = "/opt/nethack/hardfought.org/dgldir/userdata/{name[0]}/{name}/"
     
-    scoresURL = "https://www.hardfought.org/nethack/scoreboard"
+    scoresURL = "https://www.hardfought.org/nethack/scoreboard (HDF) or https://scoreboard.xd.cm (ALL)"
     
     helpURL = "https://www.hardfought.org/nethack"
 
