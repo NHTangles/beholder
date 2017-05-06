@@ -459,7 +459,7 @@ class DeathBotProtocol(irc.IRCClient):
                                                            "Burrrrp!", "We're not here to f#%k spiders, mate!",
                                                            "One Darwin stubby, coming up!"]))
     bev = { "serves": ["delivers", "tosses", "passes", "pours", "hands", "throws"],
-            "vessel": ["cup", "mug", "shot glass", "tall glass", "tumbler", "glass", "schooner", "pint", "fifth", "vial", "potion"],
+            "vessel": ["cup", "mug", "shot glass", "tall glass", "tumbler", "glass", "schooner", "pint", "fifth", "vial", "potion", "barrel", "droplet"],
             "drink" : {"tea"   : ["black", "white", "green", "polka-dot", "Earl Grey", "oolong", "darjeeling"],
                        "potion": ["water", "fruit juice", "see invisible", "sickness", "confusion", "extra healing", "hallucination", "healing", "holy water", "unholy water", "restore ability", "sleeping", "blindness", "gain energy", "invisibility", "monster detection", "object detection", "booze", "enlightenment", "full healing", "levitation", "polymorph", "speed", "acid", "oil", "gain ability", "gain level", "paralysis"], 
                        "booze" : ["booze", "the hooch", "moonshine", "the sauce", "grog", "suds", "the hard stuff", "liquid courage", "grappa"],
@@ -470,8 +470,8 @@ class DeathBotProtocol(irc.IRCClient):
                        "fictional": ["Romulan ale", "Blood wine", "Kanar", "Pan Galactic Gargle Blaster", "jynnan tonyx", "gee-N'N-T'N-ix", "jinond-o-nicks", "chinanto/mnigs", "tzjin-anthony-ks", "Moloko Plus", "Duff beer", "Panther Pilsner beer", "Screaming Viking", "Blue milk", "Fizzy Bubblech", "Butterbeer", "Ent-draught", "Nectar of the Gods"],
                        "tequila":["blanco", "oro", "reposado", "añejo", "extra añejo", "Patron Silver", "Jose Cuervo 1800"],
                        "scotch": ["single malt", "single grain", "blended malt", "blended grain", "blended", "Glenfiddich", "Glenlivet", "Dalwhinnie"],
-                       "junk"  : ["blended kale", "pickle juice", "poorly-distilled rocket fuel"]},
-            "prepared":["brewed", "distilled", "fermented", "decanted"],
+                       "junk"  : ["blended kale", "pickle juice", "poorly-distilled rocket fuel", "caustic gas", "liquid smoke", "protein shake", "wheatgrass nonsense"]},
+            "prepared":["brewed", "distilled", "fermented", "decanted", "prayed over", "replicated", "conjured"],
             "degrees" :{"Kelvin": [0, 500], "degrees Celsius": [-20,95], "degrees Fahrenheit": [-20,200]}, #sane-ish ranges
             "suppress": ["coffee", "junk", "booze", "potion", "fictional"] } # do not append these to the random description
 
