@@ -458,8 +458,25 @@ class DeathBotProtocol(irc.IRCClient):
         self.respond(replyto, sender, random.choice(["It's your shout!", "I thought you'd never ask!",
                                                            "Burrrrp!", "We're not here to f#%k spiders, mate!",
                                                            "One Darwin stubby, coming up!"]))
+
+    # The following started as !tea resulting in the bot making a cup of tea.
+    # Now it does other stuff.
     bev = { "serves": ["delivers", "tosses", "passes", "pours", "hands", "throws"],
-            "vessel": ["cup", "mug", "shot glass", "tall glass", "tumbler", "glass", "schooner", "pint", "fifth", "vial", "potion", "barrel", "droplet"],
+            # Attempt to make a sensible choice of vessel.
+            # pick from "all", and check against specific drink. Loop a few times for a match, then give up.
+            "vessel": {"all"   : ["cup", "mug", "shot", "tall glass", "tumbler", "glass", "schooner", "pint", "fifth", "vial", "potion", "barrel", "droplet", "bucket", "esky"],
+                       "tea"   : ["cup", "mug"],
+                       "potion": ["potion", "vial", "droplet"],
+                       "booze" : ["shot", "tall glass", "tumbler", "glass", "schooner", "pint", "fifth", "barrel"],
+                       "coffee": ["cup", "mug"],
+                       "vodka" : ["shot", "tall glass", "tumbler", "glass"],
+                       "whiskey":["shot", "tall glass", "tumbler", "glass"],
+                       "rum"   : ["shot", "tall glass", "tumbler", "glass"],
+                       "tequila":["shot", "tall glass", "tumbler", "glass"],
+                       "scotch": ["shot", "tall glass", "tumbler", "glass"]
+                       # others omitted - anything goes for them
+                      },
+
             "drink" : {"tea"   : ["black", "white", "green", "polka-dot", "Earl Grey", "oolong", "darjeeling"],
                        "potion": ["water", "fruit juice", "see invisible", "sickness", "confusion", "extra healing", "hallucination", "healing", "holy water", "unholy water", "restore ability", "sleeping", "blindness", "gain energy", "invisibility", "monster detection", "object detection", "booze", "enlightenment", "full healing", "levitation", "polymorph", "speed", "acid", "oil", "gain ability", "gain level", "paralysis"], 
                        "booze" : ["booze", "the hooch", "moonshine", "the sauce", "grog", "suds", "the hard stuff", "liquid courage", "grappa"],
@@ -479,14 +496,18 @@ class DeathBotProtocol(irc.IRCClient):
     def doTea(self, sender, replyto, msgwords):
         if len(msgwords) > 1: target = msgwords[1] 
         else: target = sender
-        drink = random.choice([msgwords[0]] * 20 + self.bev["drink"].keys())
+        drink = random.choice([msgwords[0]] * 50 + self.bev["drink"].keys())
+        for vchoice in xrange(10):
+            vessel = random.choice(self.bev["vessel"]["all"])
+            if drink not in self.bev["vessel"].keys(): break # anything goes for these
+            if vessel in self.bev["vessel"][drink]: break # match!
         fulldrink = random.choice(self.bev["drink"][drink])
         if drink not in self.bev["suppress"]: fulldrink += " " + drink
         tempunit = random.choice(self.bev["degrees"].keys())
         [tmin,tmax] = self.bev["degrees"][tempunit]
         temp = random.randrange(tmin,tmax)
         self.describe(replyto, random.choice(self.bev["serves"]) + " " + target
-                + " a "  + random.choice(self.bev["vessel"])
+                + " a "  + vessel
                 + " of " + fulldrink
                 + ", "   + random.choice(self.bev["prepared"])
                 + " by " + random.choice(self.brethren) 
