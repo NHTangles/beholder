@@ -126,6 +126,7 @@ class DeathBotProtocol(irc.IRCClient):
                  filepath.FilePath("/opt/nethack/hardfought.org/gh/var/livelog"): ("gh", ":"),
                  filepath.FilePath("/opt/nethack/hardfought.org/dnethackdir/livelog"): ("dnh", ":"),
                  filepath.FilePath("/opt/nethack/hardfought.org/fourkdir/save/livelog"): ("4k", "\t"),
+                 filepath.FilePath("/opt/nethack/hardfought.org/fiqhackdir/data/livelog"): ("fh", ":"),
                  filepath.FilePath("/opt/nethack/hardfought.org/un531/var/unnethack/livelog"): ("un", ":")}
 
     # variant related stuff that does not relate to xlogfile processing
