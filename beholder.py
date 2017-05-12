@@ -263,6 +263,8 @@ class DeathBotProtocol(irc.IRCClient):
                     game["variant"] = self.logs[filepath][1]
                     if game["variant"] == "fh":
                         game["dumplog"] = fixdump(game["dumplog"])
+                    if game["variant"] == "nh4":
+                        game["dumplog"] = fixdump(game["dumplog"])
                     game["dumpfmt"] = self.logs[filepath][3]
                     for line in self.logs[filepath][0](game,False):
                         pass
