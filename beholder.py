@@ -155,7 +155,7 @@ class DeathBotProtocol(irc.IRCClient):
     # first alias will be used for !variant
     # note this breaks if a player has the same name as an alias
     # so don't do that (I'm looking at you, FIQ)
-    variants = {"nh": (["nh343", "nethack", "343"],
+    variants = {"\x0304nh\x03": (["nh343", "nethack", "343"],
                        vanilla_roles, vanilla_races),
                 "nd": (["nhdev", "nh361", "361dev", "361", "dev"],
                        vanilla_roles, vanilla_races),
