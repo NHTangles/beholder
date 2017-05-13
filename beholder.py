@@ -725,10 +725,10 @@ class DeathBotProtocol(irc.IRCClient):
             event["message"] = event["historic_event"]
 
         if "message" in event:
-            yield ("[{variant}] {player} ({role} {race} {gender} {align}) "
+            yield ("[\x0304{variant}\x03] {player} ({role} {race} {gender} {align}) "
                    "{message}, on T:{turns}").format(**event)
         elif "wish" in event:
-            yield ("[\x0304{variant}\x03] {player} ({role} {race} {gender} {align}) "
+            yield ("[{variant}] {player} ({role} {race} {gender} {align}) "
                    'wished for "{wish}", on T:{turns}').format(**event)
         elif "shout" in event:
             yield ("[{variant}] {player} ({role} {race} {gender} {align}) "
