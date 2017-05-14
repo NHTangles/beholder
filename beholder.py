@@ -661,6 +661,9 @@ class DeathBotProtocol(irc.IRCClient):
     def xlogfileReport(self, game, report = True):
         if self.startscummed(game): return
 
+        dumplog = game.get("dumplog",False)
+        if dumplog and game["variant"] != "dyn":
+            game["dumplog"] = fixdump(dumplog)
         # Need to figure out the dump path before messing with the name below
         dumpfile = (self.dump_file_prefix + game["dumpfmt"]).format(**game)
         dumpurl = "(sorry, no dump exists for {variant}:{name})".format(**game)
