@@ -42,7 +42,7 @@ import shelve   # for perstistent !tell messages
 import random   # for !rng and friends
 
 TEST= False
-#TEST = True  # uncomment for testing
+TEST = True  # uncomment for testing
 
 # fn
 HOST, PORT = "chat.us.freenode.net", 6697
@@ -247,6 +247,7 @@ class DeathBotProtocol(irc.IRCClient):
                          "sb"       : self.doScoreboard,
                          "commands" : self.doCommands,
                          "help"     : self.doHelp,
+                         "coltest"  : self.doColTest,
                          "setmintc" : self.setPlrTC}
 
         # seek to end of livelogs
@@ -326,6 +327,11 @@ class DeathBotProtocol(irc.IRCClient):
         
     def doHelp(self, sender, replyto, msgwords):
         self.respond(replyto, sender, self.helpURL )
+        
+    def doColTest(self, sender, replyto, msgwords):
+        code = chr(3)
+        code += msgwords[1]
+        self.respond(replyto, sender, msgwords[1] + " " + code + "TEST!" )
         
     def doCommands(self, sender, replyto, msgwords):
         self.respond(replyto, sender, "available commands are !help !ping !time !pom !hello !booze !beer !potion !tea !coffee !whiskey !vodka !rum !tequila !scotch !goat !lotg !d(1-1000) !(1-50)d(1-1000) !rng !role !race !variant !tell !source !lastgame !lastasc !scores !sb !setmintc !commands")
