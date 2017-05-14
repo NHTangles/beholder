@@ -706,7 +706,7 @@ class DeathBotProtocol(irc.IRCClient):
 
         if (game.get("mode", "normal") == "normal" and
               game.get("modes", "normal") == "normal"):
-            yield ("[{variant}] {name} ({role} {race} {gender} {align}), "
+            yield ("[\x0304{variant}\x03] {name} ({role} {race} {gender} {align}), "
                    "{points} points, T:{turns}, {death}{ascsuff}").format(**game)
         else:
             if "modes" in game:
