@@ -113,10 +113,10 @@ class DeathBotProtocol(irc.IRCClient):
     
     helpURL = "https://www.hardfought.org/nethack"
 
-    xlogfiles = {filepath.FilePath("/opt/nethack/hardfought.org/nh343/var/xlogfile"): ("nh", ":", "nh343/dumplog/{starttime}.nh343.txt"),
+    xlogfiles = {filepath.FilePath("/opt/nethack/hardfought.org/nh343/var/xlogfile"): ("\x0304nh\x03", ":", "nh343/dumplog/{starttime}.nh343.txt"),
                  filepath.FilePath("/opt/nethack/hardfought.org/nhdev/var/xlogfile"): ("nd", "\t", "nhdev/dumplog/{starttime}.nhdev.txt"),
                  filepath.FilePath("/opt/nethack/hardfought.org/gh/var/xlogfile"): ("gh", ":", "gh/dumplog/{starttime}.gh.txt"),
-                 filepath.FilePath("/opt/nethack/hardfought.org/dnethackdir/xlogfile"): ("dnh", ":", "dnethack/dumplog/{starttime}.dnh.txt"),
+                 filepath.FilePath("/opt/nethack/hardfought.org/dnethackdir/xlogfile"): ("\x0313dnh\x03", ":", "dnethack/dumplog/{starttime}.dnh.txt"),
                  filepath.FilePath("/opt/nethack/hardfought.org/fiqhackdir/data/xlogfile"): ("fh", ":", "fiqhack/dumplog/{dumplog}"),
                  filepath.FilePath("/opt/nethack/hardfought.org/dynahack/dynahack-data/var/xlogfile"): ("dyn", ":", "dynahack/dumplog/{dumplog}"),
                  filepath.FilePath("/opt/nethack/hardfought.org/nh4dir/save/xlogfile"): ("nh4", ":", "nethack4/dumplog/{dumplog}"),
@@ -706,7 +706,7 @@ class DeathBotProtocol(irc.IRCClient):
 
         if (game.get("mode", "normal") == "normal" and
               game.get("modes", "normal") == "normal"):
-            yield ("[\x0304{variant}\x03] {name} ({role} {race} {gender} {align}), "
+            yield ("[{variant}] {name} ({role} {race} {gender} {align}), "
                    "{points} points, T:{turns}, {death}{ascsuff}").format(**game)
         else:
             if "modes" in game:
