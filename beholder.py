@@ -111,6 +111,8 @@ class DeathBotProtocol(irc.IRCClient):
     
     scoresURL = "https://www.hardfought.org/nethack/scoreboard (HDF) or https://scoreboard.xd.cm (ALL)"
     
+    rceditURL = "https://www.hardfought.org/nethack/rcedit"
+    
     helpURL = "https://www.hardfought.org/nethack"
 
     xlogfiles = {filepath.FilePath("/opt/nethack/hardfought.org/nh343/var/xlogfile"): ("nh", "\x0315nh\x03", ":", "nh343/dumplog/{starttime}.nh343.txt"),
@@ -245,6 +247,7 @@ class DeathBotProtocol(irc.IRCClient):
                          "lastasc"  : self.lastAsc,
                          "scores"   : self.doScoreboard,
                          "sb"       : self.doScoreboard,
+                         "rcedit"   : self.doRCedit,
                          "commands" : self.doCommands,
                          "help"     : self.doHelp,
                          "coltest"  : self.doColTest,
@@ -325,6 +328,9 @@ class DeathBotProtocol(irc.IRCClient):
     def doScoreboard(self, sender, replyto, msgwords):
         self.respond(replyto, sender, self.scoresURL )
         
+    def doRCedit(self, sender, replyto, msgwords):
+        self.respond(replyto, sender, self.rceditURL )
+        
     def doHelp(self, sender, replyto, msgwords):
         self.respond(replyto, sender, self.helpURL )
         
@@ -334,7 +340,7 @@ class DeathBotProtocol(irc.IRCClient):
         self.respond(replyto, sender, msgwords[1] + " " + code + "TEST!" )
         
     def doCommands(self, sender, replyto, msgwords):
-        self.respond(replyto, sender, "available commands are !help !ping !time !pom !hello !booze !beer !potion !tea !coffee !whiskey !vodka !rum !tequila !scotch !goat !lotg !d(1-1000) !(1-50)d(1-1000) !rng !role !race !variant !tell !source !lastgame !lastasc !scores !sb !setmintc !commands")
+        self.respond(replyto, sender, "available commands are !help !ping !time !pom !hello !booze !beer !potion !tea !coffee !whiskey !vodka !rum !tequila !scotch !goat !lotg !d(1-1000) !(1-50)d(1-1000) !rng !role !race !variant !tell !source !lastgame !lastasc !rcedit !scores !sb !setmintc !commands")
 
     def getPom(self, dt):
         # this is a direct translation of the NetHack method of working out pom.
