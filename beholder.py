@@ -31,7 +31,7 @@ from twisted.internet import reactor, protocol, ssl, task
 from twisted.words.protocols import irc
 from twisted.python import filepath
 from twisted.application import internet, service
-from twisted.words.protocols.irc import attributes as A
+#from twisted.words.protocols.irc import attributes as A
 import datetime # for timestamp stuff
 import time     # for !time
 import ast      # for conduct/achievement bitfields - not really used
@@ -40,6 +40,7 @@ import re       # for hello, and other things.
 import urllib   # for dealing with NH4 variants' #&$#@ spaces in filenames.
 import shelve   # for perstistent !tell messages
 import random   # for !rng and friends
+import glob     # for matchning in !whereis
 
 TEST= False
 #TEST = True  # uncomment for testing
@@ -51,6 +52,8 @@ NICK = "Beholder"
 if TEST:
     CHANNEL = "#hfdev"
     NICK = "BeerHolder"
+FILEROOT="/opt/nethack/hardfought.org/"
+WEBROOT="https://www.hardfought.org/"
 
 def fromtimestamp_int(s):
     return datetime.datetime.fromtimestamp(int(s))
@@ -66,7 +69,7 @@ def fixdump(s):
 
 xlogfile_parse = dict.fromkeys(
     ("points", "deathdnum", "deathlev", "maxlvl", "hp", "maxhp", "deaths",
-     "uid", "turns", "xplevel", "exp"), int)
+     "uid", "turns", "xplevel", "exp","depth","dnum","score","amulet"), int)
 xlogfile_parse.update(dict.fromkeys(
     ("conduct", "event", "carried", "flags", "achieve"), ast.literal_eval))
 #xlogfile_parse["starttime"] = fromtimestamp_int
@@ -106,31 +109,66 @@ class DeathBotProtocol(irc.IRCClient):
     versionName = "beholder.py"
     versionNum = "0.1"
 
-    dump_url_prefix = "https://www.hardfought.org/userdata/{name[0]}/{name}/"
-    dump_file_prefix = "/opt/nethack/hardfought.org/dgldir/userdata/{name[0]}/{name}/"
+    dump_url_prefix = WEBROOT + "userdata/{name[0]}/{name}/"
+    dump_file_prefix = FILEROOT + "dgldir/userdata/{name[0]}/{name}/"
     
-    scoresURL = "https://www.hardfought.org/nethack/scoreboard (HDF) or https://scoreboard.xd.cm (ALL)"
-    
-    rceditURL = "https://www.hardfought.org/nethack/rcedit"
-    
-    helpURL = "https://www.hardfought.org/nethack"
+    scoresURL = WEBROOT + "nethack/scoreboard (HDF) or https://scoreboard.xd.cm (ALL)"
+    rceditURL = WEBROOT + "nethack/rcedit"
+    helpURL = WEBROOT + "nethack"
 
-    xlogfiles = {filepath.FilePath("/opt/nethack/hardfought.org/nh343/var/xlogfile"): ("nh", "\x0315nh\x03", ":", "nh343/dumplog/{starttime}.nh343.txt"),
-                 filepath.FilePath("/opt/nethack/hardfought.org/nhdev/var/xlogfile"): ("nd", "\x0307nd\x03", "\t", "nhdev/dumplog/{starttime}.nhdev.txt"),
-                 filepath.FilePath("/opt/nethack/hardfought.org/gh/var/xlogfile"): ("gh", "\x0304gh\x03", ":", "gh/dumplog/{starttime}.gh.txt"),
-                 filepath.FilePath("/opt/nethack/hardfought.org/dnethackdir/xlogfile"): ("dnh", "\x0313dnh\x03", ":", "dnethack/dumplog/{starttime}.dnh.txt"),
-                 filepath.FilePath("/opt/nethack/hardfought.org/fiqhackdir/data/xlogfile"): ("fh", "\x0310fh\x03", ":", "fiqhack/dumplog/{dumplog}"),
-                 filepath.FilePath("/opt/nethack/hardfought.org/dynahack/dynahack-data/var/xlogfile"): ("dyn", "\x0305dyn\x03", ":", "dynahack/dumplog/{dumplog}"),
-                 filepath.FilePath("/opt/nethack/hardfought.org/nh4dir/save/xlogfile"): ("nh4", "\x0306nh4\x03", ":", "nethack4/dumplog/{dumplog}"),
-                 filepath.FilePath("/opt/nethack/hardfought.org/fourkdir/save/xlogfile"): ("4k", "\x03114k\x03", "\t", "nhfourk/dumps/{dumplog}"),
-                 filepath.FilePath("/opt/nethack/hardfought.org/un531/var/unnethack/xlogfile"): ("un", "\x0308un\x03", ":", "un531/dumplog/{starttime}.un531.txt.html")}
-    livelogs  = {filepath.FilePath("/opt/nethack/hardfought.org/nh343/var/livelog"): ("nh", "\x0315nh\x03", ":"),
-                 filepath.FilePath("/opt/nethack/hardfought.org/nhdev/var/livelog"): ("nd", "\x0307nd\x03", "\t"),
-                 filepath.FilePath("/opt/nethack/hardfought.org/gh/var/livelog"): ("gh", "\x0304gh\x03", ":"),
-                 filepath.FilePath("/opt/nethack/hardfought.org/dnethackdir/livelog"): ("dnh", "\x0313dnh\x03", ":"),
-                 filepath.FilePath("/opt/nethack/hardfought.org/fourkdir/save/livelog"): ("4k", "\x03114k\x03", "\t"),
-                 filepath.FilePath("/opt/nethack/hardfought.org/fiqhackdir/data/livelog"): ("fh", "\x0310fh\x03", ":"),
-                 filepath.FilePath("/opt/nethack/hardfought.org/un531/var/unnethack/livelog"): ("un", "\x0308un\x03", ":")}
+    xlogfiles = {filepath.FilePath(FILEROOT+"nh343/var/xlogfile"): ("nh", "\x0315nh\x03", ":", "nh343/dumplog/{starttime}.nh343.txt"),
+                 filepath.FilePath(FILEROOT+"nhdev/var/xlogfile"): ("nd", "\x0307nd\x03", "\t", "nhdev/dumplog/{starttime}.nhdev.txt"),
+                 filepath.FilePath(FILEROOT+"gh/var/xlogfile"): ("gh", "\x0304gh\x03", ":", "gh/dumplog/{starttime}.gh.txt"),
+                 filepath.FilePath(FILEROOT+"dnethackdir/xlogfile"): ("dnh", "\x0313dnh\x03", ":", "dnethack/dumplog/{starttime}.dnh.txt"),
+                 filepath.FilePath(FILEROOT+"fiqhackdir/data/xlogfile"): ("fh", "\x0310fh\x03", ":", "fiqhack/dumplog/{dumplog}"),
+                 filepath.FilePath(FILEROOT+"dynahack/dynahack-data/var/xlogfile"): ("dyn", "\x0305dyn\x03", ":", "dynahack/dumplog/{dumplog}"),
+                 filepath.FilePath(FILEROOT+"nh4dir/save/xlogfile"): ("nh4", "\x0306nh4\x03", ":", "nethack4/dumplog/{dumplog}"),
+                 filepath.FilePath(FILEROOT+"fourkdir/save/xlogfile"): ("4k", "\x03114k\x03", "\t", "nhfourk/dumps/{dumplog}"),
+                 filepath.FilePath(FILEROOT+"un531/var/unnethack/xlogfile"): ("un", "\x0308un\x03", ":", "un531/dumplog/{starttime}.un531.txt.html")}
+    livelogs  = {filepath.FilePath(FILEROOT+"nh343/var/livelog"): ("nh", "\x0315nh\x03", ":"),
+                 filepath.FilePath(FILEROOT+"nhdev/var/livelog"): ("nd", "\x0307nd\x03", "\t"),
+                 filepath.FilePath(FILEROOT+"gh/var/livelog"): ("gh", "\x0304gh\x03", ":"),
+                 filepath.FilePath(FILEROOT+"dnethackdir/livelog"): ("dnh", "\x0313dnh\x03", ":"),
+                 filepath.FilePath(FILEROOT+"fourkdir/save/livelog"): ("4k", "\x03114k\x03", "\t"),
+                 filepath.FilePath(FILEROOT+"fiqhackdir/data/livelog"): ("fh", "\x0310fh\x03", ":"),
+                 filepath.FilePath(FILEROOT+"un531/var/unnethack/livelog"): ("un", "\x0308un\x03", ":")}
+
+    # some of these don't exist yet, so paths may not be accurate
+    whereis = {"nh": FILEROOT+"nh343/var/whereis/",
+               "nd": FILEROOT+"nhdev/var/whereis/",
+               "gh": FILEROOT+"gh/var/whereis/",
+              "dnh": FILEROOT+"dnethackdir/var/whereis/",
+               "fh": FILEROOT+"fiqhackdir/var/whereis/",
+              "dyn": FILEROOT+"dynahack/dynahack-data/var/whereis/",
+              "nh4": FILEROOT+"nh4dir/save/whereis/",
+               "4k": FILEROOT+"fourkdir/save/whereis/",
+               "un": FILEROOT+"un531/var/whereis/"}
+
+    dungeons = {"nh": ["The Dungeons of Doom","Gehennom","The Gnomish Mines","The Quest",
+                       "Sokoban","Fort Ludios","Vlad's Tower","The Elemental Planes"],
+                "nd": ["The Dungeons of Doom","Gehennom","The Gnomish Mines","The Quest",
+                       "Sokoban","Fort Ludios","Vlad's Tower","The Elemental Planes"],
+                "gh": ["The Dungeons of Doom","Gehennom","The Gnomish Mines","The Quest",
+                       "Sokoban","Fort Ludios","Vlad's Tower","The Elemental Planes"],
+               "dnh": ["The Dungeons of Doom","Gehennom","The Gnomish Mines","Law Quest",
+                       "Neutral Quest","The Lost Cities","Chaos Quest","The Quest",
+                       "Sokoban","Fort Ludios","The Lost Tomb","The Sunless Sea",
+                       "The Temple of Moloch","The Dispensary","Vlad's Tower",
+                       "The Elemental Planes"],
+                "fh": ["The Dungeons of Doom","Gehennom","The Gnomish Mines","The Quest",
+                       "Sokoban","Fort Ludios","Vlad's Tower","The Elemental Planes"],
+               "dyn": ["The Dungeons of Doom","Gehennom","The Gnomish Mines","The Quest",
+                       "Sokoban","Town","Fort Ludios","One-eyed Sam's Market","Vlad's Tower",
+                       "The Dragon Caves","The Elemental Planes","Advent Calendar"],
+               "nh4": ["The Dungeons of Doom","Gehennom","The Gnomish Mines","The Quest",
+                       "Sokoban","Fort Ludios","Vlad's Tower","The Elemental Planes"],
+                "4k": ["The Dungeons of Doom","Gehennom","The Gnomish Mines","The Quest",
+                       "Sokoban","Fort Ludios","Advent Calendar","Vlad's Tower",
+                       "The Elemental Planes"],
+                "un": ["The Dungeons of Doom","Gehennom","Sheol","The Gnomish Mines",
+                       "The Quest","Sokoban","Town","The Ruins of Moria","Fort Ludios",
+                       "One-eyed Sam's Market","Vlad's Tower","The Dragon Caves",
+                       "The Elemental Planes","Advent Calendar"]}
 
     # variant related stuff that does not relate to xlogfile processing
     rolename = {"arc": "archeologist", "bar": "barbarian", "cav": "caveman",
@@ -251,6 +289,7 @@ class DeathBotProtocol(irc.IRCClient):
                          "commands" : self.doCommands,
                          "help"     : self.doHelp,
                          "coltest"  : self.doColTest,
+                         "whereis"  : self.doWhereIs,
                          "setmintc" : self.setPlrTC}
 
         # seek to end of livelogs
@@ -555,6 +594,26 @@ class DeathBotProtocol(irc.IRCClient):
             self.respond(forwardto, user, "Message from " + sender + " at " + self.msgTime(ts) + ": " + message)
         del self.tellbuf[user.lower()]
         self.tellbuf.sync()
+
+    def doWhereIs(self,sender,replyto, msgwords):
+        if (len(msgwords) < 2): return
+        found = False
+        ammy = ["", " (with Amulet)"]
+        for var in self.whereis.keys():
+            for wipath in glob.iglob(self.whereis[var] + "*.whereis"): 
+                if wipath.split("/")[-1].lower() == (msgwords[1] + ".whereis").lower():
+                    found = True
+                    plr = wipath.split("/")[-1].split(".")[0] # Correct case 
+                    wirec = parse_xlogfile_line(open(wipath, "r").read().strip(),":")
+                
+                    self.respond(replyto, sender, plr
+                                 + "["+var+"]: ({role} {race} {gender} {align}) T:{turns} ".format(**wirec)
+                                 + self.dungeons[var][wirec["dnum"]]
+                                 + " level: " + str(wirec["depth"])
+                                 + ammy[wirec["amulet"]])
+        if not found:
+            self.respond(replyto, sender, msgwords[1] + " is not currently playing.") 
+        
 
     def lastGame(self, sender, replyto, msgwords):
         if (len(msgwords) >= 3): #var, plr, any order.
