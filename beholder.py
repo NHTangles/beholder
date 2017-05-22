@@ -697,7 +697,7 @@ class DeathBotProtocol(irc.IRCClient):
         else: #private msg
             replyto = sender
         # Hello processing first.
-        if re.match(r'^(hello|hi|hey)[!?. ]*$', message.lower()):
+        if re.match(r'^(hello|hi|hey|salut|hallo|guten tag|shalom|ciao|hola|nuqneh)[!?. ]*$', message.lower()):
             self.doHello(sender, replyto)
         # Message checks next.
         self.checkMessages(sender)
