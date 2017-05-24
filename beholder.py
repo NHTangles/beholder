@@ -133,6 +133,23 @@ class DeathBotProtocol(irc.IRCClient):
                  filepath.FilePath(FILEROOT+"fiqhackdir/data/livelog"): ("fh", "\x0310fh\x03", ":"),
                  filepath.FilePath(FILEROOT+"un531/var/unnethack/livelog"): ("un", "\x0308un\x03", ":")}
 
+
+    # for !who or !players or whatever we end up calling it
+    # Reduce the repetitive crap
+    DGLD=FILEROOT+"dgldir/"
+    INPR=DGLD+"inprogress-"
+    inprog = { "nh" : INPR+"nh343/",
+               "nd" : INPR+"nhdev/",
+               "gh" : INPR+"gh/",
+               "un" : INPR+"un531/",
+              "dnh" : INPR+"dnh/",
+               "fh" : INPR+"fh/",
+               "4k" : INPR+"4k/",
+               # K2 - check these next ones:
+              "nh4" : INPR+"nh4/",
+              "dyn" : INPR+"dyn/"}
+               
+    # for !whereis 
     # some of these don't exist yet, so paths may not be accurate
     whereis = {"nh": FILEROOT+"nh343/var/whereis/",
                "nd": FILEROOT+"nhdev/var/whereis/",
@@ -289,6 +306,8 @@ class DeathBotProtocol(irc.IRCClient):
                          "commands" : self.doCommands,
                          "help"     : self.doHelp,
                          "coltest"  : self.doColTest,
+                         "players"  : self.doPlayers,
+                         "who"      : self.doPlayers,
                          "whereis"  : self.doWhereIs,
                          "setmintc" : self.setPlrTC}
 
@@ -595,6 +614,18 @@ class DeathBotProtocol(irc.IRCClient):
         del self.tellbuf[user.lower()]
         self.tellbuf.sync()
 
+    def doPlayers(self,sender,replyto, msgwords):
+        plrvar = ""
+        for var in self.inprog.keys():
+            for inpfile in glob.iglob(self.inprog[var] + "*.ttyrec"): 
+                # /stuff/crap/PLAYER:shit:garbage.ttyrec
+                # we want AFTER last '/', BEFORE 1st ':' 
+                plrvar += inpfile.split("/")[-1].split(":")[0] + "[" + var + "] "
+        if len(plrvar) == 0:
+            plrvar = "No current players"
+        self.respond(replyto, sender, plrvar)
+                
+            
     def doWhereIs(self,sender,replyto, msgwords):
         if (len(msgwords) < 2): return
         found = False
