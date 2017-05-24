@@ -619,7 +619,7 @@ class DeathBotProtocol(irc.IRCClient):
             for inpfile in glob.iglob(self.inprog[var] + "*.ttyrec"): 
                 # /stuff/crap/PLAYER:shit:garbage.ttyrec
                 # we want AFTER last '/', BEFORE 1st ':' 
-                plrvar += inpfile.split("/")[-1].split(":")[0] + "[ " + var + "] "
+                plrvar += inpfile.split("/")[-1].split(":")[0] + " [" + var + "] "
         if len(plrvar) == 0:
             plrvar = "No current players"
         self.respond(replyto, sender, plrvar)
