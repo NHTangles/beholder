@@ -145,7 +145,6 @@ class DeathBotProtocol(irc.IRCClient):
               "dnh" : INPR+"dnh/",
                "fh" : INPR+"fh/",
                "4k" : INPR+"4k/",
-               # K2 - check these next ones:
               "nh4" : INPR+"nh4/",
               "dyn" : INPR+"dyn/"}
                
@@ -398,7 +397,7 @@ class DeathBotProtocol(irc.IRCClient):
         self.respond(replyto, sender, msgwords[1] + " " + code + "TEST!" )
         
     def doCommands(self, sender, replyto, msgwords):
-        self.respond(replyto, sender, "available commands are !help !ping !time !pom !hello !booze !beer !potion !tea !coffee !whiskey !vodka !rum !tequila !scotch !goat !lotg !d(1-1000) !(1-50)d(1-1000) !rng !role !race !variant !tell !source !lastgame !lastasc !rcedit !scores !sb !setmintc !whereis !commands")
+        self.respond(replyto, sender, "available commands are !help !ping !time !pom !hello !booze !beer !potion !tea !coffee !whiskey !vodka !rum !tequila !scotch !goat !lotg !d(1-1000) !(1-50)d(1-1000) !rng !role !race !variant !tell !source !lastgame !lastasc !rcedit !scores !sb !setmintc !whereis !players !who !commands")
 
     def getPom(self, dt):
         # this is a direct translation of the NetHack method of working out pom.
@@ -620,7 +619,7 @@ class DeathBotProtocol(irc.IRCClient):
             for inpfile in glob.iglob(self.inprog[var] + "*.ttyrec"): 
                 # /stuff/crap/PLAYER:shit:garbage.ttyrec
                 # we want AFTER last '/', BEFORE 1st ':' 
-                plrvar += inpfile.split("/")[-1].split(":")[0] + "[" + var + "] "
+                plrvar += inpfile.split("/")[-1].split(":")[0] + "[ " + var + "] "
         if len(plrvar) == 0:
             plrvar = "No current players"
         self.respond(replyto, sender, plrvar)
@@ -638,7 +637,7 @@ class DeathBotProtocol(irc.IRCClient):
                     wirec = parse_xlogfile_line(open(wipath, "r").read().strip(),":")
                 
                     self.respond(replyto, sender, plr
-                                 + "["+var+"]: ({role} {race} {gender} {align}) T:{turns} ".format(**wirec)
+                                 + " ["+var+"]: ({role} {race} {gender} {align}) T:{turns} ".format(**wirec)
                                  + self.dungeons[var][wirec["dnum"]]
                                  + " level: " + str(wirec["depth"])
                                  + ammy[wirec["amulet"]])
