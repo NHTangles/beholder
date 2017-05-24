@@ -116,23 +116,33 @@ class DeathBotProtocol(irc.IRCClient):
     rceditURL = WEBROOT + "nethack/rcedit"
     helpURL = WEBROOT + "nethack"
 
-    xlogfiles = {filepath.FilePath(FILEROOT+"nh343/var/xlogfile"): ("nh", "\x0315nh\x03", ":", "nh343/dumplog/{starttime}.nh343.txt"),
-                 filepath.FilePath(FILEROOT+"nhdev/var/xlogfile"): ("nd", "\x0307nd\x03", "\t", "nhdev/dumplog/{starttime}.nhdev.txt"),
-                 filepath.FilePath(FILEROOT+"gh/var/xlogfile"): ("gh", "\x0304gh\x03", ":", "gh/dumplog/{starttime}.gh.txt"),
-                 filepath.FilePath(FILEROOT+"dnethackdir/xlogfile"): ("dnh", "\x0313dnh\x03", ":", "dnethack/dumplog/{starttime}.dnh.txt"),
-                 filepath.FilePath(FILEROOT+"fiqhackdir/data/xlogfile"): ("fh", "\x0310fh\x03", ":", "fiqhack/dumplog/{dumplog}"),
-                 filepath.FilePath(FILEROOT+"dynahack/dynahack-data/var/xlogfile"): ("dyn", "\x0305dyn\x03", ":", "dynahack/dumplog/{dumplog}"),
-                 filepath.FilePath(FILEROOT+"nh4dir/save/xlogfile"): ("nh4", "\x0306nh4\x03", ":", "nethack4/dumplog/{dumplog}"),
-                 filepath.FilePath(FILEROOT+"fourkdir/save/xlogfile"): ("4k", "\x03114k\x03", "\t", "nhfourk/dumps/{dumplog}"),
-                 filepath.FilePath(FILEROOT+"un531/var/unnethack/xlogfile"): ("un", "\x0308un\x03", ":", "un531/dumplog/{starttime}.un531.txt.html")}
-    livelogs  = {filepath.FilePath(FILEROOT+"nh343/var/livelog"): ("nh", "\x0315nh\x03", ":"),
-                 filepath.FilePath(FILEROOT+"nhdev/var/livelog"): ("nd", "\x0307nd\x03", "\t"),
-                 filepath.FilePath(FILEROOT+"gh/var/livelog"): ("gh", "\x0304gh\x03", ":"),
-                 filepath.FilePath(FILEROOT+"dnethackdir/livelog"): ("dnh", "\x0313dnh\x03", ":"),
-                 filepath.FilePath(FILEROOT+"fourkdir/save/livelog"): ("4k", "\x03114k\x03", "\t"),
-                 filepath.FilePath(FILEROOT+"fiqhackdir/data/livelog"): ("fh", "\x0310fh\x03", ":"),
-                 filepath.FilePath(FILEROOT+"un531/var/unnethack/livelog"): ("un", "\x0308un\x03", ":")}
+    xlogfiles = {filepath.FilePath(FILEROOT+"nh343/var/xlogfile"): ("nh", ":", "nh343/dumplog/{starttime}.nh343.txt"),
+                 filepath.FilePath(FILEROOT+"nhdev/var/xlogfile"): ("nd", "\t", "nhdev/dumplog/{starttime}.nhdev.txt"),
+                 filepath.FilePath(FILEROOT+"gh/var/xlogfile"): ("gh", ":", "gh/dumplog/{starttime}.gh.txt"),
+                 filepath.FilePath(FILEROOT+"dnethackdir/xlogfile"): ("dnh", ":", "dnethack/dumplog/{starttime}.dnh.txt"),
+                 filepath.FilePath(FILEROOT+"fiqhackdir/data/xlogfile"): ("fh", ":", "fiqhack/dumplog/{dumplog}"),
+                 filepath.FilePath(FILEROOT+"dynahack/dynahack-data/var/xlogfile"): ("dyn", ":", "dynahack/dumplog/{dumplog}"),
+                 filepath.FilePath(FILEROOT+"nh4dir/save/xlogfile"): ("nh4", ":", "nethack4/dumplog/{dumplog}"),
+                 filepath.FilePath(FILEROOT+"fourkdir/save/xlogfile"): ("4k", "\t", "nhfourk/dumps/{dumplog}"),
+                 filepath.FilePath(FILEROOT+"un531/var/unnethack/xlogfile"): ("un", ":", "un531/dumplog/{starttime}.un531.txt.html")}
+    livelogs  = {filepath.FilePath(FILEROOT+"nh343/var/livelog"): ("nh", ":"),
+                 filepath.FilePath(FILEROOT+"nhdev/var/livelog"): ("nd", "\t"),
+                 filepath.FilePath(FILEROOT+"gh/var/livelog"): ("gh", ":"),
+                 filepath.FilePath(FILEROOT+"dnethackdir/livelog"): ("dnh", ":"),
+                 filepath.FilePath(FILEROOT+"fourkdir/save/livelog"): ("4k", "\t"),
+                 filepath.FilePath(FILEROOT+"fiqhackdir/data/livelog"): ("fh", ":"),
+                 filepath.FilePath(FILEROOT+"un531/var/unnethack/livelog"): ("un", ":")}
 
+    # for displaying variants in colour
+    displaystring = {"nh" : "\x0315nh\x03",
+                     "nd" : "\x0307nd\x03",
+                     "gh" : "\x0304gh\x03",
+                    "dnh" : "\x0313dnh\x03",
+                     "fh" : "\x0310fh\x03",
+                    "dyn" : "\x0305dyn\x03",
+                    "nh4" : "\x0306nh4\x03",
+                     "4k" : "\x03114k\x03",
+                     "un" : "\x0308un\x03"}
 
     # for !who or !players or whatever we end up calling it
     # Reduce the repetitive crap
@@ -247,10 +257,10 @@ class DeathBotProtocol(irc.IRCClient):
         random.seed()
 
         self.logs = {}
-        for xlogfile, (variant, displaystring, delim, dumpfmt) in self.xlogfiles.iteritems():
-            self.logs[xlogfile] = (self.xlogfileReport, variant, displaystring, delim, dumpfmt)
-        for livelog, (variant, displaystring, delim) in self.livelogs.iteritems():
-            self.logs[livelog] = (self.livelogReport, variant, displaystring, delim, "")
+        for xlogfile, (variant, delim, dumpfmt) in self.xlogfiles.iteritems():
+            self.logs[xlogfile] = (self.xlogfileReport, variant, delim, dumpfmt)
+        for livelog, (variant, delim) in self.livelogs.iteritems():
+            self.logs[livelog] = (self.livelogReport, variant, delim, "")
 
         self.logs_seek = {}
         self.looping_calls = {}
@@ -320,14 +330,14 @@ class DeathBotProtocol(irc.IRCClient):
         for filepath in self.xlogfiles:
             with filepath.open("r") as handle:
                 for line in handle:
-                    delim = self.logs[filepath][3]
+                    delim = self.logs[filepath][2]
                     game = parse_xlogfile_line(line, delim)
                     game["variant"] = self.logs[filepath][1]
                     if game["variant"] == "fh":
                         game["dumplog"] = fixdump(game["dumplog"])
                     if game["variant"] == "nh4":
                         game["dumplog"] = fixdump(game["dumplog"])
-                    game["dumpfmt"] = self.logs[filepath][4]
+                    game["dumpfmt"] = self.logs[filepath][3]
                     for line in self.logs[filepath][0](game,False):
                         pass
                 self.logs_seek[filepath] = handle.tell()
@@ -619,14 +629,16 @@ class DeathBotProtocol(irc.IRCClient):
             for inpfile in glob.iglob(self.inprog[var] + "*.ttyrec"): 
                 # /stuff/crap/PLAYER:shit:garbage.ttyrec
                 # we want AFTER last '/', BEFORE 1st ':' 
-                plrvar += inpfile.split("/")[-1].split(":")[0] + " [" + var + "] "
+                plrvar += inpfile.split("/")[-1].split(":")[0] + " [" + self.displaystring[var] + "] "
         if len(plrvar) == 0:
             plrvar = "No current players"
         self.respond(replyto, sender, plrvar)
                 
             
     def doWhereIs(self,sender,replyto, msgwords):
-        if (len(msgwords) < 2): return
+        if (len(msgwords) < 2):
+            self.doPlayers(sender,replyto,msgwords)
+            return
         found = False
         ammy = ["", " (with Amulet)"]
         for var in self.whereis.keys():
@@ -637,7 +649,7 @@ class DeathBotProtocol(irc.IRCClient):
                     wirec = parse_xlogfile_line(open(wipath, "r").read().strip(),":")
                 
                     self.respond(replyto, sender, plr
-                                 + " ["+var+"]: ({role} {race} {gender} {align}) T:{turns} ".format(**wirec)
+                                 + " ["+self.displaystring[var]+"]: ({role} {race} {gender} {align}) T:{turns} ".format(**wirec)
                                  + self.dungeons[var][wirec["dnum"]]
                                  + " level: " + str(wirec["depth"])
                                  + ammy[wirec["amulet"]])
@@ -856,11 +868,11 @@ class DeathBotProtocol(irc.IRCClient):
             handle.seek(self.logs_seek[filepath])
 
             for line in handle:
-                delim = self.logs[filepath][3]
+                delim = self.logs[filepath][2]
                 game = parse_xlogfile_line(line, delim)
                 game["variant"] = self.logs[filepath][1]
-                game["displaystring"] = self.logs[filepath][2]
-                game["dumpfmt"] = self.logs[filepath][4]
+                game["displaystring"] = self.displaystring.get(game["variant"],game["variant"])
+                game["dumpfmt"] = self.logs[filepath][3]
                 for line in self.logs[filepath][0](game):
                     self.say(CHANNEL, line)
 
