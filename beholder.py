@@ -761,7 +761,7 @@ class DeathBotProtocol(irc.IRCClient):
 
     # players can request that their deaths not be reported if less than x turns
     def plr_tc_notreached(self, game):
-        return (game["death"] not in ("ascended") #report these anyway!
+        return (game["death"][0:8] not in ("ascended") #report these anyway!
            and game["name"].lower() in self.plr_tc.keys()
            and game["turns"] < self.plr_tc[game["name"].lower()])
 
@@ -788,7 +788,7 @@ class DeathBotProtocol(irc.IRCClient):
         if (game["endtime"] > self.tlastgame):
             self.lastgame = dumpurl
             self.tlastgame = game["endtime"]
-        if game["death"] in ("ascended"):
+        if game["death"][0:8] in ("ascended"):
             game["ascsuff"] = "\n" + dumpurl
             self.la["{variant}:{name}".format(**game).lower()] = dumpurl
             if (game["endtime"] > self.lae.get(game["name"].lower(), 0)):
