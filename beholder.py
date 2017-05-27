@@ -544,10 +544,10 @@ class DeathBotProtocol(irc.IRCClient):
                                                            "One Darwin stubby, coming up!"]))
         
     def do8ball(self, sender, replyto, msgwords):
-        self.respond(replyto, sender, random.choice(["It is certain", "It is decidedly so", "Without a doubt", "Yes definitely", "You may rely on it",
-                                                           "As I see it, yes", "Most likely", "Outlook good", "Yes", "Signs point to yes", "Reply hazy try again",
-                                                           "Ask again later", "Better not tell you now", "Cannot predict now", "Concentrate and ask again",
-                                                           "Don't count on it", "My reply is no", "My sources say no", "Outlook not so good", "Very doubtful"]))
+        self.respond(replyto, sender, random.choice(["\x1FIt is certain\x0F", "\x1FIt is decidedly so\x0F", "\x1FWithout a doubt\x0F", "\x1FYes definitely\x0F", "\x1FYou may rely on it\x0F",
+                                                           "\x1FAs I see it, yes\x0F", "\x1FMost likely\x0F", "\x1FOutlook good\x0F", "\x1FYes\x0F", "\x1FSigns point to yes\x0F", "\x1FReply hazy try again\x0F",
+                                                           "\x1FAsk again later\x0F", "\x1FBetter not tell you now\x0F", "\x1FCannot predict now\x0F", "\x1FConcentrate and ask again\x0F",
+                                                           "\x1FDon't count on it\x0F", "\x1FMy reply is no\x0F", "\x1FMy sources say no\x0F", "\x1FOutlook not so good\x0F", "\x1FVery doubtful\x0F"]))
         
     # The following started as !tea resulting in the bot making a cup of tea.
     # Now it does other stuff.
