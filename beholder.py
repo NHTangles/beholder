@@ -544,10 +544,10 @@ class DeathBotProtocol(irc.IRCClient):
                                                            "One Darwin stubby, coming up!"]))
         
     def do8ball(self, sender, replyto, msgwords):
-        self.respond(replyto, sender, random.choice(["\x1FIt is certain\x0F", "\x1FIt is decidedly so\x0F", "\x1FWithout a doubt\x0F", "\x1FYes definitely\x0F", "\x1FYou may rely on it\x0F",
-                                                           "\x1FAs I see it, yes\x0F", "\x1FMost likely\x0F", "\x1FOutlook good\x0F", "\x1FYes\x0F", "\x1FSigns point to yes\x0F", "\x1FReply hazy try again\x0F",
-                                                           "\x1FAsk again later\x0F", "\x1FBetter not tell you now\x0F", "\x1FCannot predict now\x0F", "\x1FConcentrate and ask again\x0F",
-                                                           "\x1FDon't count on it\x0F", "\x1FMy reply is no\x0F", "\x1FMy sources say no\x0F", "\x1FOutlook not so good\x0F", "\x1FVery doubtful\x0F"]))
+        self.respond(replyto, sender, random.choice(["\x1DIt is certain\x0F", "\x1DIt is decidedly so\x0F", "\x1DWithout a doubt\x0F", "\x1DYes definitely\x0F", "\x1DYou may rely on it\x0F",
+                                                           "\x1DAs I see it, yes\x0F", "\x1DMost likely\x0F", "\x1DOutlook good\x0F", "\x1DYes\x0F", "\x1DSigns point to yes\x0F", "\x1DReply hazy try again\x0F",
+                                                           "\x1DAsk again later\x0F", "\x1DBetter not tell you now\x0F", "\x1DCannot predict now\x0F", "\x1DConcentrate and ask again\x0F",
+                                                           "\x1DDon't count on it\x0F", "\x1DMy reply is no\x0F", "\x1DMy sources say no\x0F", "\x1DOutlook not so good\x0F", "\x1DVery doubtful\x0F"]))
         
     # The following started as !tea resulting in the bot making a cup of tea.
     # Now it does other stuff.
