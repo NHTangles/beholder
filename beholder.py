@@ -330,6 +330,7 @@ class DeathBotProtocol(irc.IRCClient):
                          "who"      : self.doPlayers,
                          "streak"   : self.doStreak,
                          "whereis"  : self.doWhereIs,
+                         "8ball"    : self.do8ball,
                          "setmintc" : self.setPlrTC}
 
         # seek to end of livelogs
@@ -419,7 +420,7 @@ class DeathBotProtocol(irc.IRCClient):
         self.respond(replyto, sender, msgwords[1] + " " + code + "TEST!" )
         
     def doCommands(self, sender, replyto, msgwords):
-        self.respond(replyto, sender, "available commands are !help !ping !time !pom !hello !booze !beer !potion !tea !coffee !whiskey !vodka !rum !tequila !scotch !goat !lotg !d(1-1000) !(1-50)d(1-1000) !rng !role !race !variant !tell !source !lastgame !lastasc !streak !rcedit !scores !sb !setmintc !whereis !players !who !commands")
+        self.respond(replyto, sender, "available commands are !help !ping !time !pom !hello !booze !beer !potion !tea !coffee !whiskey !vodka !rum !tequila !scotch !goat !lotg !d(1-1000) !(1-50)d(1-1000) !8ball !rng !role !race !variant !tell !source !lastgame !lastasc !streak !rcedit !scores !sb !setmintc !whereis !players !who !commands")
 
     def getPom(self, dt):
         # this is a direct translation of the NetHack method of working out pom.
@@ -553,7 +554,13 @@ class DeathBotProtocol(irc.IRCClient):
         self.respond(replyto, sender, random.choice(["It's your shout!", "I thought you'd never ask!",
                                                            "Burrrrp!", "We're not here to f#%k spiders, mate!",
                                                            "One Darwin stubby, coming up!"]))
-
+        
+    def do8ball(self, sender, replyto, msgwords):
+        self.respond(replyto, sender, random.choice(["\x1DIt is certain\x0F", "\x1DIt is decidedly so\x0F", "\x1DWithout a doubt\x0F", "\x1DYes definitely\x0F", "\x1DYou may rely on it\x0F",
+                                                           "\x1DAs I see it, yes\x0F", "\x1DMost likely\x0F", "\x1DOutlook good\x0F", "\x1DYes\x0F", "\x1DSigns point to yes\x0F", "\x1DReply hazy try again\x0F",
+                                                           "\x1DAsk again later\x0F", "\x1DBetter not tell you now\x0F", "\x1DCannot predict now\x0F", "\x1DConcentrate and ask again\x0F",
+                                                           "\x1DDon't count on it\x0F", "\x1DMy reply is no\x0F", "\x1DMy sources say no\x0F", "\x1DOutlook not so good\x0F", "\x1DVery doubtful\x0F"]))
+        
     # The following started as !tea resulting in the bot making a cup of tea.
     # Now it does other stuff.
     bev = { "serves": ["delivers", "tosses", "passes", "pours", "hands", "throws"],
