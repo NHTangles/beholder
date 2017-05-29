@@ -244,6 +244,8 @@ class DeathBotProtocol(irc.IRCClient):
                 "4k": (["nhfourk", "nhf", "fourk"],
                        vanilla_roles, vanilla_races + ["gia", "scu", "syl"])}
 
+    # variants which support streaks
+    streakvars = ["nh", "nd", "gh", "dnh", "un"]
     #who is making tea? - bots of the nethack community who have influenced this project.
     brethren = ["Rodney", "Athame", "Arsinoe", "Izchak", "TheresaMayBot", "the late Pinobot", "Announcy", "demogorgon", "the /dev/null/oracle"]
     looping_calls = None
@@ -277,6 +279,15 @@ class DeathBotProtocol(irc.IRCClient):
         self.tlastgame = 0
         self.lae = {}
         self.tlastasc = 0
+
+        # streaks
+        self.curstreak = {}
+        self.longstreak = {}
+        for v in self.streakvars:
+            # curstreak[var][player] = (start, end, length)
+            self.curstreak[v] = {}
+            # longstreak - as above
+            self.longstreak[v] = {}
 
         # for !tell
         self.tellbuf = shelve.open("/opt/beholder/tellmsg.db", writeback=True)
@@ -317,6 +328,7 @@ class DeathBotProtocol(irc.IRCClient):
                          "coltest"  : self.doColTest,
                          "players"  : self.doPlayers,
                          "who"      : self.doPlayers,
+                         "streak"   : self.doStreak,
                          "whereis"  : self.doWhereIs,
                          "setmintc" : self.setPlrTC}
 
@@ -407,7 +419,7 @@ class DeathBotProtocol(irc.IRCClient):
         self.respond(replyto, sender, msgwords[1] + " " + code + "TEST!" )
         
     def doCommands(self, sender, replyto, msgwords):
-        self.respond(replyto, sender, "available commands are !help !ping !time !pom !hello !booze !beer !potion !tea !coffee !whiskey !vodka !rum !tequila !scotch !goat !lotg !d(1-1000) !(1-50)d(1-1000) !rng !role !race !variant !tell !source !lastgame !lastasc !rcedit !scores !sb !setmintc !whereis !players !who !commands")
+        self.respond(replyto, sender, "available commands are !help !ping !time !pom !hello !booze !beer !potion !tea !coffee !whiskey !vodka !rum !tequila !scotch !goat !lotg !d(1-1000) !(1-50)d(1-1000) !rng !role !race !variant !tell !source !lastgame !lastasc !streak !rcedit !scores !sb !setmintc !whereis !players !who !commands")
 
     def getPom(self, dt):
         # this is a direct translation of the NetHack method of working out pom.
@@ -656,7 +668,68 @@ class DeathBotProtocol(irc.IRCClient):
         if not found:
             self.respond(replyto, sender, msgwords[1] + " is not currently playing.") 
         
+    
 
+    def doStreak(self, sender, replyto, msgwords):
+        plr = sender
+        var = False
+        if len(msgwords) > 3:
+            # !streak tom dick harry
+            self.respond(replyto,sender,"Usage: !" +msgwords[0] +" [variant] [player]") 
+            return
+        if len(msgwords) == 3:
+            vp = self.varalias(msgwords[1])
+            pv = self.varalias(msgwords[2])
+            if vp in self.variants.keys():
+                # !streak dnh Tangles
+                var = vp
+                plr = pv
+            elif pv in self.variants.keys():
+                # !streak K2 UnNethHack
+                var = pv
+                plr = vp
+            else: 
+                # !streak bogus garbage
+                self.respond(replyto,sender,"Usage: !" +msgwords[0] +" [variant] [player]") 
+                return
+        if len(msgwords) == 2:
+            vp = self.varalias(msgwords[1])
+            if vp in self.variants.keys():
+                # !streak Grunthack
+                var = vp
+            else:
+                # !streak Grasshopper
+                plr = vp
+        if var:
+            if var not in self.streakvars:
+                self.respond(replyto,sender,"Streaks are not recoreded for " + var +".")
+                return
+            (lstart,lend,llength) = self.longstreak[var].get(plr.lower(),(0,0,0))
+            (cstart,cend,clength) = self.curstreak[var].get(plr.lower(),(0,0,0))
+            self.respond(replyto,sender, plr + "[" + self.displaystring[var]
+                                             + "] Max: " + str(llength)
+                                             + " Current: " + str(clength))
+            return
+        (lmax,cmax) = (0,0)
+        for var in self.streakvars:
+            (lstart,lend,llength) = self.longstreak[var].get(plr.lower(),(0,0,0))
+            (cstart,cend,clength) = self.curstreak[var].get(plr.lower(),(0,0,0))
+            if llength > lmax:
+                lmax = llength
+                lvar = var
+            if clength > cmax:
+                cmax = clength
+                cvar = var
+        if lmax == 0:
+            self.respond(replyto,sender, "No streaks for " + plr +".") 
+            return
+        msg = plr + " Max[" + self.displaystring[lvar] + "]: " + str(lmax)
+        if cmax == 0:
+            msg += ". No current streaks."
+        else: 
+            msg += " Current[" + self.displaystring[cvar] + "]: " + str(cmax)
+        self.respond(replyto,sender, msg)
+ 
     def lastGame(self, sender, replyto, msgwords):
         if (len(msgwords) >= 3): #var, plr, any order.
             vp = self.varalias(msgwords[1])
@@ -798,8 +871,25 @@ class DeathBotProtocol(irc.IRCClient):
             if (game["endtime"] > self.tlastasc):
                 self.lastasc = dumpurl
                 self.tlastasc = game["endtime"]
+            if game["variant"] in self.streakvars:
+                (cs_start, cs_end,
+                 cs_length) = self.curstreak[game["variant"]].get(game["name"].lower(),
+                                                         (game["starttime"],0,0))
+                cs_end = game["endtime"]
+                cs_length += 1
+                self.curstreak[game["variant"]][game["name"].lower()] = (cs_start,
+                                                                         cs_end,
+                                                                         cs_length)
+                (ls_start, ls_end,
+                 ls_length) = self.longstreak[game["variant"]].get(game["name"].lower(),
+                                                                   (0,0,0))
+                if cs_length > ls_length:
+                    self.longstreak[game["variant"]][game["name"].lower()] = self.curstreak[game["variant"]][game["name"].lower()]
         else:
             game["ascsuff"] = ""
+            if game["variant"] in self.streakvars:
+                if game["name"].lower() in self.curstreak[game["variant"]]:
+                    del self.curstreak[game["variant"]][game["name"].lower()] 
 
         if (not report): return
         if self.plr_tc_notreached(game): return
