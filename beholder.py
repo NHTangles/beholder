@@ -677,8 +677,12 @@ class DeathBotProtocol(irc.IRCClient):
         
     
 
+    def streakDate(self,stamp):
+        return datetime.datetime.fromtimestamp(float(stamp)).strftime("%Y-%m-%d")
+
     def doStreak(self, sender, replyto, msgwords):
-        plr = sender
+        PLR = sender
+        plr = sender.lower()
         var = False
         if len(msgwords) > 3:
             # !streak tom dick harry
@@ -691,10 +695,12 @@ class DeathBotProtocol(irc.IRCClient):
                 # !streak dnh Tangles
                 var = vp
                 plr = pv
+                PLR = msgwords[2]
             elif pv in self.variants.keys():
                 # !streak K2 UnNethHack
                 var = pv
                 plr = vp
+                PLR = msgwords[1]
             else: 
                 # !streak bogus garbage
                 self.respond(replyto,sender,"Usage: !" +msgwords[0] +" [variant] [player]") 
@@ -707,35 +713,51 @@ class DeathBotProtocol(irc.IRCClient):
             else:
                 # !streak Grasshopper
                 plr = vp
+                PLR = msgwords[1]
         if var:
             if var not in self.streakvars:
                 self.respond(replyto,sender,"Streaks are not recoreded for " + var +".")
                 return
-            (lstart,lend,llength) = self.longstreak[var].get(plr.lower(),(0,0,0))
-            (cstart,cend,clength) = self.curstreak[var].get(plr.lower(),(0,0,0))
-            self.respond(replyto,sender, plr + "[" + self.displaystring[var]
-                                             + "] Max: " + str(llength)
-                                             + " Current: " + str(clength))
+            (lstart,lend,llength) = self.longstreak[var].get(plr,(0,0,0))
+            (cstart,cend,clength) = self.curstreak[var].get(plr,(0,0,0))
+            reply = PLR + "[" + self.displaystring[var] + "]"
+            if llength == 0:
+                reply += ": No streaks."
+                self.respond(replyto,sender,reply)
+                return
+            reply += " Max: " + str(llength) + " (" + self.streakDate(lstart) \
+                              + " - " + self.streakDate(lend) + ")"
+            if clength > 0:
+                if cstart == lstart:
+                    reply += "(current)"
+                else: 
+                    reply += ". Current: " + str(clength) + " (since " \
+                                           + self.streakDate(cstart) + ")"
+            reply += "."
+            self.respond(replyto,sender,reply)
             return
         (lmax,cmax) = (0,0)
         for var in self.streakvars:
-            (lstart,lend,llength) = self.longstreak[var].get(plr.lower(),(0,0,0))
-            (cstart,cend,clength) = self.curstreak[var].get(plr.lower(),(0,0,0))
+            (lstart,lend,llength) = self.longstreak[var].get(plr,(0,0,0))
+            (cstart,cend,clength) = self.curstreak[var].get(plr,(0,0,0))
             if llength > lmax:
-                lmax = llength
-                lvar = var
+                (lmax, lvar, lsmax, lemax)  = (llength, var, lstart, lend)
             if clength > cmax:
-                cmax = clength
-                cvar = var
+                (cmax, cvar, csmax, cemax)  = (clength, var, cstart, cend)
         if lmax == 0:
-            self.respond(replyto,sender, "No streaks for " + plr +".") 
+            self.respond(replyto,sender, "No streaks for " + PLR +".") 
             return
-        msg = plr + " Max[" + self.displaystring[lvar] + "]: " + str(lmax)
-        if cmax == 0:
-            msg += ". No current streaks."
-        else: 
-            msg += " Current[" + self.displaystring[cvar] + "]: " + str(cmax)
-        self.respond(replyto,sender, msg)
+        reply = PLR + " Max[" + self.displaystring[lvar] + "]: " + str(lmax)
+        reply += " (" + self.streakDate(lsmax) \
+                      + " - " + self.streakDate(lemax) + ")"
+        if cmax > 0:
+            if csmax == lsmax:
+                reply += "(current)"
+            else:
+                reply += ". Current[" + self.displaystring[cvar] + "]: " + str(cmax)
+                reply += " (since " + self.streakDate(csmax) + ")"
+        reply += "."
+        self.respond(replyto,sender, reply)
  
     def lastGame(self, sender, replyto, msgwords):
         if (len(msgwords) >= 3): #var, plr, any order.
@@ -828,7 +850,7 @@ class DeathBotProtocol(irc.IRCClient):
             if (dest == CHANNEL): return
         else: # pop the '!'
             message = message[1:]
-        msgwords = message.split(" ")
+        msgwords = message.strip().split(" ")
         if re.match(r'^\d*d\d*$', msgwords[0]):
             self.rollDice(sender, replyto, msgwords)
             return
