@@ -202,7 +202,7 @@ class DeathBotProtocol(irc.IRCClient):
                 "pri": "priest",       "ran": "ranger",    "rog": "rogue",
                 "sam": "samurai",      "tou": "tourist",   "val": "valkyrie",
                 "wiz": "wizard", #all
-                "ana": "anachronaut",  "bin": "binder",    "nob": "Noble",
+                "ana": "anachrononaut",  "bin": "binder",    "nob": "Noble",
                 "pir": "pirate",       "brd": "troubadour", #dnh
                 "con": "convict"} #unnethack
     racename = {"dwa": "dwarf", "elf": "elf", "gno": "gnome", "hum": "human",
