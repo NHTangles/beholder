@@ -469,7 +469,7 @@ class DeathBotProtocol(irc.IRCClient):
         self.msg(replyto, "Hello " + sender + ", Welcome to " + CHANNEL)
 
     def doLotg(self, sender, replyto, msgwords):
-        if len(msgwords) > 1: target = msgwords[1] 
+        if len(msgwords) > 1: target = " ".join(msgwords[1:])
         else: target = sender
         self.msg(replyto, "May the Luck of the Grasshopper be with you always, " + target + "!")
 
@@ -477,18 +477,26 @@ class DeathBotProtocol(irc.IRCClient):
         act = random.choice(['kicks', 'rams', 'headbutts'])
         part = random.choice(['arse', 'nose', 'face', 'kneecap'])
         if len(msgwords) > 1:
-            self.msg(replyto, sender + "'s goat runs up and " + act + " " + msgwords[1] + " in the " + part + "! Baaaaaa!")
+            self.msg(replyto, sender + "'s goat runs up and " + act + " " + " ".join(msgwords[1:]) + " in the " + part + "! Baaaaaa!")
         else:
             self.msg(replyto, NICK + "'s goat runs up and " + act + " " + sender + " in the " + part + "! Baaaaaa!")
 
     def doRng(self, sender, replyto, msgwords):
         if len(msgwords) == 1:
-            if (sender[0:11].lower()) == "grasshopper":
+            if (sender[0:11].lower()) == "grasshopper": # always troll the grasshopper
                 self.msg(replyto, "The RNG only has eyes for you, " + sender)
-            elif not random.randrange(5):
+            elif random.randrange(20): # 95% of the time, print usage
+                self.respond(replyto, sender, "!rng thomas richard harold ; !rng do dishes|play nethack ; !rng 1-100")
+            elif not random.randrange(5): #otherwise, trololol
                 self.respond(replyto, sender, "How doth the RNG hate thee? Let me count the ways...")
             else:
-                self.respond(replyto, sender, "The RNG " + random.choice(["hates you.","hates everyone (especially you)","REALLY hates you.","is thinking of Grasshopper <3", "hates everyone (except you-know-who)"]))
+                self.respond(replyto, sender, "The RNG " + random.choice(["hates you.",
+                                                                          "is thinking of Grasshopper <3",
+                                                                          "hates everyone (except you-know-who)",
+                                                                          "cares not for your whining.",
+                                                                          "is feeling generous (maybe).",
+                                                                          "doesn't care.",
+                                                                          "is indifferent to your plight."]))
             return
         multiword = " ".join(msgwords[1:]).split('|')
         if len(multiword) > 1:
@@ -496,7 +504,7 @@ class DeathBotProtocol(irc.IRCClient):
             return
         if len(msgwords) == 2:
             rngrange = msgwords[1].split('-')
-            self.respond(replyto, sender, str(random.randrange(int(rngrange[0]), int(rngrange[-1]+1))))
+            self.respond(replyto, sender, str(random.randrange(int(rngrange[0]), int(rngrange[-1])+1)))
         else:
             self.respond(replyto, sender, random.choice(msgwords[1:]))
 
