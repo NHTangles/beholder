@@ -575,15 +575,15 @@ class DeathBotProtocol(irc.IRCClient):
             # Attempt to make a sensible choice of vessel.
             # pick from "all", and check against specific drink. Loop a few times for a match, then give up.
             "vessel": {"all"   : ["cup", "mug", "shot", "tall glass", "tumbler", "glass", "schooner", "pint", "fifth", "vial", "potion", "barrel", "droplet", "bucket", "esky"],
-                       "tea"   : ["cup", "mug"],
+                       "tea"   : ["cup", "mug", "saucer"],
                        "potion": ["potion", "vial", "droplet"],
-                       "booze" : ["shot", "tall glass", "tumbler", "glass", "schooner", "pint", "fifth", "barrel"],
+                       "booze" : ["shot", "tall glass", "tumbler", "glass", "schooner", "pint", "fifth", "barrel", "flask"],
                        "coffee": ["cup", "mug"],
                        "vodka" : ["shot", "tall glass", "tumbler", "glass"],
-                       "whiskey":["shot", "tall glass", "tumbler", "glass"],
+                       "whiskey":["shot", "tall glass", "tumbler", "glass", "flask"],
                        "rum"   : ["shot", "tall glass", "tumbler", "glass"],
                        "tequila":["shot", "tall glass", "tumbler", "glass"],
-                       "scotch": ["shot", "tall glass", "tumbler", "glass"]
+                       "scotch": ["shot", "tall glass", "tumbler", "glass", "flask"]
                        # others omitted - anything goes for them
                       },
 
@@ -593,12 +593,12 @@ class DeathBotProtocol(irc.IRCClient):
                        "coffee": ["coffee", "espresso", "cafe latte", "Blend 43"],
                        "vodka" : ["Stolichnaya", "Absolut", "Grey Goose", "Ketel One", "Belvedere", "Luksusowa", "SKYY", "Finlandia", "Smirnoff"],
                        "whiskey":["Irish", "Jack Daniels", "Evan Williams", "Crown Royal", "Crown Royal Reserve", "Johnnie Walker Black", "Johnnie Walker Red", "Johnnie Walker Blue"],
-                       "rum"   : ["Bundy", "Jamaican", "white", "dark", "spiced"],
+                       "rum"   : ["Bundy", "Jamaican", "white", "dark", "spiced", "pirate"],
                        "fictional": ["Romulan ale", "Blood wine", "Kanar", "Pan Galactic Gargle Blaster", "jynnan tonyx", "gee-N'N-T'N-ix", "jinond-o-nicks", "chinanto/mnigs", "tzjin-anthony-ks", "Moloko Plus", "Duff beer", "Panther Pilsner beer", "Screaming Viking", "Blue milk", "Fizzy Bubblech", "Butterbeer", "Ent-draught", "Nectar of the Gods"],
                        "tequila":["blanco", "oro", "reposado", "añejo", "extra añejo", "Patron Silver", "Jose Cuervo 1800"],
                        "scotch": ["single malt", "single grain", "blended malt", "blended grain", "blended", "Glenfiddich", "Glenlivet", "Dalwhinnie"],
                        "junk"  : ["blended kale", "pickle juice", "poorly-distilled rocket fuel", "caustic gas", "liquid smoke", "protein shake", "wheatgrass nonsense", "olive oil", "saline solution", "napalm", "synovial fluid", "drool"]},
-            "prepared":["brewed", "distilled", "fermented", "decanted", "prayed over", "replicated", "conjured"],
+            "prepared":["brewed", "distilled", "fermented", "decanted", "prayed over", "replicated", "conjured", "acquired", "brewed", "excreted"],
             "degrees" :{"Kelvin": [0, 500], "degrees Celsius": [-20,95], "degrees Fahrenheit": [-20,200]}, #sane-ish ranges
             "suppress": ["coffee", "junk", "booze", "potion", "fictional"] } # do not append these to the random description
 
