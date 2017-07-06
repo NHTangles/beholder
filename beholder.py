@@ -167,7 +167,7 @@ class DeathBotProtocol(irc.IRCClient):
     whereis = {"nh": FILEROOT+"nh343/var/whereis/",
                "nd": FILEROOT+"nhdev/var/whereis/",
                "gh": FILEROOT+"gh/var/whereis/",
-              "dnh": FILEROOT+"dnethackdir/whereis/",
+              "dnh": FILEROOT+"dnethack-3.15.0/whereis/",
                "fh": FILEROOT+"fiqhackdir/var/whereis/",
               "dyn": FILEROOT+"dynahack/dynahack-data/var/whereis/",
               "nh4": FILEROOT+"nh4dir/save/whereis/",
