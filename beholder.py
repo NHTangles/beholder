@@ -376,6 +376,8 @@ class DeathBotProtocol(irc.IRCClient):
         self.looping_calls["nick"].start(30)
 
     def nickCheck(self):
+        # also rejoin the channel here, in case we drop off for any reason
+        self.join(CHANNEL)
         if (self.nickname != NICK):
             self.setNick(NICK)
 
