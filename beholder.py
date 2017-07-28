@@ -125,6 +125,7 @@ class DeathBotProtocol(irc.IRCClient):
                  filepath.FilePath(FILEROOT+"nh4dir/save/xlogfile"): ("nh4", ":", "nethack4/dumplog/{dumplog}"),
                  filepath.FilePath(FILEROOT+"fourkdir/save/xlogfile"): ("4k", "\t", "nhfourk/dumps/{dumplog}"),
                  filepath.FilePath(FILEROOT+"sporkhack/var/xlogfile"): ("sp", "\t", "sporkhack/dumplog/{starttime}.sp.txt"),
+                 filepath.FilePath(FILEROOT+"slex-2.0.1/xlogfile"): ("slex", "\t", "slex/dumplog/{starttime}.slex.txt"),
                  filepath.FilePath(FILEROOT+"un531/var/unnethack/xlogfile"): ("un", ":", "un531/dumplog/{starttime}.un531.txt.html")}
     livelogs  = {filepath.FilePath(FILEROOT+"nh343/var/livelog"): ("nh", ":"),
                  filepath.FilePath(FILEROOT+"nhdev/var/livelog"): ("nd", "\t"),
@@ -133,6 +134,7 @@ class DeathBotProtocol(irc.IRCClient):
                  filepath.FilePath(FILEROOT+"fourkdir/save/livelog"): ("4k", "\t"),
                  filepath.FilePath(FILEROOT+"fiqhackdir/data/livelog"): ("fh", ":"),
                  filepath.FilePath(FILEROOT+"sporkhack/var/livelog"): ("sp", "\t"),
+                 filepath.FilePath(FILEROOT+"slex-2.0.1/livelog"): ("slex", "\t"),
                  filepath.FilePath(FILEROOT+"un531/var/unnethack/livelog"): ("un", ":")}
 
     # for displaying variants in colour
@@ -145,6 +147,7 @@ class DeathBotProtocol(irc.IRCClient):
                     "nh4" : "\x0306nh4\x03",
                      "4k" : "\x03114k\x03",
                      "sp" : "\x0302sp\x03",
+                   "slex" : "\x0312slex\x03",
                      "un" : "\x0308un\x03"}
 
     # for !who or !players or whatever we end up calling it
@@ -160,6 +163,7 @@ class DeathBotProtocol(irc.IRCClient):
                "4k" : INPR+"4k/",
               "nh4" : INPR+"nh4/",
                "sp" : INPR+"sp/",
+             "slex" : INPR+"slex/",
               "dyn" : INPR+"dyn/"}
                
     # for !whereis 
@@ -173,6 +177,7 @@ class DeathBotProtocol(irc.IRCClient):
               "nh4": FILEROOT+"nh4dir/save/whereis/",
                "4k": FILEROOT+"fourkdir/save/whereis/",
                "sp": FILEROOT+"sporkhack/var/",
+             "slex": FILEROOT+"slex-2.0.1/",
                "un": FILEROOT+"un531/var/unnethack/whereis/"}
 
     dungeons = {"nh": ["The Dungeons of Doom","Gehennom","The Gnomish Mines","The Quest",
@@ -197,6 +202,8 @@ class DeathBotProtocol(irc.IRCClient):
                        "Sokoban","Fort Ludios","Advent Calendar","Vlad's Tower",
                        "The Elemental Planes"],
                 "sp": ["The Dungeons of Doom","Gehennom","The Gnomish Mines","The Quest",
+                       "Sokoban","Fort Ludios","Vlad's Tower","The Elemental Planes"],
+              "slex": ["The Dungeons of Doom","Gehennom","The Gnomish Mines","The Quest",
                        "Sokoban","Fort Ludios","Vlad's Tower","The Elemental Planes"],
                 "un": ["The Dungeons of Doom","Gehennom","Sheol","The Gnomish Mines",
                        "The Quest","Sokoban","Town","The Ruins of Moria","Fort Ludios",
