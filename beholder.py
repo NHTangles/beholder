@@ -146,7 +146,7 @@ class DeathBotProtocol(irc.IRCClient):
                     "dyn" : "\x0305dyn\x03",
                     "nh4" : "\x0306nh4\x03",
                      "4k" : "\x03114k\x03",
-                     "sp" : "\x0302sp\x03",
+                     "sp" : "\x0314sp\x03",
                    "slex" : "\x0312slex\x03",
                      "un" : "\x0308un\x03"}
 
