@@ -699,8 +699,15 @@ class DeathBotProtocol(irc.IRCClient):
                                  + " level: " + str(wirec["depth"])
                                  + ammy[wirec["amulet"]])
         if not found:
-            self.respond(replyto, sender, msgwords[1] + " is not currently playing.") 
-        
+            # Look for inprogress in case player is playing something that does not do whereis
+            for var in self.inprog.keys():
+                for inpfile in glob.iglob(self.inprog[var] + "*.ttyrec"):
+                    plr = inpfile.split("/")[-1].split(":")[0]
+                    if plr.lower() == msgwords[1].lower():
+                        found = True
+                        self.respond(replyto, sender, plr + " [" + self.displaystring[var] + "]: No details available")
+            if not found:
+                self.respond(replyto, sender, msgwords[1] + " is not currently playing.")
     
 
     def streakDate(self,stamp):
