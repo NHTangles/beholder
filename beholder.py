@@ -133,8 +133,8 @@ class DeathBotProtocol(irc.IRCClient):
                  filepath.FilePath(FILEROOT+"dnethack-3.15.0/livelog"): ("dnh", ":"),
                  filepath.FilePath(FILEROOT+"fourkdir/save/livelog"): ("4k", "\t"),
                  filepath.FilePath(FILEROOT+"fiqhackdir/data/livelog"): ("fh", ":"),
-                 filepath.FilePath(FILEROOT+"sporkhack/var/livelog"): ("sp", "\t"),
-                 filepath.FilePath(FILEROOT+"slex-2.0.1/livelog"): ("slex", "\t"),
+                 filepath.FilePath(FILEROOT+"sporkhack/var/livelog"): ("sp", ":"),
+                 filepath.FilePath(FILEROOT+"slex-2.0.1/livelog"): ("slex", ":"),
                  filepath.FilePath(FILEROOT+"un531/var/unnethack/livelog"): ("un", ":")}
 
     # for displaying variants in colour
