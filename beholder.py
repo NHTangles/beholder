@@ -54,7 +54,7 @@ if TEST:
     NICK = "BeerHolder"
 FILEROOT="/opt/nethack/hardfought.org/"
 WEBROOT="https://www.hardfought.org/"
-LOGROOT="/opt/beholder/irclog/"
+LOGROOT="/var/www/hardfought.org/irclog/"
 
 def fromtimestamp_int(s):
     return datetime.datetime.fromtimestamp(int(s))
