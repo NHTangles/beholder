@@ -122,7 +122,7 @@ class DeathBotProtocol(irc.IRCClient):
     xlogfiles = {filepath.FilePath(FILEROOT+"nh343/var/xlogfile"): ("nh", ":", "nh343/dumplog/{starttime}.nh343.txt"),
                  filepath.FilePath(FILEROOT+"nhdev/var/xlogfile"): ("nd", "\t", "nhdev/dumplog/{starttime}.nhdev.txt"),
                  filepath.FilePath(FILEROOT+"gh/var/xlogfile"): ("gh", ":", "gh/dumplog/{starttime}.gh.txt"),
-                 filepath.FilePath(FILEROOT+"dnethackdir/xlogfile"): ("dnh", ":", "dnethack/dumplog/{starttime}.dnh.txt"),
+                 filepath.FilePath(FILEROOT+"dnethack-3.15.0/xlogfile"): ("dnh", ":", "dnethack/dumplog/{starttime}.dnh.txt"),
                  filepath.FilePath(FILEROOT+"fiqhackdir/data/xlogfile"): ("fh", ":", "fiqhack/dumplog/{dumplog}"),
                  filepath.FilePath(FILEROOT+"dynahack/dynahack-data/var/xlogfile"): ("dyn", ":", "dynahack/dumplog/{dumplog}"),
                  filepath.FilePath(FILEROOT+"nh4dir/save/xlogfile"): ("nh4", ":", "nethack4/dumplog/{dumplog}"),
@@ -133,11 +133,11 @@ class DeathBotProtocol(irc.IRCClient):
     livelogs  = {filepath.FilePath(FILEROOT+"nh343/var/livelog"): ("nh", ":"),
                  filepath.FilePath(FILEROOT+"nhdev/var/livelog"): ("nd", "\t"),
                  filepath.FilePath(FILEROOT+"gh/var/livelog"): ("gh", ":"),
-                 filepath.FilePath(FILEROOT+"dnethackdir/livelog"): ("dnh", ":"),
+                 filepath.FilePath(FILEROOT+"dnethack-3.15.0/livelog"): ("dnh", ":"),
                  filepath.FilePath(FILEROOT+"fourkdir/save/livelog"): ("4k", "\t"),
                  filepath.FilePath(FILEROOT+"fiqhackdir/data/livelog"): ("fh", ":"),
-                 filepath.FilePath(FILEROOT+"sporkhack/var/livelog"): ("sp", "\t"),
-                 filepath.FilePath(FILEROOT+"slex-2.0.1/livelog"): ("slex", "\t"),
+                 filepath.FilePath(FILEROOT+"sporkhack/var/livelog"): ("sp", ":"),
+                 filepath.FilePath(FILEROOT+"slex-2.0.1/livelog"): ("slex", ":"),
                  filepath.FilePath(FILEROOT+"un531/var/unnethack/livelog"): ("un", ":")}
 
     # for displaying variants in colour
@@ -161,7 +161,7 @@ class DeathBotProtocol(irc.IRCClient):
                "nd" : INPR+"nhdev/",
                "gh" : INPR+"gh/",
                "un" : INPR+"un531/",
-              "dnh" : INPR+"dnh/",
+              "dnh" : INPR+"dnh315/",
                "fh" : INPR+"fh/",
                "4k" : INPR+"4k/",
               "nh4" : INPR+"nh4/",
