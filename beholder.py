@@ -551,8 +551,8 @@ class DeathBotProtocol(irc.IRCClient):
             self.respond(replyto, sender, random.choice(multiword))
             return
         if len(msgwords) == 2:
-            rngrange = msgwords[1].split('-')
-            self.respond(replyto, sender, str(random.randrange(int(rngrange[0]), int(rngrange[-1])+1))).strip()
+            rngrange = msgwords[1].split('-').strip()
+            self.respond(replyto, sender, str(random.randrange(int(rngrange[0]), int(rngrange[-1])+1)))
         else:
             self.respond(replyto, sender, random.choice(msgwords[1:]))
 
