@@ -546,7 +546,7 @@ class DeathBotProtocol(irc.IRCClient):
                                                                           "doesn't care.",
                                                                           "is indifferent to your plight."]))
             return
-        multiword = " ".join(msgwords[1:]).split('|')
+        multiword = " ".join(msgwords[1:]).split('|').strip()
         if len(multiword) > 1:
             self.respond(replyto, sender, random.choice(multiword))
             return
