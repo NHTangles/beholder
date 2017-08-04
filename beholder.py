@@ -54,6 +54,7 @@ if TEST:
     NICK = "BeerHolder"
 FILEROOT="/opt/nethack/hardfought.org/"
 WEBROOT="https://www.hardfought.org/"
+LOGROOT="/var/www/irclogs/"
 
 def fromtimestamp_int(s):
     return datetime.datetime.fromtimestamp(int(s))
@@ -115,6 +116,8 @@ class DeathBotProtocol(irc.IRCClient):
     scoresURL = WEBROOT + "nethack/scoreboard (HDF) or https://scoreboard.xd.cm (ALL)"
     rceditURL = WEBROOT + "nethack/rcedit"
     helpURL = WEBROOT + "nethack"
+    chanLogName = LOGROOT + CHANNEL + time.strftime("-%Y-%m-%d-%H:%M.log")
+    chanLog = open(chanLogName,'w')
 
     xlogfiles = {filepath.FilePath(FILEROOT+"nh343/var/xlogfile"): ("nh", ":", "nh343/dumplog/{starttime}.nh343.txt"),
                  filepath.FilePath(FILEROOT+"nhdev/var/xlogfile"): ("nd", "\t", "nhdev/dumplog/{starttime}.nhdev.txt"),
@@ -263,7 +266,7 @@ class DeathBotProtocol(irc.IRCClient):
     # variants which support streaks
     streakvars = ["nh", "nd", "gh", "dnh", "un", "sp"]
     #who is making tea? - bots of the nethack community who have influenced this project.
-    brethren = ["Rodney", "Athame", "Arsinoe", "Izchak", "TheresaMayBot", "the late Pinobot", "Announcy", "demogorgon", "the /dev/null/oracle"]
+    brethren = ["Rodney", "Athame", "Arsinoe", "Izchak", "TheresaMayBot", "FCCBot", "the late Pinobot", "Announcy", "demogorgon", "the /dev/null/oracle"]
     looping_calls = None
 
 
@@ -382,6 +385,15 @@ class DeathBotProtocol(irc.IRCClient):
         self.looping_calls["nick"] = task.LoopingCall(self.nickCheck)
         self.looping_calls["nick"].start(30)
 
+        #and another one to rotate the channel log every 24h
+        self.looping_calls["log"] = task.LoopingCall(self.logRotate)
+        self.looping_calls["log"].start(86400)
+
+    def logRotate(self):
+        self.chanLog.close()
+        self.chanLogName = LOGROOT + CHANNEL + time.strftime("-%Y-%m-%d-%H:%M.log")
+        self.chanLog = open(self.chanLogName,'w')
+
     def nickCheck(self):
         # also rejoin the channel here, in case we drop off for any reason
         self.join(CHANNEL)
@@ -404,6 +416,24 @@ class DeathBotProtocol(irc.IRCClient):
         # this is used for variant/player agnosticism in !lastgame
         return alias
 
+    # Write log
+    def log(self, message):
+        self.chanLog.write(time.strftime("%H:%M ") + message + "\n")
+        self.chanLog.flush()
+
+    # wrapper for "msg" that logs if msg dest is channel
+    # Need to log our own actions separately as they don't trigger events
+    def msgLog(self, replyto, message):
+        if replyto == CHANNEL:
+            self.log("<" + self.nickname + "> " + message)
+        self.msg(replyto, message)
+
+    # Similar wrapper for describe
+    def describeLog(self,replyto, message):
+        if replyto == CHANNEL:
+            self.log("* " + self.nickname + " " + message)
+        self.describe(replyto, message)
+
     # construct and send response.
     # replyto is channel, or private nick
     # sender is original sender of query
@@ -411,7 +441,7 @@ class DeathBotProtocol(irc.IRCClient):
         if (replyto.lower() == sender.lower()): #private
             self.msg(replyto, message)
         else: #channel - prepend "Nick: " to message
-            self.msg(replyto, sender + ": " + message)
+            self.msgLog(replyto, sender + ": " + message)
 
     # implement commands here
     def doPing(self, sender, replyto, msgwords):
@@ -484,25 +514,25 @@ class DeathBotProtocol(irc.IRCClient):
         self.respond(replyto, sender, resp)
 
     def doHello(self, sender, replyto, msgwords = 0):
-        self.msg(replyto, "Hello " + sender + ", Welcome to " + CHANNEL)
+        self.msgLog(replyto, "Hello " + sender + ", Welcome to " + CHANNEL)
 
     def doLotg(self, sender, replyto, msgwords):
         if len(msgwords) > 1: target = " ".join(msgwords[1:])
         else: target = sender
-        self.msg(replyto, "May the Luck of the Grasshopper be with you always, " + target + "!")
+        self.msgLog(replyto, "May the Luck of the Grasshopper be with you always, " + target + "!")
 
     def doGoat(self, sender, replyto, msgwords):
         act = random.choice(['kicks', 'rams', 'headbutts'])
         part = random.choice(['arse', 'nose', 'face', 'kneecap'])
         if len(msgwords) > 1:
-            self.msg(replyto, sender + "'s goat runs up and " + act + " " + " ".join(msgwords[1:]) + " in the " + part + "! Baaaaaa!")
+            self.msgLog(replyto, sender + "'s goat runs up and " + act + " " + " ".join(msgwords[1:]) + " in the " + part + "! Baaaaaa!")
         else:
-            self.msg(replyto, NICK + "'s goat runs up and " + act + " " + sender + " in the " + part + "! Baaaaaa!")
+            self.msgLog(replyto, NICK + "'s goat runs up and " + act + " " + sender + " in the " + part + "! Baaaaaa!")
 
     def doRng(self, sender, replyto, msgwords):
         if len(msgwords) == 1:
             if (sender[0:11].lower()) == "grasshopper": # always troll the grasshopper
-                self.msg(replyto, "The RNG only has eyes for you, " + sender)
+                self.msgLog(replyto, "The RNG only has eyes for you, " + sender)
             elif random.randrange(20): # 95% of the time, print usage
                 self.respond(replyto, sender, "!rng thomas richard harold ; !rng do dishes|play nethack ; !rng 1-100")
             elif not random.randrange(5): #otherwise, trololol
@@ -634,7 +664,7 @@ class DeathBotProtocol(irc.IRCClient):
         tempunit = random.choice(self.bev["degrees"].keys())
         [tmin,tmax] = self.bev["degrees"][tempunit]
         temp = random.randrange(tmin,tmax)
-        self.describe(replyto, random.choice(self.bev["serves"]) + " " + target
+        self.describeLog(replyto, random.choice(self.bev["serves"]) + " " + target
                 + " a "  + vessel
                 + " of " + fulldrink
                 + ", "   + random.choice(self.bev["prepared"])
@@ -652,7 +682,7 @@ class DeathBotProtocol(irc.IRCClient):
             self.tellbuf[rcpt.lower()] = []
         self.tellbuf[rcpt.lower()].append((forwardto,sender,time.time()," ".join(msgwords[2:])))
         self.tellbuf.sync()
-        self.msg(replyto,"Will do, " + sender + "!")
+        self.msgLog(replyto,"Will do, " + sender + "!")
 
     def msgTime(self, stamp):
         # Timezone handling is not great, but the following seems to work.
@@ -866,10 +896,12 @@ class DeathBotProtocol(irc.IRCClient):
         else:
             self.respond(replyto, sender, "Usage: !" + msgwords[0] + " [turncount]")
 
+
     # Listen to the chatter
     def privmsg(self, sender, dest, message):
         sender = sender.partition("!")[0]
         if (dest == CHANNEL): #public message
+            self.log("<"+sender+"> " + message)
             replyto = CHANNEL
         else: #private msg
             replyto = sender
@@ -890,6 +922,50 @@ class DeathBotProtocol(irc.IRCClient):
         if self.commands.get(msgwords[0].lower(), False):
             self.commands[msgwords[0].lower()](sender, replyto, msgwords)
 
+    #other events for logging
+    def action(self, doer, dest, message):
+        if (dest == CHANNEL):
+            doer = doer.split('!', 1)[0]
+            self.log("* " + doer + " " + message)
+
+#    def irc_NICK(self, user, params):
+#        oldName = user.split('!')[0]
+#        newName = params[0]
+    def userRenamed(self, oldName, newName):
+        self.log("-!- " + oldName + " is now known as " + newName)
+
+    def noticed(self, user, channel, message):
+        if (channel == CHANNEL):
+            user = user.split('!')[0]
+            self.log("-" + user + ":" + channel + "- " + message)
+
+    def modeChanged(self, user, channel, set, modes, args):
+        if (set): s = "+"
+        else: s = "-"
+        user = user.split('!')[0]
+        #self.log("-!- mode/" + channel + " [" + s + modes + " " + " ".join(list(args)) + "] by " + user)
+        self.log("-!- mode/" + channel + " [" + s + modes + "] by " + user)
+
+    def userJoined(self, user, channel):
+        (user,details) = user.split('!')
+        self.log("-!- " + user + " [" + details + "] has joined " + channel)
+
+    def userLeft(self, user, channel):
+        (user,details) = user.split('!')
+        self.log("-!- " + user + " [" + details + "] has left " + channel)
+
+    def userQuit(self, user, quitMsg):
+        (user,details) = user.split('!')
+        self.log("-!- " + user + " [" + details + "] has quit [" + quitMsg + "]")
+
+    def userKicked(self, kickee, channel, kicker, message):
+        kicker = kicker.split('!')[0]
+        kickee = kickee.split('!')[0]
+        self.log("-!- " + kickee + " was kicked from " + channel + "by " + kicker + " [" + message + "]")
+
+    def topicUpdated(self, user, channel, newTopic):
+        user = user.split('!')[0]
+        self.log("-!- " + user + " changed the topic on " + channel + " to: " + newTopic)
 
     def startscummed(self, game):
         return game["death"] in ("quit", "escaped") and game["points"] < 1000
