@@ -49,6 +49,7 @@ TEST= False
 HOST, PORT = "chat.us.freenode.net", 6697
 CHANNEL = "#hardfought"
 NICK = "Beholder"
+PINOBOT = "Pinobot"
 if TEST:
     CHANNEL = "#hfdev"
     NICK = "BeerHolder"
@@ -900,6 +901,9 @@ class DeathBotProtocol(irc.IRCClient):
     # Listen to the chatter
     def privmsg(self, sender, dest, message):
         sender = sender.partition("!")[0]
+        if (sender == PINOBOT): # response to earlier pino query
+            self.msgLog(CHANNEL,message)
+            return
         if (dest == CHANNEL): #public message
             self.log("<"+sender+"> " + message)
             replyto = CHANNEL
@@ -910,6 +914,14 @@ class DeathBotProtocol(irc.IRCClient):
             self.doHello(sender, replyto)
         # Message checks next.
         self.checkMessages(sender)
+        # Proxy pino queries
+        if (message[0] == '@'):
+            if (dest == CHANNEL):
+                print PINOBOT + ":" + message
+                self.msg(PINOBOT,message)
+            else:
+                self.respond(replyto,sender,"Please query " + PINOBOT + " directly.")
+            return
         # ignore other channel noise unless !command
         if (message[0] != '!'):
             if (dest == CHANNEL): return
@@ -928,9 +940,6 @@ class DeathBotProtocol(irc.IRCClient):
             doer = doer.split('!', 1)[0]
             self.log("* " + doer + " " + message)
 
-#    def irc_NICK(self, user, params):
-#        oldName = user.split('!')[0]
-#        newName = params[0]
     def userRenamed(self, oldName, newName):
         self.log("-!- " + oldName + " is now known as " + newName)
 
