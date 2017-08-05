@@ -1102,7 +1102,7 @@ class DeathBotProtocol(irc.IRCClient):
                 game["displaystring"] = self.displaystring.get(game["variant"],game["variant"])
                 game["dumpfmt"] = self.logs[filepath][3]
                 for line in self.logs[filepath][0](game):
-                    self.say(CHANNEL, line)
+                    self.msgLog(CHANNEL, line)
 
             self.logs_seek[filepath] = handle.tell()
 
