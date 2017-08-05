@@ -943,8 +943,10 @@ class DeathBotProtocol(irc.IRCClient):
         if (set): s = "+"
         else: s = "-"
         user = user.split('!')[0]
-        #self.log("-!- mode/" + channel + " [" + s + modes + " " + " ".join(list(args)) + "] by " + user)
-        self.log("-!- mode/" + channel + " [" + s + modes + "] by " + user)
+        if args[0]:
+            self.log("-!- mode/" + channel + " [" + s + modes + " " + " ".join(list(args)) + "] by " + user)
+        else:
+            self.log("-!- mode/" + channel + " [" + s + modes + "] by " + user)
 
     def userJoined(self, user, channel):
         (user,details) = user.split('!')
