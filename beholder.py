@@ -419,6 +419,11 @@ class DeathBotProtocol(irc.IRCClient):
 
     # Write log
     def log(self, message):
+        # strip the colour control stuff out
+        # This can probably all be done with a single RE but I have a headache.
+        message = re.sub(r'\x03\d\d,\d\d', '', message) # fg,bg pair
+        message = re.sub(r'\x03\d\d', '', message) # fg only
+        message = re.sub(r'[\x03\x0f]', '', message) # end of colour
         self.chanLog.write(time.strftime("%H:%M ") + message + "\n")
         self.chanLog.flush()
 
