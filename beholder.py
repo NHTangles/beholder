@@ -922,7 +922,6 @@ class DeathBotProtocol(irc.IRCClient):
         # Proxy pino queries
         if (message[0] == '@'):
             if (dest == CHANNEL):
-                print PINOBOT + ":" + message
                 self.msg(PINOBOT,message)
             else:
                 self.respond(replyto,sender,"Please query " + PINOBOT + " directly.")
@@ -963,25 +962,29 @@ class DeathBotProtocol(irc.IRCClient):
             self.log("-!- mode/" + channel + " [" + s + modes + "] by " + user)
 
     def userJoined(self, user, channel):
-        (user,details) = user.split('!')
-        self.log("-!- " + user + " [" + details + "] has joined " + channel)
+        #(user,details) = user.split('!')
+        #self.log("-!- " + user + " [" + details + "] has joined " + channel)
+        self.log("-!- " + user + " has joined " + channel)
 
     def userLeft(self, user, channel):
-        (user,details) = user.split('!')
-        self.log("-!- " + user + " [" + details + "] has left " + channel)
+        #(user,details) = user.split('!')
+        #self.log("-!- " + user + " [" + details + "] has left " + channel)
+        self.log("-!- " + user + " has left " + channel)
 
     def userQuit(self, user, quitMsg):
-        (user,details) = user.split('!')
-        self.log("-!- " + user + " [" + details + "] has quit [" + quitMsg + "]")
+        #(user,details) = user.split('!')
+        #self.log("-!- " + user + " [" + details + "] has quit [" + quitMsg + "]")
+        self.log("-!- " + user + " has quit [" + quitMsg + "]")
 
     def userKicked(self, kickee, channel, kicker, message):
         kicker = kicker.split('!')[0]
         kickee = kickee.split('!')[0]
-        self.log("-!- " + kickee + " was kicked from " + channel + "by " + kicker + " [" + message + "]")
+        self.log("-!- " + kickee + " was kicked from " + channel + " by " + kicker + " [" + message + "]")
 
     def topicUpdated(self, user, channel, newTopic):
         user = user.split('!')[0]
         self.log("-!- " + user + " changed the topic on " + channel + " to: " + newTopic)
+
 
     def startscummed(self, game):
         return game["death"] in ("quit", "escaped") and game["points"] < 1000
