@@ -35,7 +35,8 @@ from twisted.application import internet, service
 import datetime # for timestamp stuff
 import time     # for !time
 import ast      # for conduct/achievement bitfields - not really used
-import os       # for check path exists (dumplogs)
+import os       # for check path exists (dumplogs), and chmod
+import stat     # for chmod mode bits
 import re       # for hello, and other things.
 import urllib   # for dealing with NH4 variants' #&$#@ spaces in filenames.
 import shelve   # for perstistent !tell messages
@@ -119,6 +120,7 @@ class DeathBotProtocol(irc.IRCClient):
     helpURL = WEBROOT + "nethack"
     chanLogName = LOGROOT + CHANNEL + time.strftime("-%Y-%m-%d-%H:%M.log")
     chanLog = open(chanLogName,'w')
+    os.chmod(chanLogName,stat.S_IRUSR|stat.S_IWUSR|stat.S_IRGRP|stat.S_IROTH)
 
     xlogfiles = {filepath.FilePath(FILEROOT+"nh343/var/xlogfile"): ("nh", ":", "nh343/dumplog/{starttime}.nh343.txt"),
                  filepath.FilePath(FILEROOT+"nhdev/var/xlogfile"): ("nd", "\t", "nhdev/dumplog/{starttime}.nhdev.txt"),
@@ -394,6 +396,7 @@ class DeathBotProtocol(irc.IRCClient):
         self.chanLog.close()
         self.chanLogName = LOGROOT + CHANNEL + time.strftime("-%Y-%m-%d-%H:%M.log")
         self.chanLog = open(self.chanLogName,'w')
+        os.chmod(self.chanLogName,stat.S_IRUSR|stat.S_IWUSR|stat.S_IRGRP|stat.S_IROTH)
 
     def nickCheck(self):
         # also rejoin the channel here, in case we drop off for any reason
