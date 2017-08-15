@@ -118,7 +118,8 @@ class DeathBotProtocol(irc.IRCClient):
     scoresURL = WEBROOT + "nethack/scoreboard (HDF) or https://scoreboard.xd.cm (ALL)"
     rceditURL = WEBROOT + "nethack/rcedit"
     helpURL = WEBROOT + "nethack"
-    chanLogName = LOGROOT + CHANNEL + time.strftime("-%Y-%m-%d-%H:%M.log")
+    logday = time.strftime("%d")
+    chanLogName = LOGROOT + CHANNEL + time.strftime("-%Y-%m-%d.log")
     chanLog = open(chanLogName,'w')
     os.chmod(chanLogName,stat.S_IRUSR|stat.S_IWUSR|stat.S_IRGRP|stat.S_IROTH)
 
@@ -388,16 +389,6 @@ class DeathBotProtocol(irc.IRCClient):
         self.looping_calls["nick"] = task.LoopingCall(self.nickCheck)
         self.looping_calls["nick"].start(30)
 
-        #and another one to rotate the channel log every 24h
-        self.looping_calls["log"] = task.LoopingCall(self.logRotate)
-        self.looping_calls["log"].start(86400)
-
-    def logRotate(self):
-        self.chanLog.close()
-        self.chanLogName = LOGROOT + CHANNEL + time.strftime("-%Y-%m-%d-%H:%M.log")
-        self.chanLog = open(self.chanLogName,'w')
-        os.chmod(self.chanLogName,stat.S_IRUSR|stat.S_IWUSR|stat.S_IRGRP|stat.S_IROTH)
-
     def nickCheck(self):
         # also rejoin the channel here, in case we drop off for any reason
         self.join(CHANNEL)
@@ -420,6 +411,13 @@ class DeathBotProtocol(irc.IRCClient):
         # this is used for variant/player agnosticism in !lastgame
         return alias
 
+    def logRotate(self):
+        self.chanLog.close()
+        self.logday = time.strftime("%d")
+        self.chanLogName = LOGROOT + CHANNEL + time.strftime("-%Y-%m-%d.log")
+        self.chanLog = open(self.chanLogName,'w')
+        os.chmod(self.chanLogName,stat.S_IRUSR|stat.S_IWUSR|stat.S_IRGRP|stat.S_IROTH)
+
     # Write log
     def log(self, message):
         # strip the colour control stuff out
@@ -427,6 +425,7 @@ class DeathBotProtocol(irc.IRCClient):
         message = re.sub(r'\x03\d\d,\d\d', '', message) # fg,bg pair
         message = re.sub(r'\x03\d\d', '', message) # fg only
         message = re.sub(r'[\x03\x0f]', '', message) # end of colour
+        if time.strftime("%d") != self.logday: self.logRotate()
         self.chanLog.write(time.strftime("%H:%M ") + message + "\n")
         self.chanLog.flush()
 
