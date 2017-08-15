@@ -126,22 +126,22 @@ class DeathBotProtocol(irc.IRCClient):
     xlogfiles = {filepath.FilePath(FILEROOT+"nh343/var/xlogfile"): ("nh", ":", "nh343/dumplog/{starttime}.nh343.txt"),
                  filepath.FilePath(FILEROOT+"nhdev/var/xlogfile"): ("nd", "\t", "nhdev/dumplog/{starttime}.nhdev.txt"),
                  filepath.FilePath(FILEROOT+"gh/var/xlogfile"): ("gh", ":", "gh/dumplog/{starttime}.gh.txt"),
-                 filepath.FilePath(FILEROOT+"dnethack-3.15.0/xlogfile"): ("dnh", ":", "dnethack/dumplog/{starttime}.dnh.txt"),
+                 filepath.FilePath(FILEROOT+"dnethack-3.15.1/xlogfile"): ("dnh", ":", "dnethack/dumplog/{starttime}.dnh.txt"),
                  filepath.FilePath(FILEROOT+"fiqhackdir/data/xlogfile"): ("fh", ":", "fiqhack/dumplog/{dumplog}"),
                  filepath.FilePath(FILEROOT+"dynahack/dynahack-data/var/xlogfile"): ("dyn", ":", "dynahack/dumplog/{dumplog}"),
                  filepath.FilePath(FILEROOT+"nh4dir/save/xlogfile"): ("nh4", ":", "nethack4/dumplog/{dumplog}"),
                  filepath.FilePath(FILEROOT+"fourkdir/save/xlogfile"): ("4k", "\t", "nhfourk/dumps/{dumplog}"),
                  filepath.FilePath(FILEROOT+"sporkhack-0.6.5/var/xlogfile"): ("sp", "\t", "sporkhack/dumplog/{starttime}.sp.txt"),
-                 filepath.FilePath(FILEROOT+"slex-2.0.1/xlogfile"): ("slex", "\t", "slex/dumplog/{starttime}.slex.txt"),
+                 filepath.FilePath(FILEROOT+"slex-2.0.2/xlogfile"): ("slex", "\t", "slex/dumplog/{starttime}.slex.txt"),
                  filepath.FilePath(FILEROOT+"un531/var/unnethack/xlogfile"): ("un", ":", "un531/dumplog/{starttime}.un531.txt.html")}
     livelogs  = {filepath.FilePath(FILEROOT+"nh343/var/livelog"): ("nh", ":"),
                  filepath.FilePath(FILEROOT+"nhdev/var/livelog"): ("nd", "\t"),
                  filepath.FilePath(FILEROOT+"gh/var/livelog"): ("gh", ":"),
-                 filepath.FilePath(FILEROOT+"dnethack-3.15.0/livelog"): ("dnh", ":"),
+                 filepath.FilePath(FILEROOT+"dnethack-3.15.1/livelog"): ("dnh", ":"),
                  filepath.FilePath(FILEROOT+"fourkdir/save/livelog"): ("4k", "\t"),
                  filepath.FilePath(FILEROOT+"fiqhackdir/data/livelog"): ("fh", ":"),
                  filepath.FilePath(FILEROOT+"sporkhack-0.6.5/var/livelog"): ("sp", ":"),
-                 filepath.FilePath(FILEROOT+"slex-2.0.1/livelog"): ("slex", ":"),
+                 filepath.FilePath(FILEROOT+"slex-2.0.2/livelog"): ("slex", ":"),
                  filepath.FilePath(FILEROOT+"un531/var/unnethack/livelog"): ("un", ":")}
 
     # for displaying variants in colour
@@ -165,12 +165,12 @@ class DeathBotProtocol(irc.IRCClient):
                "nd" : INPR+"nhdev/",
                "gh" : INPR+"gh/",
                "un" : INPR+"un531/",
-              "dnh" : INPR+"dnh315/",
+              "dnh" : INPR+"dnh3151/",
                "fh" : INPR+"fh/",
                "4k" : INPR+"4k/",
               "nh4" : INPR+"nh4/",
                "sp" : INPR+"sp065/",
-             "slex" : INPR+"slex/",
+             "slex" : INPR+"slex202/",
               "dyn" : INPR+"dyn/"}
                
     # for !whereis 
@@ -178,13 +178,13 @@ class DeathBotProtocol(irc.IRCClient):
     whereis = {"nh": FILEROOT+"nh343/var/whereis/",
                "nd": FILEROOT+"nhdev/var/whereis/",
                "gh": FILEROOT+"gh/var/whereis/",
-              "dnh": FILEROOT+"dnethack-3.15.0/whereis/",
+              "dnh": FILEROOT+"dnethack-3.15.1/whereis/",
                "fh": FILEROOT+"fiqhackdir/var/whereis/",
               "dyn": FILEROOT+"dynahack/dynahack-data/var/whereis/",
               "nh4": FILEROOT+"nh4dir/save/whereis/",
                "4k": FILEROOT+"fourkdir/save/whereis/",
                "sp": FILEROOT+"sporkhack-0.6.5/var/",
-             "slex": FILEROOT+"slex-2.0.1/",
+             "slex": FILEROOT+"slex-2.0.2/",
                "un": FILEROOT+"un531/var/unnethack/whereis/"}
 
     dungeons = {"nh": ["The Dungeons of Doom","Gehennom","The Gnomish Mines","The Quest",
