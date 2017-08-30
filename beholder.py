@@ -125,7 +125,7 @@ class DeathBotProtocol(irc.IRCClient):
 
     xlogfiles = {filepath.FilePath(FILEROOT+"nh343/var/xlogfile"): ("nh", ":", "nh343/dumplog/{starttime}.nh343.txt"),
                  filepath.FilePath(FILEROOT+"nhdev/var/xlogfile"): ("nd", "\t", "nhdev/dumplog/{starttime}.nhdev.txt"),
-                 filepath.FilePath(FILEROOT+"gh/var/xlogfile"): ("gh", ":", "gh/dumplog/{starttime}.gh.txt"),
+                 filepath.FilePath(FILEROOT+"grunthack-0.2.2/var/xlogfile"): ("gh", ":", "gh/dumplog/{starttime}.gh.txt"),
                  filepath.FilePath(FILEROOT+"dnethack-3.15.1/xlogfile"): ("dnh", ":", "dnethack/dumplog/{starttime}.dnh.txt"),
                  filepath.FilePath(FILEROOT+"fiqhackdir/data/xlogfile"): ("fh", ":", "fiqhack/dumplog/{dumplog}"),
                  filepath.FilePath(FILEROOT+"dynahack/dynahack-data/var/xlogfile"): ("dyn", ":", "dynahack/dumplog/{dumplog}"),
@@ -136,7 +136,7 @@ class DeathBotProtocol(irc.IRCClient):
                  filepath.FilePath(FILEROOT+"un531/var/unnethack/xlogfile"): ("un", ":", "un531/dumplog/{starttime}.un531.txt.html")}
     livelogs  = {filepath.FilePath(FILEROOT+"nh343/var/livelog"): ("nh", ":"),
                  filepath.FilePath(FILEROOT+"nhdev/var/livelog"): ("nd", "\t"),
-                 filepath.FilePath(FILEROOT+"gh/var/livelog"): ("gh", ":"),
+                 filepath.FilePath(FILEROOT+"grunthack-0.2.2/var/livelog"): ("gh", ":"),
                  filepath.FilePath(FILEROOT+"dnethack-3.15.1/livelog"): ("dnh", ":"),
                  filepath.FilePath(FILEROOT+"fourkdir/save/livelog"): ("4k", "\t"),
                  filepath.FilePath(FILEROOT+"fiqhackdir/data/livelog"): ("fh", ":"),
@@ -163,7 +163,7 @@ class DeathBotProtocol(irc.IRCClient):
     INPR=DGLD+"inprogress-"
     inprog = { "nh" : INPR+"nh343/",
                "nd" : INPR+"nhdev/",
-               "gh" : INPR+"gh/",
+               "gh" : INPR+"gh022/",
                "un" : INPR+"un531/",
               "dnh" : INPR+"dnh3151/",
                "fh" : INPR+"fh/",
@@ -177,7 +177,7 @@ class DeathBotProtocol(irc.IRCClient):
     # some of these don't exist yet, so paths may not be accurate
     whereis = {"nh": FILEROOT+"nh343/var/whereis/",
                "nd": FILEROOT+"nhdev/var/whereis/",
-               "gh": FILEROOT+"gh/var/whereis/",
+               "gh": FILEROOT+"grunthack-0.2.2/var/whereis/",
               "dnh": FILEROOT+"dnethack-3.15.1/whereis/",
                "fh": FILEROOT+"fiqhackdir/var/whereis/",
               "dyn": FILEROOT+"dynahack/dynahack-data/var/whereis/",
