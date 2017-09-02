@@ -265,8 +265,13 @@ class DeathBotProtocol(irc.IRCClient):
                 "sp": (["sporkhack", "spork"],
                        vanilla_roles, vanilla_races),
                 "4k": (["nhfourk", "nhf", "fourk"],
-                       vanilla_roles, vanilla_races + ["gia", "scu", "syl"])}
-
+                       vanilla_roles, vanilla_races + ["gia", "scu", "syl"]),
+              "slex": (["slex", "sloth"], 
+                       vanilla_roles
+                         + ["aci", "act", "alt", "ama", "ana", "art", "ass", "aug", "brd", "bin", "ble", "blo", "bos", "bul", "cam", "cha", "che", "con", "coo", "cou", "abu", "dea", "div", "dol", "mar", "sli", "drd", "dru", "dun", "ele", "elm", "elp", "erd", "fai", "stu", "fen", "fig", "fir", "fla", "fox", "gam", "gan", "gee", "gla", "gof", "gol", "gra", "gun", "ice", "scr", "jed", "jes", "jus", "kor", "kur", "lad", "lib", "loc", "lun", "mah", "med", "mid", "mon", "mur", "mus", "mys", "nec", "nin", "nob", "occ", "off", "ord", "ota", "pal", "pic", "pir", "poi", "pok", "pol", "pro", "psi", "rin", "roc", "sag", "sai", "sci", "sha", "sla", "spa", "sup", "tha", "top", "trs", "tra", "twe", "unb", "und", "unt", "use", "wan", "war", "wil", "yeo", "sex", "zoo", "zyb"],
+                       vanilla_races
+                         + ["add", "akt", "alb", "alc", "ali", "ame", "amn", "anc", "acp", "agb", "ang", "aqu", "arg", "asg"])}
+    
     # variants which support streaks
     streakvars = ["nh", "nd", "gh", "dnh", "un", "sp"]
     #who is making tea? - bots of the nethack community who have influenced this project.
