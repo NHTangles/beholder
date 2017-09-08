@@ -144,6 +144,20 @@ class DeathBotProtocol(irc.IRCClient):
                  filepath.FilePath(FILEROOT+"slex-2.0.5/livelog"): ("slex", ":"),
                  filepath.FilePath(FILEROOT+"un531/var/unnethack/livelog"): ("un", ":")}
 
+    # Forward events to other bots at the request of maintainers of other variant-specific channels
+    forwards = {"nh" : [],
+                "nd" : [],
+                "gh" : [],
+               "dnh" : [],
+                "fh" : [],
+               "dyn" : [],
+               "nh4" : [],
+                "4k" : [],
+                "sp" : [],
+#             "slex" : ["FCCBot","Elronnd","Tangles"],
+              "slex" : ["FCCBot"],
+                "un" : []}
+
     # for displaying variants in colour
     displaystring = {"nh" : "\x0315nh\x03",
                      "nd" : "\x0307nd\x03",
@@ -1129,6 +1143,8 @@ class DeathBotProtocol(irc.IRCClient):
                 game["dumpfmt"] = self.logs[filepath][3]
                 for line in self.logs[filepath][0](game):
                     self.msgLog(CHANNEL, line)
+                    for fwd in self.forwards[game["variant"]]:
+                        self.msg(fwd, line)
 
             self.logs_seek[filepath] = handle.tell()
 
