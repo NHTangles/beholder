@@ -286,8 +286,12 @@ class DeathBotProtocol(irc.IRCClient):
                        vanilla_races
                          + ["add", "akt", "alb", "alc", "ali", "ame", "amn", "anc", "acp", "agb", "ang", "aqu", "arg", "asg"])}
     
-    # variants which support streaks
-    streakvars = ["nh", "nd", "gh", "dnh", "un", "sp"]
+    # variants which support streaks - now tracking slex streaks, because that's totally possible.
+    streakvars = ["nh", "nd", "gh", "dnh", "un", "sp", "slex"]
+    # for !asc statistics - assume these are the same for all variants, or at least the sane ones.
+    aligns = ["Law", "Neu", "Cha"]
+    genders = ["Mal", "Fem"]
+
     #who is making tea? - bots of the nethack community who have influenced this project.
     brethren = ["Rodney", "Athame", "Arsinoe", "Izchak", "TheresaMayBot", "FCCBot", "the late Pinobot", "Announcy", "demogorgon", "the /dev/null/oracle"]
     looping_calls = None
@@ -331,6 +335,23 @@ class DeathBotProtocol(irc.IRCClient):
             # longstreak - as above
             self.longstreak[v] = {}
 
+        # ascensions (for !asc)
+        # "!asc plr var" will give something like Rodney's output.
+        # "!asc plr" will give breakdown by variant.
+        # "!asc" or "!asc var" will be as above, assuming requestor's nick.
+        # asc[var][player][role] = count;
+        # asc[var][player][race] = count;
+        # asc[var][player][align] = count;
+        # asc[var][player][gender] = count;
+        # assumes 3-char abbreviations for role/race/align/gender, and no overlaps.
+        # for asc ratio we need total games too
+        # allgames[var][player] = count;
+        self.asc = {}
+        self.allgames = {}
+        for v in self.variants.keys():
+            self.asc[v] = {};
+            self.allgames[v] = {};
+
         # for !tell
         self.tellbuf = shelve.open("/opt/beholder/tellmsg.db", writeback=True)
         # for !setmintc
@@ -370,6 +391,7 @@ class DeathBotProtocol(irc.IRCClient):
                          "coltest"  : self.doColTest,
                          "players"  : self.doPlayers,
                          "who"      : self.doPlayers,
+                         "asc"      : self.doAsc,
                          "streak"   : self.doStreak,
                          "whereis"  : self.doWhereIs,
                          "8ball"    : self.do8ball,
@@ -495,7 +517,7 @@ class DeathBotProtocol(irc.IRCClient):
         self.respond(replyto, sender, msgwords[1] + " " + code + "TEST!" )
         
     def doCommands(self, sender, replyto, msgwords):
-        self.respond(replyto, sender, "available commands are !help !ping !time !pom !hello !booze !beer !potion !tea !coffee !whiskey !vodka !rum !tequila !scotch !goat !lotg !d(1-1000) !(1-50)d(1-1000) !8ball !rng !role !race !variant !tell !source !lastgame !lastasc !streak !rcedit !scores !sb !setmintc !whereis !players !who !commands")
+        self.respond(replyto, sender, "available commands are !help !ping !time !pom !hello !booze !beer !potion !tea !coffee !whiskey !vodka !rum !tequila !scotch !goat !lotg !d(1-1000) !(1-50)d(1-1000) !8ball !rng !role !race !variant !tell !source !lastgame !lastasc !asc !streak !rcedit !scores !sb !setmintc !whereis !players !who !commands")
 
     def getPom(self, dt):
         # this is a direct translation of the NetHack method of working out pom.
@@ -767,13 +789,8 @@ class DeathBotProtocol(irc.IRCClient):
                 self.respond(replyto, sender, msgwords[1] + " is not currently playing.")
     
 
-    def streakDate(self,stamp):
-        return datetime.datetime.fromtimestamp(float(stamp)).strftime("%Y-%m-%d")
-
-    def doStreak(self, sender, replyto, msgwords):
-        PLR = sender
-        plr = sender.lower()
-        var = False
+    def plrVar(self, sender, replyto, msgwords):
+        # for !streak and !asc, work out what player and variant they want
         if len(msgwords) > 3:
             # !streak tom dick harry
             self.respond(replyto,sender,"Usage: !" +msgwords[0] +" [variant] [player]") 
@@ -783,30 +800,98 @@ class DeathBotProtocol(irc.IRCClient):
             pv = self.varalias(msgwords[2])
             if vp in self.variants.keys():
                 # !streak dnh Tangles
-                var = vp
-                plr = pv
-                PLR = msgwords[2]
-            elif pv in self.variants.keys():
+                return (msgwords[2], vp)
+            if pv in self.variants.keys():
                 # !streak K2 UnNethHack
-                var = pv
-                plr = vp
-                PLR = msgwords[1]
-            else: 
-                # !streak bogus garbage
-                self.respond(replyto,sender,"Usage: !" +msgwords[0] +" [variant] [player]") 
-                return
+                return (msgwords[1],pv)
+            # !streak bogus garbage
+            self.respond(replyto,sender,"Usage: !" +msgwords[0] +" [variant] [player]") 
+            return (None, None)
         if len(msgwords) == 2:
             vp = self.varalias(msgwords[1])
             if vp in self.variants.keys():
                 # !streak Grunthack
-                var = vp
-            else:
-                # !streak Grasshopper
-                plr = vp
-                PLR = msgwords[1]
+                return (sender, vp)
+            # !streak Grasshopper
+            return (msgwords[1],None)
+        #!streak ...player is self, no variant
+        return(sender, None)
+
+    def doAsc(self, sender, replyto, msgwords):
+        (PLR, var) = self.plrVar(sender,replyto,msgwords)
+        if not PLR: return # bogus input, handled in plrVar
+        plr = PLR.lower()
+        stats = ""
+        totasc = 0
+        if var:
+            if not plr in self.asc[var]:
+                repl = "No ascensions for " + PLR + " in "
+                if plr in self.allgames[var]:
+                    repl += str(self.allgames[var][plr]) + " games of "
+                repl += self.variants[var][0][0] + "."
+                self.respond(replyto,sender,repl)
+                return
+            for role in self.variants[var][1]:
+                role = role.title() # capitalise the first letter
+                if role in self.asc[var][plr]:
+                    totasc += self.asc[var][plr][role]
+                    stats += " " + str(self.asc[var][plr][role]) + "x" + role
+            stats += ", "
+            for race in self.variants[var][2]:
+                race = race.title()
+                if race in self.asc[var][plr]:
+                    stats += " " + str(self.asc[var][plr][race]) + "x" + race
+            stats += ", "
+            for alig in self.aligns:
+                if alig in self.asc[var][plr]:
+                    stats += " " + str(self.asc[var][plr][alig]) + "x" + alig
+            stats += ", "
+            for gend in self.genders:
+                if gend in self.asc[var][plr]:
+                    stats += " " + str(self.asc[var][plr][gend]) + "x" + gend
+            stats += "."
+            self.respond(replyto, sender,
+                         PLR + " has ascended " + self.variants[var][0][0] + " "
+                             + str(totasc) + " times in "
+                             + str(self.allgames[var][plr])
+                             + " games ({:0.2f}%):".format((100.0 * totasc)
+                                                           / self.allgames[var][plr])
+                             + stats)
+            return
+        # no variant. Do player stats across variants.
+        totgames = 0
+        for var in self.asc:
+            totgames += self.allgames[var].get(plr,0)
+            if plr in self.asc[var]:
+                varasc = self.asc[var][plr].get("Mal",0)
+                varasc += self.asc[var][plr].get("Fem",0)
+                totasc += varasc
+                if stats: stats += ","
+                stats += " " + self.displaystring[var] + ":" + str(varasc) + " ({:0.2f}%)".format((100.0 * varasc)
+                                                                                             / self.allgames[var][plr])
+        if totasc:
+            self.respond(replyto, sender,
+                         PLR + " has ascended " + str(totasc) + " times in "
+                             + str(totgames)
+                             + " games ({:0.2f}%): ".format((100.0 * totasc) / totgames)
+                             + stats)
+            return
+        if totgames:
+            self.respond(replyto, sender, PLR + " has not ascended in " + str(totgames) + " games.")
+            return
+        self.respond(replyto, sender, "No games for " + PLR + ".")
+        return
+
+    def streakDate(self,stamp):
+        return datetime.datetime.fromtimestamp(float(stamp)).strftime("%Y-%m-%d")
+
+    def doStreak(self, sender, replyto, msgwords):
+        (PLR, var) = self.plrVar(sender,replyto,msgwords)
+        if not PLR: return # bogus input, handled in plrVar
+        plr = PLR.lower()
         if var:
             if var not in self.streakvars:
-                self.respond(replyto,sender,"Streaks are not recoreded for " + var +".")
+                self.respond(replyto,sender,"Streaks are not recorded for " + var +".")
                 return
             (lstart,lend,llength) = self.longstreak[var].get(plr,(0,0,0))
             (cstart,cend,clength) = self.curstreak[var].get(plr,(0,0,0))
@@ -1007,6 +1092,7 @@ class DeathBotProtocol(irc.IRCClient):
         self.log("-!- " + user + " changed the topic on " + channel + " to: " + newTopic)
 
 
+    ### Xlog/livelog event processing
     def startscummed(self, game):
         return game["death"] in ("quit", "escaped") and game["points"] < 1000
 
@@ -1017,10 +1103,17 @@ class DeathBotProtocol(irc.IRCClient):
            and game["turns"] < self.plr_tc[game["name"].lower()])
 
     def xlogfileReport(self, game, report = True):
+        var = game["variant"] # Make code less ugly
+        # lowercased name is used for lookups
+        lname = game["name"].lower()
+        # "allgames" for a player even counts scummed games
+        if not lname in self.allgames[var]:
+            self.allgames[var][lname] = 0
+        self.allgames[var][lname] += 1
         if self.startscummed(game): return
 
         dumplog = game.get("dumplog",False)
-        if dumplog and game["variant"] != "dyn":
+        if dumplog and var != "dyn":
             game["dumplog"] = fixdump(dumplog)
         # Need to figure out the dump path before messing with the name below
         dumpfile = (self.dump_file_prefix + game["dumpfmt"]).format(**game)
@@ -1032,46 +1125,62 @@ class DeathBotProtocol(irc.IRCClient):
             dumpurl = urllib.quote(game["dumpfmt"].format(**game))
             dumpurl = self.dump_url_prefix.format(**game) + dumpurl
         self.lg["{variant}:{name}".format(**game).lower()] = dumpurl
-        if (game["endtime"] > self.lge.get(game["name"].lower(), 0)):
-            self.lge[game["name"].lower()] = game["endtime"]
-            self.lg[game["name"].lower()] = dumpurl
-        self.lg[game["variant"].lower()] = dumpurl
+        if (game["endtime"] > self.lge.get(lname, 0)):
+            self.lge[lname] = game["endtime"]
+            self.lg[lname] = dumpurl
+        self.lg[var] = dumpurl
         if (game["endtime"] > self.tlastgame):
             self.lastgame = dumpurl
             self.tlastgame = game["endtime"]
+
         if game["death"][0:8] in ("ascended"):
+            # append dump url to report for ascensions
             game["ascsuff"] = "\n" + dumpurl
+            # !lastasc stats.
             self.la["{variant}:{name}".format(**game).lower()] = dumpurl
-            if (game["endtime"] > self.lae.get(game["name"].lower(), 0)):
-                self.lae[game["name"].lower()] = game["endtime"]
-                self.la[game["name"].lower()] = dumpurl
-            self.la[game["variant"].lower()] = dumpurl
+            if (game["endtime"] > self.lae.get(lname, 0)):
+                self.lae[lname] = game["endtime"]
+                self.la[lname] = dumpurl
+            self.la[var] = dumpurl
             if (game["endtime"] > self.tlastasc):
                 self.lastasc = dumpurl
                 self.tlastasc = game["endtime"]
-            if game["variant"] in self.streakvars:
+
+            # !asc stats
+            if not lname in self.asc[var]: self.asc[var][lname] = {}
+            if not game["role"]   in self.asc[var][lname]: self.asc[var][lname][game["role"]]   = 0
+            if not game["race"]   in self.asc[var][lname]: self.asc[var][lname][game["race"]]   = 0
+            if not game["gender"] in self.asc[var][lname]: self.asc[var][lname][game["gender"]] = 0
+            if not game["align"]  in self.asc[var][lname]: self.asc[var][lname][game["align"]]  = 0
+            self.asc[var][lname][game["role"]]   += 1
+            self.asc[var][lname][game["race"]]   += 1
+            self.asc[var][lname][game["gender"]] += 1
+            self.asc[var][lname][game["align"]]  += 1
+
+            # streaks
+            if var in self.streakvars:
                 (cs_start, cs_end,
-                 cs_length) = self.curstreak[game["variant"]].get(game["name"].lower(),
-                                                         (game["starttime"],0,0))
+                 cs_length) = self.curstreak[var].get(lname,
+                                                      (game["starttime"],0,0))
                 cs_end = game["endtime"]
                 cs_length += 1
-                self.curstreak[game["variant"]][game["name"].lower()] = (cs_start,
-                                                                         cs_end,
-                                                                         cs_length)
+                self.curstreak[var][lname] = (cs_start, cs_end, cs_length)
                 (ls_start, ls_end,
-                 ls_length) = self.longstreak[game["variant"]].get(game["name"].lower(),
-                                                                   (0,0,0))
+                 ls_length) = self.longstreak[var].get(lname, (0,0,0))
                 if cs_length > ls_length:
-                    self.longstreak[game["variant"]][game["name"].lower()] = self.curstreak[game["variant"]][game["name"].lower()]
-        else:
+                    self.longstreak[var][lname] = self.curstreak[var][lname]
+
+        else:   # not ascended - kill off any streak
             game["ascsuff"] = ""
-            if game["variant"] in self.streakvars:
-                if game["name"].lower() in self.curstreak[game["variant"]]:
-                    del self.curstreak[game["variant"]][game["name"].lower()] 
+            if var in self.streakvars:
+                if lname in self.curstreak[var]:
+                    del self.curstreak[var][lname]
+        # end of statistics gathering
 
-        if (not report): return
-        if self.plr_tc_notreached(game): return
+        if (not report): return # we're just reading through old entries at startup
+        if self.plr_tc_notreached(game): return # ignore due to !setmintc
 
+        # start of actual reporting
         if game.get("charname", False):
             if game.get("name", False):
                 if game["name"] != game["charname"]:
