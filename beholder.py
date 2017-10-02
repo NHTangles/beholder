@@ -50,7 +50,7 @@ TEST= False
 HOST, PORT = "chat.us.freenode.net", 6697
 CHANNEL = "#hardfought"
 NICK = "Beholder"
-PINOBOT = "Pinobot"
+PINOBOT = "Pinoclone"
 if TEST:
     CHANNEL = "#hfdev"
     NICK = "BeerHolder"
