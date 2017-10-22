@@ -196,7 +196,7 @@ class DeathBotProtocol(irc.IRCClient):
                "fh": FILEROOT+"fiqhackdir/data/",
               "dyn": FILEROOT+"dynahack/dynahack-data/var/whereis/",
               "nh4": FILEROOT+"nh4dir/save/whereis/",
-               "4k": FILEROOT+"fourkdir/save/whereis/",
+               "4k": FILEROOT+"fourkdir/save/",
                "sp": FILEROOT+"sporkhack-0.6.5/var/",
              "slex": FILEROOT+"slex-2.0.9/",
                "un": FILEROOT+"un531/var/unnethack/whereis/"}
