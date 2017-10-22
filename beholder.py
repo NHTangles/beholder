@@ -193,7 +193,7 @@ class DeathBotProtocol(irc.IRCClient):
                "nd": FILEROOT+"nhdev/var/whereis/",
                "gh": FILEROOT+"grunthack-0.2.2/var/whereis/",
               "dnh": FILEROOT+"dnethack-3.15.1/whereis/",
-               "fh": FILEROOT+"fiqhackdir/var/whereis/",
+               "fh": FILEROOT+"fiqhackdir/data/",
               "dyn": FILEROOT+"dynahack/dynahack-data/var/whereis/",
               "nh4": FILEROOT+"nh4dir/save/whereis/",
                "4k": FILEROOT+"fourkdir/save/whereis/",
