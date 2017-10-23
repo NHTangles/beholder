@@ -39,9 +39,9 @@ import os       # for check path exists (dumplogs), and chmod
 import stat     # for chmod mode bits
 import re       # for hello, and other things.
 import urllib   # for dealing with NH4 variants' #&$#@ spaces in filenames.
-import shelve   # for perstistent !tell messages
+import shelve   # for persistent !tell messages
 import random   # for !rng and friends
-import glob     # for matchning in !whereis
+import glob     # for matching in !whereis
 
 TEST= False
 #TEST = True  # uncomment for testing
@@ -57,6 +57,9 @@ if TEST:
 FILEROOT="/opt/nethack/hardfought.org/"
 WEBROOT="https://www.hardfought.org/"
 LOGROOT="/var/www/hardfought.org/irclog/"
+
+EUROOT="http://35.176.184.65/"
+NAOROOT="http://54.183.3.254/"
 
 def fromtimestamp_int(s):
     return datetime.datetime.fromtimestamp(int(s))
@@ -125,6 +128,7 @@ class DeathBotProtocol(irc.IRCClient):
 
     xlogfiles = {filepath.FilePath(FILEROOT+"nh343/var/xlogfile"): ("nh", ":", "nh343/dumplog/{starttime}.nh343.txt"),
                  filepath.FilePath(FILEROOT+"nhdev/var/xlogfile"): ("nd", "\t", "nhdev/dumplog/{starttime}.nhdev.txt"),
+                 # filepath.FilePath(FILEROOT+"devnull36/var/xlogfile"): ("dn36", "\t", "dn36/dumplog/{starttime}.dn36.txt"),
                  filepath.FilePath(FILEROOT+"grunthack-0.2.2/var/xlogfile"): ("gh", ":", "gh/dumplog/{starttime}.gh.txt"),
                  filepath.FilePath(FILEROOT+"dnethack-3.15.1/xlogfile"): ("dnh", ":", "dnethack/dumplog/{starttime}.dnh.txt"),
                  filepath.FilePath(FILEROOT+"fiqhackdir/data/xlogfile"): ("fh", ":", "fiqhack/dumplog/{dumplog}"),
@@ -136,6 +140,7 @@ class DeathBotProtocol(irc.IRCClient):
                  filepath.FilePath(FILEROOT+"un531/var/unnethack/xlogfile"): ("un", ":", "un531/dumplog/{starttime}.un531.txt.html")}
     livelogs  = {filepath.FilePath(FILEROOT+"nh343/var/livelog"): ("nh", ":"),
                  filepath.FilePath(FILEROOT+"nhdev/var/livelog"): ("nd", "\t"),
+                 # filepath.FilePath(FILEROOT+"devnull36/var/livelog"): ("dn36", "\t"),
                  filepath.FilePath(FILEROOT+"grunthack-0.2.2/var/livelog"): ("gh", ":"),
                  filepath.FilePath(FILEROOT+"dnethack-3.15.1/livelog"): ("dnh", ":"),
                  filepath.FilePath(FILEROOT+"fourkdir/save/livelog"): ("4k", "\t"),
@@ -147,6 +152,8 @@ class DeathBotProtocol(irc.IRCClient):
     # Forward events to other bots at the request of maintainers of other variant-specific channels
     forwards = {"nh" : [],
                 "nd" : [],
+              "dn36" : [],
+              "zapm" : [],
                 "gh" : [],
                "dnh" : [],
                 "fh" : [],
@@ -161,6 +168,12 @@ class DeathBotProtocol(irc.IRCClient):
     # for displaying variants in colour
     displaystring = {"nh" : "\x0315nh\x03",
                      "nd" : "\x0307nd\x03",
+                   "dn36" : "\x0310dn36\x03",
+                   "zapm" : "\x0311zapm\x03",
+                "dn36-eu" : "\x0310dn36-eu\x03",
+                "zapm-eu" : "\x0311zapm-eu\x03",
+               "dn36-nao" : "\x0310dn36-nao\x03",
+               "zapm-nao" : "\x0311zapm-nao\x03",
                      "gh" : "\x0304gh\x03",
                     "dnh" : "\x0313dnh\x03",
                      "fh" : "\x0310fh\x03",
@@ -175,8 +188,16 @@ class DeathBotProtocol(irc.IRCClient):
     # Reduce the repetitive crap
     DGLD=FILEROOT+"dgldir/"
     INPR=DGLD+"inprogress-"
+    INEU=EUROOT+"inprogress-"
+    INNAO=NAOROOT+"inprogress-"
     inprog = { "nh" : INPR+"nh343/",
                "nd" : INPR+"nhdev/",
+             "dn36" : INPR+"dn36/",
+             "zapm" : INPR+"zapm/",
+          "dn36-eu" : INEU+"dn36/",
+          "zapm-eu" : INEU+"zapm/",
+         "dn36-nao" : INNAO+"dn36/",
+         "zapm-nao" : INNAO+"zapm/",
                "gh" : INPR+"gh022/",
                "un" : INPR+"un531/",
               "dnh" : INPR+"dnh3151/",
@@ -204,6 +225,8 @@ class DeathBotProtocol(irc.IRCClient):
     dungeons = {"nh": ["The Dungeons of Doom","Gehennom","The Gnomish Mines","The Quest",
                        "Sokoban","Fort Ludios","Vlad's Tower","The Elemental Planes"],
                 "nd": ["The Dungeons of Doom","Gehennom","The Gnomish Mines","The Quest",
+                       "Sokoban","Fort Ludios","Vlad's Tower","The Elemental Planes"],
+              "dn36": ["The Dungeons of Doom","Gehennom","The Gnomish Mines","The Quest",
                        "Sokoban","Fort Ludios","Vlad's Tower","The Elemental Planes"],
                 "gh": ["The Dungeons of Doom","Gehennom","The Gnomish Mines","The Quest",
                        "Sokoban","Fort Ludios","Vlad's Tower","The Elemental Planes"],
@@ -261,6 +284,8 @@ class DeathBotProtocol(irc.IRCClient):
                        vanilla_roles, vanilla_races),
                 "nd": (["nhdev", "nh361", "361dev", "361", "dev"],
                        vanilla_roles, vanilla_races),
+              "dn36": (["dn36", "devnull"],
+                       vanilla_roles, vanilla_races),
                 "nh4": (["nethack4", "n4"],
                        vanilla_roles, vanilla_races),
                 "gh": (["grunt", "grunthack"],
@@ -287,7 +312,7 @@ class DeathBotProtocol(irc.IRCClient):
                          + ["add", "akt", "alb", "alc", "ali", "ame", "amn", "anc", "acp", "agb", "ang", "aqu", "arg", "asg"])}
     
     # variants which support streaks - now tracking slex streaks, because that's totally possible.
-    streakvars = ["nh", "nd", "gh", "dnh", "un", "sp", "slex"]
+    streakvars = ["nh", "nd", "dn36", "gh", "dnh", "un", "sp", "slex"]
     # for !asc statistics - assume these are the same for all variants, or at least the sane ones.
     aligns = ["Law", "Neu", "Cha"]
     genders = ["Mal", "Fem"]
