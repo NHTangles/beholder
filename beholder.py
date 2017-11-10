@@ -136,7 +136,7 @@ class DeathBotProtocol(irc.IRCClient):
                  filepath.FilePath(FILEROOT+"nh4dir/save/xlogfile"): ("nh4", ":", "nethack4/dumplog/{dumplog}"),
                  filepath.FilePath(FILEROOT+"fourkdir/save/xlogfile"): ("4k", "\t", "nhfourk/dumps/{dumplog}"),
                  filepath.FilePath(FILEROOT+"sporkhack-0.6.5/var/xlogfile"): ("sp", "\t", "sporkhack/dumplog/{starttime}.sp.txt"),
-                 filepath.FilePath(FILEROOT+"slex-2.0.9/xlogfile"): ("slex", "\t", "slex/dumplog/{starttime}.slex.txt"),
+                 filepath.FilePath(FILEROOT+"slex-2.1.1/xlogfile"): ("slex", "\t", "slex/dumplog/{starttime}.slex.txt"),
                  filepath.FilePath(FILEROOT+"un531/var/unnethack/xlogfile"): ("un", ":", "un531/dumplog/{starttime}.un531.txt.html")}
     livelogs  = {filepath.FilePath(FILEROOT+"nh343/var/livelog"): ("nh", ":"),
                  filepath.FilePath(FILEROOT+"nhdev/var/livelog"): ("nd", "\t"),
@@ -146,7 +146,7 @@ class DeathBotProtocol(irc.IRCClient):
                  filepath.FilePath(FILEROOT+"fourkdir/save/livelog"): ("4k", "\t"),
                  filepath.FilePath(FILEROOT+"fiqhackdir/data/livelog"): ("fh", ":"),
                  filepath.FilePath(FILEROOT+"sporkhack-0.6.5/var/livelog"): ("sp", ":"),
-                 filepath.FilePath(FILEROOT+"slex-2.0.9/livelog"): ("slex", ":"),
+                 filepath.FilePath(FILEROOT+"slex-2.1.1/livelog"): ("slex", ":"),
                  filepath.FilePath(FILEROOT+"un531/var/unnethack/livelog"): ("un", ":")}
 
     # Forward events to other bots at the request of maintainers of other variant-specific channels
@@ -219,7 +219,7 @@ class DeathBotProtocol(irc.IRCClient):
               "nh4": FILEROOT+"nh4dir/save/whereis/",
                "4k": FILEROOT+"fourkdir/save/",
                "sp": FILEROOT+"sporkhack-0.6.5/var/",
-             "slex": FILEROOT+"slex-2.0.9/",
+             "slex": FILEROOT+"slex-2.1.1/",
                "un": FILEROOT+"un531/var/unnethack/whereis/"}
 
     dungeons = {"nh": ["The Dungeons of Doom","Gehennom","The Gnomish Mines","The Quest",
