@@ -1,4 +1,8 @@
 """
+beholder.py - a game-reporting and general services IRC bot for
+              the hardfought.org NetHack server.
+Copyright (c) 2017 A. Thomson, K. Simpson
+Based on original code from: 
 deathbot.py - a game-reporting IRC bot for AceHack
 Copyright (c) 2011, Edoardo Spadolini
 All rights reserved.
@@ -43,20 +47,12 @@ import shelve   # for perstistent !tell messages
 import random   # for !rng and friends
 import glob     # for matchning in !whereis
 
-TEST= False
-#TEST = True  # uncomment for testing
-
-# fn
-HOST, PORT = "chat.us.freenode.net", 6697
-CHANNEL = "#hardfought"
-NICK = "Beholder"
-PINOBOT = "Pinoclone"
-if TEST:
-    CHANNEL = "#hfdev"
-    NICK = "BeerHolder"
-FILEROOT="/opt/nethack/hardfought.org/"
-WEBROOT="https://www.hardfought.org/"
-LOGROOT="/var/www/hardfought.org/irclog/"
+from botconf import HOST, PORT, CHANNEL, NICK, USERNAME, REALNAME, BOTDIR
+from botconf import PWFILE, FILEROOT, WEBROOT, LOGROOT, PINOBOT, ADMIN
+try:
+   from botconf import TEST
+except:
+   TEST = False
 
 def fromtimestamp_int(s):
     return datetime.datetime.fromtimestamp(int(s))
@@ -99,14 +95,13 @@ def parse_xlogfile_line(line, delim):
 
 class DeathBotProtocol(irc.IRCClient):
     nickname = NICK
-    username = "beholder"
-    realname = "Beholder"
-    admin = ["K2", "Tangles"]  # for plr_tc maintenance. NOT SECURE obviously.
+    username = USERNAME
+    realname = REALNAME
+    admin = ADMIN
     try:
-        password = open("/opt/beholder/pw", "r").read().strip()
+        password = open(PWFILE, "r").read().strip()
     except:
-        pass
-    if TEST: password = "NotTHEPassword"
+        password = "NotTHEPassword"
 
     sourceURL = "https://github.com/NHTangles/beholder"
     versionName = "beholder.py"
@@ -282,9 +277,25 @@ class DeathBotProtocol(irc.IRCClient):
                        vanilla_roles, vanilla_races + ["gia", "scu", "syl"]),
               "slex": (["slex", "sloth"], 
                        vanilla_roles
-                         + ["aci", "act", "alt", "ama", "ana", "art", "ass", "aug", "brd", "bin", "ble", "blo", "bos", "bul", "cam", "cha", "che", "con", "coo", "cou", "abu", "dea", "div", "dol", "mar", "sli", "drd", "dru", "dun", "ele", "elm", "elp", "erd", "fai", "stu", "fen", "fig", "fir", "fla", "fox", "gam", "gan", "gee", "gla", "gof", "gol", "gra", "gun", "ice", "scr", "jed", "jes", "jus", "kor", "kur", "lad", "lib", "loc", "lun", "mah", "med", "mid", "mon", "mur", "mus", "mys", "nec", "nin", "nob", "occ", "off", "ord", "ota", "pal", "pic", "pir", "poi", "pok", "pol", "pro", "psi", "rin", "roc", "sag", "sai", "sci", "sha", "sla", "spa", "sup", "tha", "top", "trs", "tra", "twe", "unb", "und", "unt", "use", "wan", "war", "wil", "yeo", "sex", "zoo", "zyb"],
+                         + ["aci", "act", "alt", "ama", "ana", "art", "ass",
+                            "aug", "brd", "bin", "ble", "blo", "bos", "bul",
+                            "cam", "cha", "che", "con", "coo", "cou", "abu",
+                            "dea", "div", "dol", "mar", "sli", "drd", "dru",
+                            "dun", "ele", "elm", "elp", "erd", "fai", "stu",
+                            "fen", "fig", "fir", "fla", "fox", "gam", "gan",
+                            "gee", "gla", "gof", "gol", "gra", "gun", "ice",
+                            "scr", "jed", "jes", "jus", "kor", "kur", "lad",
+                            "lib", "loc", "lun", "mah", "med", "mid", "mon",
+                            "mur", "mus", "mys", "nec", "nin", "nob", "occ",
+                            "off", "ord", "ota", "pal", "pic", "pir", "poi",
+                            "pok", "pol", "pro", "psi", "rin", "roc", "sag",
+                            "sai", "sci", "sha", "sla", "spa", "sup", "tha",
+                            "top", "trs", "tra", "twe", "unb", "und", "unt",
+                            "use", "wan", "war", "wil", "yeo", "sex", "zoo",
+                            "zyb"],
                        vanilla_races
-                         + ["add", "akt", "alb", "alc", "ali", "ame", "amn", "anc", "acp", "agb", "ang", "aqu", "arg", "asg"])}
+                         + ["add", "akt", "alb", "alc", "ali", "ame", "amn",
+                            "anc", "acp", "agb", "ang", "aqu", "arg", "asg"])}
     
     # variants which support streaks - now tracking slex streaks, because that's totally possible.
     streakvars = ["nh", "nd", "gh", "dnh", "un", "sp", "slex"]
@@ -301,7 +312,6 @@ class DeathBotProtocol(irc.IRCClient):
         self.factory.resetDelay()
         self.startHeartbeat()
         self.join(CHANNEL)
-        # seed the evil bastard RNG
         random.seed()
 
         self.logs = {}
@@ -353,9 +363,9 @@ class DeathBotProtocol(irc.IRCClient):
             self.allgames[v] = {};
 
         # for !tell
-        self.tellbuf = shelve.open("/opt/beholder/tellmsg.db", writeback=True)
+        self.tellbuf = shelve.open(BOTDIR + "/tellmsg.db", writeback=True)
         # for !setmintc
-        self.plr_tc = shelve.open("/opt/beholder/plrtc.db", writeback=True)
+        self.plr_tc = shelve.open(BOTDIR + "/plrtc.db", writeback=True)
 
         self.commands = {"ping"     : self.doPing,
                          "time"     : self.doTime,
@@ -438,8 +448,7 @@ class DeathBotProtocol(irc.IRCClient):
 
     def nickChanged(self, nn):
         # catch successful changing of nick from above and identify with nickserv
-        if TEST: self.msg("Tangles", "identify " + nn + " " + self.password)
-        else: self.msg("NickServ", "identify " + nn + " " + self.password)
+        self.msg("NickServ", "identify " + nn + " " + self.password)
 
     #helper functions
     #lookup canonical variant id from alias
