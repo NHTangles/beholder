@@ -153,7 +153,6 @@ class DeathBotProtocol(irc.IRCClient):
     # Forward events to other bots at the request of maintainers of other variant-specific channels
     forwards = {"nh" : [],
                 "nd" : [],
-              "dn36" : [],
               "zapm" : [],
                 "gh" : [],
                "dnh" : [],
@@ -168,12 +167,7 @@ class DeathBotProtocol(irc.IRCClient):
     # for displaying variants in colour
     displaystring = {"nh" : "\x0315nh\x03",
                      "nd" : "\x0307nd\x03",
-                   "dn36" : "\x0315dn36\x03",
                    "zapm" : "\x0311zapm\x03",
-                "dn36-eu" : "\x0315dn36-eu\x03",
-                "zapm-eu" : "\x0311zapm-eu\x03",
-               "dn36-nao" : "\x0315dn36-nao\x03",
-               "zapm-nao" : "\x0311zapm-nao\x03",
                      "gh" : "\x0304gh\x03",
                     "dnh" : "\x0313dnh\x03",
                      "fh" : "\x0310fh\x03",
@@ -190,7 +184,6 @@ class DeathBotProtocol(irc.IRCClient):
     INPR=DGLD+"inprogress-"
     inprog = { "nh" : INPR+"nh343/",
                "nd" : INPR+"nhdev/",
-             "dn36" : INPR+"dn36/",
              "zapm" : INPR+"zapm/",
                "gh" : INPR+"gh022/",
                "un" : INPR+"un531/",
@@ -219,8 +212,6 @@ class DeathBotProtocol(irc.IRCClient):
     dungeons = {"nh": ["The Dungeons of Doom","Gehennom","The Gnomish Mines","The Quest",
                        "Sokoban","Fort Ludios","Vlad's Tower","The Elemental Planes"],
                 "nd": ["The Dungeons of Doom","Gehennom","The Gnomish Mines","The Quest",
-                       "Sokoban","Fort Ludios","Vlad's Tower","The Elemental Planes"],
-              "dn36": ["The Dungeons of Doom","Gehennom","The Gnomish Mines","The Quest",
                        "Sokoban","Fort Ludios","Vlad's Tower","The Elemental Planes"],
                 "gh": ["The Dungeons of Doom","Gehennom","The Gnomish Mines","The Quest",
                        "Sokoban","Fort Ludios","Vlad's Tower","The Elemental Planes"],
@@ -278,8 +269,6 @@ class DeathBotProtocol(irc.IRCClient):
                        vanilla_roles, vanilla_races),
                 "nd": (["nhdev", "nh361", "361dev", "361", "dev"],
                        vanilla_roles, vanilla_races),
-              "dn36": (["dn36", "devnull"],
-                       vanilla_roles, vanilla_races),
                 "nh4": (["nethack4", "n4"],
                        vanilla_roles, vanilla_races),
                 "gh": (["grunt", "grunthack"],
@@ -322,13 +311,13 @@ class DeathBotProtocol(irc.IRCClient):
                             "anc", "acp", "agb", "ang", "aqu", "arg", "asg"])}
     
     # variants which support streaks - now tracking slex streaks, because that's totally possible.
-    streakvars = ["nh", "nd", "dn36", "gh", "dnh", "un", "sp", "slex"]
+    streakvars = ["nh", "nd", "gh", "dnh", "un", "sp", "slex"]
     # for !asc statistics - assume these are the same for all variants, or at least the sane ones.
     aligns = ["Law", "Neu", "Cha"]
     genders = ["Mal", "Fem"]
 
     #who is making tea? - bots of the nethack community who have influenced this project.
-    brethren = ["Rodney", "Athame", "Arsinoe", "Izchak", "TheresaMayBot", "FCCBot", "the late Pinobot", "Announcy", "demogorgon", "the /dev/null/oracle"]
+    brethren = ["Rodney", "Athame", "Arsinoe", "Izchak", "TheresaMayBot", "FCCBot", "the late Pinobot", "Announcy", "demogorgon", "the /dev/null/oracle", "NotTheOracle\\dnt"]
     looping_calls = None
 
 
