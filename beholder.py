@@ -35,7 +35,6 @@ from twisted.internet import reactor, protocol, ssl, task
 from twisted.words.protocols import irc
 from twisted.python import filepath
 from twisted.application import internet, service
-#from twisted.words.protocols.irc import attributes as A
 import datetime # for timestamp stuff
 import time     # for !time
 import ast      # for conduct/achievement bitfields - not really used
@@ -49,13 +48,18 @@ import glob     # for matching in !whereis
 
 from botconf import HOST, PORT, CHANNEL, NICK, USERNAME, REALNAME, BOTDIR
 from botconf import PWFILE, FILEROOT, WEBROOT, LOGROOT, PINOBOT, ADMIN
+try: from botconf import TEST
+except: TEST = False
 try:
-   from botconf import TEST
+    from botconf import REMOTES
 except:
-   TEST = False
-
-EUROOT="http://35.176.184.65/"
-NAOROOT="http://54.183.3.254/"
+    SLAVE = True #if we have no slaves, we (probably) are the slave
+    REMOTES = {}
+try:
+    from botconf import MASTERS
+except:
+    SLAVE = False #if we have no master we (definitely) are the master
+    MASTERS = []
 
 def fromtimestamp_int(s):
     return datetime.datetime.fromtimestamp(int(s))
@@ -101,6 +105,9 @@ class DeathBotProtocol(irc.IRCClient):
     username = USERNAME
     realname = REALNAME
     admin = ADMIN
+    slaves = {}
+    for r in REMOTES:
+        slaves[REMOTES[r][1]] = r
     try:
         password = open(PWFILE, "r").read().strip()
     except:
@@ -113,17 +120,17 @@ class DeathBotProtocol(irc.IRCClient):
     dump_url_prefix = WEBROOT + "userdata/{name[0]}/{name}/"
     dump_file_prefix = FILEROOT + "dgldir/userdata/{name[0]}/{name}/"
     
-    scoresURL = WEBROOT + "nethack/scoreboard (HDF) or https://scoreboard.xd.cm (ALL)"
-    rceditURL = WEBROOT + "nethack/rcedit"
-    helpURL = WEBROOT + "nethack"
-    logday = time.strftime("%d")
-    chanLogName = LOGROOT + CHANNEL + time.strftime("-%Y-%m-%d.log")
-    chanLog = open(chanLogName,'a')
-    os.chmod(chanLogName,stat.S_IRUSR|stat.S_IWUSR|stat.S_IRGRP|stat.S_IROTH)
+    if not SLAVE:
+        scoresURL = WEBROOT + "nethack/scoreboard (HDF) or https://scoreboard.xd.cm (ALL)"
+        rceditURL = WEBROOT + "nethack/rcedit"
+        helpURL = WEBROOT + "nethack"
+        logday = time.strftime("%d")
+        chanLogName = LOGROOT + CHANNEL + time.strftime("-%Y-%m-%d.log")
+        chanLog = open(chanLogName,'a')
+        os.chmod(chanLogName,stat.S_IRUSR|stat.S_IWUSR|stat.S_IRGRP|stat.S_IROTH)
 
     xlogfiles = {filepath.FilePath(FILEROOT+"nh343/var/xlogfile"): ("nh", ":", "nh343/dumplog/{starttime}.nh343.txt"),
                  filepath.FilePath(FILEROOT+"nhdev/var/xlogfile"): ("nd", "\t", "nhdev/dumplog/{starttime}.nhdev.txt"),
-                 # filepath.FilePath(FILEROOT+"devnull36/var/xlogfile"): ("dn36", "\t", "dn36/dumplog/{starttime}.dn36.txt"),
                  filepath.FilePath(FILEROOT+"grunthack-0.2.2/var/xlogfile"): ("gh", ":", "gh/dumplog/{starttime}.gh.txt"),
                  filepath.FilePath(FILEROOT+"dnethack-3.15.1/xlogfile"): ("dnh", ":", "dnethack/dumplog/{starttime}.dnh.txt"),
                  filepath.FilePath(FILEROOT+"fiqhackdir/data/xlogfile"): ("fh", ":", "fiqhack/dumplog/{dumplog}"),
@@ -135,7 +142,6 @@ class DeathBotProtocol(irc.IRCClient):
                  filepath.FilePath(FILEROOT+"un531/var/unnethack/xlogfile"): ("un", ":", "un531/dumplog/{starttime}.un531.txt.html")}
     livelogs  = {filepath.FilePath(FILEROOT+"nh343/var/livelog"): ("nh", ":"),
                  filepath.FilePath(FILEROOT+"nhdev/var/livelog"): ("nd", "\t"),
-                 # filepath.FilePath(FILEROOT+"devnull36/var/livelog"): ("dn36", "\t"),
                  filepath.FilePath(FILEROOT+"grunthack-0.2.2/var/livelog"): ("gh", ":"),
                  filepath.FilePath(FILEROOT+"dnethack-3.15.1/livelog"): ("dnh", ":"),
                  filepath.FilePath(FILEROOT+"fourkdir/save/livelog"): ("4k", "\t"),
@@ -156,7 +162,6 @@ class DeathBotProtocol(irc.IRCClient):
                "nh4" : [],
                 "4k" : [],
                 "sp" : [],
-#             "slex" : ["FCCBot","Elronnd","Tangles"],
               "slex" : ["FCCBot"],
                 "un" : []}
 
@@ -183,16 +188,10 @@ class DeathBotProtocol(irc.IRCClient):
     # Reduce the repetitive crap
     DGLD=FILEROOT+"dgldir/"
     INPR=DGLD+"inprogress-"
-    INEU=EUROOT+"inprogress-"
-    INNAO=NAOROOT+"inprogress-"
     inprog = { "nh" : INPR+"nh343/",
                "nd" : INPR+"nhdev/",
              "dn36" : INPR+"dn36/",
              "zapm" : INPR+"zapm/",
-          "dn36-eu" : INEU+"dn36/",
-          "zapm-eu" : INEU+"zapm/",
-         "dn36-nao" : INNAO+"dn36/",
-         "zapm-nao" : INNAO+"zapm/",
                "gh" : INPR+"gh022/",
                "un" : INPR+"un531/",
               "dnh" : INPR+"dnh3151/",
@@ -336,7 +335,7 @@ class DeathBotProtocol(irc.IRCClient):
     def signedOn(self):
         self.factory.resetDelay()
         self.startHeartbeat()
-        self.join(CHANNEL)
+        if not SLAVE: self.join(CHANNEL)
         random.seed()
 
         self.logs = {}
@@ -467,7 +466,7 @@ class DeathBotProtocol(irc.IRCClient):
 
     def nickCheck(self):
         # also rejoin the channel here, in case we drop off for any reason
-        self.join(CHANNEL)
+        if not SLAVE: self.join(CHANNEL)
         if (self.nickname != NICK):
             self.setNick(NICK)
 
@@ -507,7 +506,7 @@ class DeathBotProtocol(irc.IRCClient):
     # wrapper for "msg" that logs if msg dest is channel
     # Need to log our own actions separately as they don't trigger events
     def msgLog(self, replyto, message):
-        if replyto == CHANNEL:
+        if (not SLAVE) and (replyto == CHANNEL):
             self.log("<" + self.nickname + "> " + message)
         self.msg(replyto, message)
 
@@ -781,7 +780,24 @@ class DeathBotProtocol(irc.IRCClient):
         del self.tellbuf[user.lower()]
         self.tellbuf.sync()
 
+    def forwardQuery(self,sender,replyto,msgwords):
+        # need to pass the sender through to slaves so we can tag the response when it comes back
+        if replyto == sender: # was a private message
+            tag = "%"
+        else:
+            tag = "#"
+        message = " ".join(msgwords + [tag + sender])
+        for sl in self.slaves:
+            self.msg(sl,message)
+            
+
     def doPlayers(self,sender,replyto, msgwords):
+        if self.slaves:
+            self.forwardQuery(sender,replyto,msgwords)
+        replytag = ""
+        if SLAVE:
+            replytag = " " + msgwords[-1]
+            
         plrvar = ""
         for var in self.inprog.keys():
             for inpfile in glob.iglob(self.inprog[var] + "*.ttyrec"): 
@@ -790,13 +806,20 @@ class DeathBotProtocol(irc.IRCClient):
                 plrvar += inpfile.split("/")[-1].split(":")[0] + " [" + self.displaystring[var] + "] "
         if len(plrvar) == 0:
             plrvar = "No current players"
-        self.respond(replyto, sender, plrvar)
+        self.respond(replyto, sender, plrvar + replytag)
                 
             
     def doWhereIs(self,sender,replyto, msgwords):
-        if (len(msgwords) < 2):
+        replytag = ""
+        minlen = 2
+        if SLAVE:
+            replytag = " " + msgwords[-1]
+            minlen = 3
+        if (len(msgwords) < minlen):
             self.doPlayers(sender,replyto,msgwords)
             return
+        if self.slaves:
+            self.forwardQuery(sender,replyto,msgwords)
         found = False
         ammy = ["", " (with Amulet)"]
         for var in self.whereis.keys():
@@ -810,7 +833,8 @@ class DeathBotProtocol(irc.IRCClient):
                                  + " ["+self.displaystring[var]+"]: ({role} {race} {gender} {align}) T:{turns} ".format(**wirec)
                                  + self.dungeons[var][wirec["dnum"]]
                                  + " level: " + str(wirec["depth"])
-                                 + ammy[wirec["amulet"]])
+                                 + ammy[wirec["amulet"]]
+                                 + replytag)
         if not found:
             # Look for inprogress in case player is playing something that does not do whereis
             for var in self.inprog.keys():
@@ -818,9 +842,9 @@ class DeathBotProtocol(irc.IRCClient):
                     plr = inpfile.split("/")[-1].split(":")[0]
                     if plr.lower() == msgwords[1].lower():
                         found = True
-                        self.respond(replyto, sender, plr + " [" + self.displaystring[var] + "]: No details available")
-            if not found:
-                self.respond(replyto, sender, msgwords[1] + " is not currently playing.")
+                        self.respond(replyto, sender, plr + " [" + self.displaystring[var] + "]: No details available" + replytag)
+            if not found and not SLAVE:
+                self.respond(replyto, sender, msgwords[1] + " is not currently playing on this server.")
     
 
     def plrVar(self, sender, replyto, msgwords):
@@ -1009,18 +1033,21 @@ class DeathBotProtocol(irc.IRCClient):
     # turncount may not be the best metric for this - open to suggestions
     # player name must match nick, or can be set by an admin.
     def setPlrTC(self, sender, replyto, msgwords):
+        # set on all servers
+        for sl in self.slaves:
+            self.msg(sl," ".join(msgwords))
         if len(msgwords) == 2:
             if re.match(r'^\d+$',msgwords[1]):
                 self.plr_tc[sender.lower()] = int(msgwords[1])
                 self.plr_tc.sync()
-                self.respond(replyto, sender, "Min reported turncount for " + sender.lower()
+                if not SLAVE: self.respond(replyto, sender, "Min reported turncount for " + sender.lower()
                                               + " set to " + msgwords[1])
                 return
         if len(msgwords) == 1:
             if sender.lower() in self.plr_tc.keys():
                 del self.plr_tc[sender.lower()]
                 self.plr_tc.sync()
-                self.respond(replyto, sender, "Min reported turncount for " + sender.lower()
+                if not SLAVE: self.respond(replyto, sender, "Min reported turncount for " + sender.lower()
                                               + " removed.")
                 return
         if sender in self.admin:
@@ -1028,24 +1055,26 @@ class DeathBotProtocol(irc.IRCClient):
                 if re.match(r'^\d+$',msgwords[2]):
                     self.plr_tc[msgwords[1].lower()] = int(msgwords[2])
                     self.plr_tc.sync()
-                    self.respond(replyto, sender, "Min reported turncount for " + msgwords[1].lower()
+                    if not SLAVE: self.respond(replyto, sender, "Min reported turncount for " + msgwords[1].lower()
                                                   + " set to " + msgwords[2])
                     return
             if len(msgwords) == 2:
                 if msgwords[1].lower() in self.plr_tc.keys():
                     del self.plr_tc[msgwords[1].lower()]
                     self.plr_tc.sync()
-                    self.respond(replyto, sender, "Min reported turncount for " + msgwords[1].lower()
+                    if not SLAVE: self.respond(replyto, sender, "Min reported turncount for " + msgwords[1].lower()
                                                  + " removed.")
-                else: self.respond(replyto, sender, "No min turncount for " + msgwords[1].lower())
+                else:
+                    if not SLAVE: self.respond(replyto, sender, "No min turncount for " + msgwords[1].lower())
                 return
         else:
-            self.respond(replyto, sender, "Usage: !" + msgwords[0] + " [turncount]")
+            if not SLAVE: self.respond(replyto, sender, "Usage: !" + msgwords[0] + " [turncount]")
 
 
     # Listen to the chatter
     def privmsg(self, sender, dest, message):
         sender = sender.partition("!")[0]
+        if SLAVE and sender not in MASTERS: return
         if (sender == PINOBOT): # response to earlier pino query
             self.msgLog(CHANNEL,message)
             return
@@ -1072,6 +1101,19 @@ class DeathBotProtocol(irc.IRCClient):
         else: # pop the '!'
             message = message[1:]
         msgwords = message.strip().split(" ")
+        if dest != CHANNEL and sender in self.slaves: # response to slave query, or game announcement
+            msgwords = ["[" + self.slaves[sender] + "]"] + msgwords
+            #queries need the response tag used and stripped
+            if msgwords[-1][0] == '%': # response to private query
+                sender = msgwords[-1][1:]
+                self.respond(sender, sender, " ".join(msgwords[0:-1]))
+                return
+            if msgwords[-1][0] == '#': # resp to public query
+                sender = msgwords[-1][1:]
+                self.respond(CHANNEL, sender, " ".join(msgwords[0:-1]))
+                return
+            # game announcement, just throw it out there
+            self.msg(CHANNEL, " ".join(msgwords))
         if re.match(r'^\d*d\d*$', msgwords[0]):
             self.rollDice(sender, replyto, msgwords)
             return

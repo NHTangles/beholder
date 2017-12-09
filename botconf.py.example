@@ -5,7 +5,7 @@
 HOST, PORT = "chat.us.freenode.net", 6697
 
 # Nick, channel, etc
-CHANNEL = "#hardfought"
+CHANNEL = "#hardfought" #channel is ignored on slave bots.
 NICK = "Beholder"
 USERNAME = "Beholder"
 REALNAME = "Beholder"
@@ -27,3 +27,13 @@ PINOBOT = "Pinoclone"
 # people allowed to do certain admin things.
 # This is not terribly secure, as it does not verify the nick is authenticated. 
 ADMIN = ["K2", "Tangles"]
+
+# Remote servers section:
+# If this bot is the "master", we need to tell it where the remote servers are,
+# and the name of the "slave" bot that looks after each server.
+#            alias: (fqdn-of-server, remote-bot, path-to-local-copy-of-xlogfiles)
+# only define one of REMOTES or MASTERS
+REMOTES = { "hdf-eu": ("eu.hardfought.org", "beholder-eu", "/var/www/xlogs-eu")}
+# If we're a remote "slave" bot, MASTERS defines who we announce to, and who we take
+# queries from for !whereis, etc.
+#MASTERS = ["Beholder"]
