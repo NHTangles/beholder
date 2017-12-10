@@ -48,6 +48,7 @@ import glob     # for matching in !whereis
 
 from botconf import HOST, PORT, CHANNEL, NICK, USERNAME, REALNAME, BOTDIR
 from botconf import PWFILE, FILEROOT, WEBROOT, LOGROOT, PINOBOT, ADMIN
+from botconf import SERVERTAG
 try: from botconf import TEST
 except: TEST = False
 try:
@@ -164,7 +165,7 @@ class DeathBotProtocol(irc.IRCClient):
               "slex" : ["FCCBot"],
                 "un" : []}
 
-    # for displaying variants in colour
+    # for displaying variants and server tags in colour
     displaystring = {"nh" : "\x0315nh\x03",
                      "nd" : "\x0307nd\x03",
                    "zapm" : "\x0311zapm\x03",
@@ -176,7 +177,13 @@ class DeathBotProtocol(irc.IRCClient):
                      "4k" : "\x03114k\x03",
                      "sp" : "\x0314sp\x03",
                    "slex" : "\x0312slex\x03",
-                     "un" : "\x0308un\x03"}
+                     "un" : "\x0308un\x03",
+                 "hdf-us" : "\x0311hdf-us\x03",
+                 "hdf-eu" : "\x0312hdf-us\x03"}
+
+    # put the displaystring for a thing in square brackets
+    def displaytag(self, thing):
+       return '[' + self.displaystring.get(thing,thing) + ']'
 
     # for !who or !players or whatever we end up calling it
     # Reduce the repetitive crap
@@ -795,6 +802,14 @@ class DeathBotProtocol(irc.IRCClient):
 
     def forwardQuery(self,sender,replyto,msgwords):
         # need to pass the sender through to slaves so we can tag the response when it comes back
+        # we call this the replytag
+        # eg, bob says "!players" on the channel.
+        # master sends privmsg to slave: "players #bob"
+        # slave responds with "[hdf-eu] [gh] mike [nd] maryjane #bob"
+        # master strips #bob from end of reply, and forwards to channel:
+        # bob: [hdf-eu] [gh] mike [nd] maryjane
+        # if bob sends private message, replytag is %bob instead.
+        # master will then forward response direct to bob privately.
         if replyto == sender: # was a private message
             tag = "%"
         else:
@@ -816,10 +831,10 @@ class DeathBotProtocol(irc.IRCClient):
             for inpfile in glob.iglob(self.inprog[var] + "*.ttyrec"):
                 # /stuff/crap/PLAYER:shit:garbage.ttyrec
                 # we want AFTER last '/', BEFORE 1st ':'
-                plrvar += inpfile.split("/")[-1].split(":")[0] + " [" + self.displaystring[var] + "] "
+                plrvar += inpfile.split("/")[-1].split(":")[0] + " " + self.displaytag(var) + " "
         if len(plrvar) == 0:
             plrvar = "No current players"
-        self.respond(replyto, sender, plrvar + replytag)
+        self.respond(replyto, sender, self.displaytag(SERVERTAG) + " " + plrvar + replytag)
 
 
     def doWhereIs(self,sender,replyto, msgwords):
@@ -843,8 +858,8 @@ class DeathBotProtocol(irc.IRCClient):
                     plr = wipath.split("/")[-1].split(".")[0] # Correct case
                     wirec = parse_xlogfile_line(open(wipath, "r").read().strip(),":")
 
-                    self.respond(replyto, sender, plr
-                                 + " ["+self.displaystring[var]+"]: ({role} {race} {gender} {align}) T:{turns} ".format(**wirec)
+                    self.respond(replyto, sender, self.displaytag(SERVERTAG) + " " + plr
+                                 + " "+self.displaytag(var)+": ({role} {race} {gender} {align}) T:{turns} ".format(**wirec)
                                  + self.dungeons[var][wirec["dnum"]]
                                  + " level: " + str(wirec["depth"])
                                  + ammy[wirec["amulet"]]
@@ -856,9 +871,15 @@ class DeathBotProtocol(irc.IRCClient):
                     plr = inpfile.split("/")[-1].split(":")[0]
                     if plr.lower() == msgwords[1].lower():
                         found = True
-                        self.respond(replyto, sender, plr + " [" + self.displaystring[var] + "]: No details available" + replytag)
+                        self.respond(replyto, sender, self.displaytag(SERVERTAG)
+                                                      + " " + plr + " "
+                                                      + self.displaytag(var)
+                                                      + ": No details available"
+                                                      + replytag)
             if not found and not SLAVE:
-                self.respond(replyto, sender, msgwords[1] + " is not currently playing on this server.")
+                self.respond(replyto, sender, self.displaytag(SERVERTAG) + " "
+                                              + msgwords[1]
+                                              + " is not currently playing on this server.")
 
 
     def plrVar(self, sender, replyto, msgwords):
@@ -1116,7 +1137,7 @@ class DeathBotProtocol(irc.IRCClient):
             message = message[1:]
         msgwords = message.strip().split(" ")
         if dest != CHANNEL and sender in self.slaves: # response to slave query, or game announcement
-            msgwords = ["[" + self.slaves[sender] + "]"] + msgwords
+            #msgwords = ["[" + self.slaves[sender] + "]"] + msgwords
             #queries need the response tag used and stripped
             if msgwords[-1][0] == '%': # response to private query
                 sender = msgwords[-1][1:]
@@ -1283,7 +1304,7 @@ class DeathBotProtocol(irc.IRCClient):
 
         if (game.get("mode", "normal") == "normal" and
               game.get("modes", "normal") == "normal"):
-            yield ("[{displaystring}] {name} ({role} {race} {gender} {align}), "
+            yield (" [{displaystring}] {name} ({role} {race} {gender} {align}), "
                    "{points} points, T:{turns}, {death}{ascsuff}").format(**game)
         else:
             if "modes" in game:
@@ -1291,7 +1312,7 @@ class DeathBotProtocol(irc.IRCClient):
                     game["mode"] = game["modes"][7:]
                 else:
                     game["mode"] = game["modes"]
-            yield ("[{displaystring}] {name} ({role} {race} {gender} {align}), "
+            yield (" [{displaystring}] {name} ({role} {race} {gender} {align}), "
                    "{points} points, T:{turns}, {death}, "
                    "in {mode} mode{ascsuff}").format(**game)
 
@@ -1341,6 +1362,7 @@ class DeathBotProtocol(irc.IRCClient):
                 game["displaystring"] = self.displaystring.get(game["variant"],game["variant"])
                 game["dumpfmt"] = self.logs[filepath][3]
                 for line in self.logs[filepath][0](game):
+                    line = self.displaytag(SERVERTAG) + " " + line
                     self.msgLog(CHANNEL, line)
                     for fwd in self.forwards[game["variant"]]:
                         self.msg(fwd, line)

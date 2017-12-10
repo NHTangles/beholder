@@ -1,6 +1,8 @@
 # Instance-specific config for "Beholder" bot.
 #
 
+# server tag - mandatory for all instances
+SERVERTAG = "hdf-us"
 # connection
 HOST, PORT = "chat.us.freenode.net", 6697
 
