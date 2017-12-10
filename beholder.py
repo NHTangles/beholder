@@ -829,7 +829,8 @@ class DeathBotProtocol(irc.IRCClient):
             replytag = " " + msgwords[-1]
             minlen = 3
         if (len(msgwords) < minlen):
-            self.doPlayers(sender,replyto,msgwords)
+            #self.doPlayers(sender,replyto,msgwords)
+            self.respond(replyto, sender, "!" + msgwords[0] + " <player> - finds a player in the dungeon." + replytag)
             return
         if self.slaves:
             self.forwardQuery(sender,replyto,msgwords)
