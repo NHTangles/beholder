@@ -1363,7 +1363,11 @@ class DeathBotProtocol(irc.IRCClient):
                 game["dumpfmt"] = self.logs[filepath][3]
                 for line in self.logs[filepath][0](game):
                     line = self.displaytag(SERVERTAG) + " " + line
-                    self.msgLog(CHANNEL, line)
+                    if SLAVE:
+                        for master in MASTERS:
+                            self.msg(master, line)
+                    else:
+                        self.msgLog(CHANNEL, line)
                     for fwd in self.forwards[game["variant"]]:
                         self.msg(fwd, line)
 
