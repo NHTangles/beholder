@@ -2,7 +2,7 @@
 beholder.py - a game-reporting and general services IRC bot for
               the hardfought.org NetHack server.
 Copyright (c) 2017 A. Thomson, K. Simpson
-Based on original code from: 
+Based on original code from:
 deathbot.py - a game-reporting IRC bot for AceHack
 Copyright (c) 2011, Edoardo Spadolini
 All rights reserved.
@@ -119,7 +119,7 @@ class DeathBotProtocol(irc.IRCClient):
 
     dump_url_prefix = WEBROOT + "userdata/{name[0]}/{name}/"
     dump_file_prefix = FILEROOT + "dgldir/userdata/{name[0]}/{name}/"
-    
+
     if not SLAVE:
         scoresURL = WEBROOT + "nethack/scoreboard (HDF) or https://scoreboard.xd.cm (ALL)"
         rceditURL = WEBROOT + "nethack/rcedit"
@@ -194,8 +194,8 @@ class DeathBotProtocol(irc.IRCClient):
                "sp" : INPR+"sp065/",
              "slex" : INPR+"slex211/",
               "dyn" : INPR+"dyn/"}
-               
-    # for !whereis 
+
+    # for !whereis
     # some of these don't exist yet, so paths may not be accurate
     whereis = {"nh": FILEROOT+"nh343/var/whereis/",
                "nd": FILEROOT+"nhdev/var/whereis/",
@@ -273,7 +273,7 @@ class DeathBotProtocol(irc.IRCClient):
                        vanilla_roles, vanilla_races),
                 "gh": (["grunt", "grunthack"],
                        vanilla_roles, vanilla_races + ["gia", "kob", "ogr"]),
-               "dnh": (["dnethack", "dn"], 
+               "dnh": (["dnethack", "dn"],
                        vanilla_roles
                          + ["ana", "bin", "nob", "pir", "brd", "con"],
                        vanilla_races
@@ -288,7 +288,7 @@ class DeathBotProtocol(irc.IRCClient):
                        vanilla_roles, vanilla_races),
                 "4k": (["nhfourk", "nhf", "fourk"],
                        vanilla_roles, vanilla_races + ["gia", "scu", "syl"]),
-              "slex": (["slex", "sloth"], 
+              "slex": (["slex", "sloth"],
                        vanilla_roles
                          + ["aci", "act", "alt", "ama", "ana", "art", "ass",
                             "aug", "brd", "bin", "ble", "blo", "bos", "bul",
@@ -309,7 +309,7 @@ class DeathBotProtocol(irc.IRCClient):
                        vanilla_races
                          + ["add", "akt", "alb", "alc", "ali", "ame", "amn",
                             "anc", "acp", "agb", "ang", "aqu", "arg", "asg"])}
-    
+
     # variants which support streaks - now tracking slex streaks, because that's totally possible.
     streakvars = ["nh", "nd", "gh", "dnh", "un", "sp", "slex"]
     # for !asc statistics - assume these are the same for all variants, or at least the sane ones.
@@ -320,6 +320,29 @@ class DeathBotProtocol(irc.IRCClient):
     brethren = ["Rodney", "Athame", "Arsinoe", "Izchak", "TheresaMayBot", "FCCBot", "the late Pinobot", "Announcy", "demogorgon", "the /dev/null/oracle", "NotTheOracle\\dnt"]
     looping_calls = None
 
+    # SASL auth nonsense required if we run on AWS
+    # copied from https://github.com/habnabit/txsocksx/blob/master/examples/tor-irc.py
+    # irc_CAP and irc_9xx are UNDOCUMENTED.
+    def connectionMade(self):
+        self.sendLine('CAP REQ :sasl')
+        #self.deferred = Deferred()
+        irc.IRCClient.connectionMade(self)
+
+    def irc_CAP(self, prefix, params):
+        if params[1] != 'ACK' or params[2].split() != ['sasl']:
+            print 'sasl not available'
+            self.quit('')
+        sasl = ('{0}\0{0}\0{1}'.format(self.nickname, self.password)).encode('base64').strip()
+        self.sendLine('AUTHENTICATE PLAIN')
+        self.sendLine('AUTHENTICATE ' + sasl)
+
+    def irc_903(self, prefix, params):
+        self.sendLine('CAP END')
+
+    def irc_904(self, prefix, params):
+        print 'sasl auth failed', params
+        self.quit('')
+    irc_905 = irc_904
 
     def signedOn(self):
         self.factory.resetDelay()
@@ -483,6 +506,7 @@ class DeathBotProtocol(irc.IRCClient):
 
     # Write log
     def log(self, message):
+        if SLAVE: return
         # strip the colour control stuff out
         # This can probably all be done with a single RE but I have a headache.
         message = re.sub(r'\x03\d\d,\d\d', '', message) # fg,bg pair
@@ -495,7 +519,7 @@ class DeathBotProtocol(irc.IRCClient):
     # wrapper for "msg" that logs if msg dest is channel
     # Need to log our own actions separately as they don't trigger events
     def msgLog(self, replyto, message):
-        if (not SLAVE) and (replyto == CHANNEL):
+        if replyto == CHANNEL:
             self.log("<" + self.nickname + "> " + message)
         self.msg(replyto, message)
 
@@ -523,21 +547,21 @@ class DeathBotProtocol(irc.IRCClient):
 
     def doSource(self, sender, replyto, msgwords):
         self.respond(replyto, sender, self.sourceURL )
-        
+
     def doScoreboard(self, sender, replyto, msgwords):
         self.respond(replyto, sender, self.scoresURL )
-        
+
     def doRCedit(self, sender, replyto, msgwords):
         self.respond(replyto, sender, self.rceditURL )
-        
+
     def doHelp(self, sender, replyto, msgwords):
         self.respond(replyto, sender, self.helpURL )
-        
+
     def doColTest(self, sender, replyto, msgwords):
         code = chr(3)
         code += msgwords[1]
         self.respond(replyto, sender, msgwords[1] + " " + code + "TEST!" )
-        
+
     def doCommands(self, sender, replyto, msgwords):
         self.respond(replyto, sender, "available commands are !help !ping !time !pom !hello !booze !beer !potion !tea !coffee !whiskey !vodka !rum !tequila !scotch !goat !lotg !d(1-1000) !(1-50)d(1-1000) !8ball !rng !role !race !variant !tell !source !lastgame !lastasc !asc !streak !rcedit !scores !sb !setmintc !whereis !players !who !commands")
 
@@ -557,7 +581,7 @@ class DeathBotProtocol(irc.IRCClient):
     def doPom(self, sender, replyto, msgwords):
         # only info we have is that this yields 0..7, with 0 = new, 4 = full.
         # the rest is assumption.
-        mp = ["new", "waxing crescent", "at first quarter", "waxing gibbous", 
+        mp = ["new", "waxing crescent", "at first quarter", "waxing gibbous",
               "full", "waning gibbous", "at last quarter", "waning crescent"]
         dt = datetime.datetime.now()
         nowphase = self.getPom(dt)
@@ -573,7 +597,7 @@ class DeathBotProtocol(irc.IRCClient):
             if daysleft == 1: days = "day."
             resp += " for " + str(daysleft) + " more " + days
         else:
-            daysuntil = 1 # again, we are counting today    
+            daysuntil = 1 # again, we are counting today
             dt += aday
             while (self.getPom(dt)) not in [0, 4]:
                daysuntil += 1
@@ -681,13 +705,13 @@ class DeathBotProtocol(irc.IRCClient):
         self.respond(replyto, sender, random.choice(["It's your shout!", "I thought you'd never ask!",
                                                            "Burrrrp!", "We're not here to f#%k spiders, mate!",
                                                            "One Darwin stubby, coming up!"]))
-        
+
     def do8ball(self, sender, replyto, msgwords):
         self.respond(replyto, sender, random.choice(["\x1DIt is certain\x0F", "\x1DIt is decidedly so\x0F", "\x1DWithout a doubt\x0F", "\x1DYes definitely\x0F", "\x1DYou may rely on it\x0F",
                                                            "\x1DAs I see it, yes\x0F", "\x1DMost likely\x0F", "\x1DOutlook good\x0F", "\x1DYes\x0F", "\x1DSigns point to yes\x0F", "\x1DReply hazy try again\x0F",
                                                            "\x1DAsk again later\x0F", "\x1DBetter not tell you now\x0F", "\x1DCannot predict now\x0F", "\x1DConcentrate and ask again\x0F",
                                                            "\x1DDon't count on it\x0F", "\x1DMy reply is no\x0F", "\x1DMy sources say no\x0F", "\x1DOutlook not so good\x0F", "\x1DVery doubtful\x0F"]))
-        
+
     # The following started as !tea resulting in the bot making a cup of tea.
     # Now it does other stuff.
     bev = { "serves": ["delivers", "tosses", "passes", "pours", "hands", "throws"],
@@ -707,7 +731,7 @@ class DeathBotProtocol(irc.IRCClient):
                       },
 
             "drink" : {"tea"   : ["black", "white", "green", "polka-dot", "Earl Grey", "oolong", "darjeeling"],
-                       "potion": ["water", "fruit juice", "see invisible", "sickness", "confusion", "extra healing", "hallucination", "healing", "holy water", "unholy water", "restore ability", "sleeping", "blindness", "gain energy", "invisibility", "monster detection", "object detection", "booze", "enlightenment", "full healing", "levitation", "polymorph", "speed", "acid", "oil", "gain ability", "gain level", "paralysis"], 
+                       "potion": ["water", "fruit juice", "see invisible", "sickness", "confusion", "extra healing", "hallucination", "healing", "holy water", "unholy water", "restore ability", "sleeping", "blindness", "gain energy", "invisibility", "monster detection", "object detection", "booze", "enlightenment", "full healing", "levitation", "polymorph", "speed", "acid", "oil", "gain ability", "gain level", "paralysis"],
                        "booze" : ["booze", "the hooch", "moonshine", "the sauce", "grog", "suds", "the hard stuff", "liquid courage", "grappa"],
                        "coffee": ["coffee", "espresso", "cafe latte", "Blend 43"],
                        "vodka" : ["Stolichnaya", "Absolut", "Grey Goose", "Ketel One", "Belvedere", "Luksusowa", "SKYY", "Finlandia", "Smirnoff"],
@@ -723,7 +747,7 @@ class DeathBotProtocol(irc.IRCClient):
 
 
     def doTea(self, sender, replyto, msgwords):
-        if len(msgwords) > 1: target = msgwords[1] 
+        if len(msgwords) > 1: target = msgwords[1]
         else: target = sender
         drink = random.choice([msgwords[0]] * 50 + self.bev["drink"].keys())
         for vchoice in xrange(10):
@@ -739,7 +763,7 @@ class DeathBotProtocol(irc.IRCClient):
                 + " a "  + vessel
                 + " of " + fulldrink
                 + ", "   + random.choice(self.bev["prepared"])
-                + " by " + random.choice(self.brethren) 
+                + " by " + random.choice(self.brethren)
                 + " at " + str(temp)
                 + " " + tempunit + ".")
 
@@ -778,7 +802,7 @@ class DeathBotProtocol(irc.IRCClient):
         message = " ".join(msgwords + [tag + sender])
         for sl in self.slaves:
             self.msg(sl,message)
-            
+
 
     def doPlayers(self,sender,replyto, msgwords):
         if self.slaves:
@@ -786,18 +810,18 @@ class DeathBotProtocol(irc.IRCClient):
         replytag = ""
         if SLAVE:
             replytag = " " + msgwords[-1]
-            
+
         plrvar = ""
         for var in self.inprog.keys():
-            for inpfile in glob.iglob(self.inprog[var] + "*.ttyrec"): 
+            for inpfile in glob.iglob(self.inprog[var] + "*.ttyrec"):
                 # /stuff/crap/PLAYER:shit:garbage.ttyrec
-                # we want AFTER last '/', BEFORE 1st ':' 
+                # we want AFTER last '/', BEFORE 1st ':'
                 plrvar += inpfile.split("/")[-1].split(":")[0] + " [" + self.displaystring[var] + "] "
         if len(plrvar) == 0:
             plrvar = "No current players"
         self.respond(replyto, sender, plrvar + replytag)
-                
-            
+
+
     def doWhereIs(self,sender,replyto, msgwords):
         replytag = ""
         minlen = 2
@@ -812,12 +836,12 @@ class DeathBotProtocol(irc.IRCClient):
         found = False
         ammy = ["", " (with Amulet)"]
         for var in self.whereis.keys():
-            for wipath in glob.iglob(self.whereis[var] + "*.whereis"): 
+            for wipath in glob.iglob(self.whereis[var] + "*.whereis"):
                 if wipath.split("/")[-1].lower() == (msgwords[1] + ".whereis").lower():
                     found = True
-                    plr = wipath.split("/")[-1].split(".")[0] # Correct case 
+                    plr = wipath.split("/")[-1].split(".")[0] # Correct case
                     wirec = parse_xlogfile_line(open(wipath, "r").read().strip(),":")
-                
+
                     self.respond(replyto, sender, plr
                                  + " ["+self.displaystring[var]+"]: ({role} {race} {gender} {align}) T:{turns} ".format(**wirec)
                                  + self.dungeons[var][wirec["dnum"]]
@@ -834,13 +858,13 @@ class DeathBotProtocol(irc.IRCClient):
                         self.respond(replyto, sender, plr + " [" + self.displaystring[var] + "]: No details available" + replytag)
             if not found and not SLAVE:
                 self.respond(replyto, sender, msgwords[1] + " is not currently playing on this server.")
-    
+
 
     def plrVar(self, sender, replyto, msgwords):
         # for !streak and !asc, work out what player and variant they want
         if len(msgwords) > 3:
             # !streak tom dick harry
-            self.respond(replyto,sender,"Usage: !" +msgwords[0] +" [variant] [player]") 
+            self.respond(replyto,sender,"Usage: !" +msgwords[0] +" [variant] [player]")
             return
         if len(msgwords) == 3:
             vp = self.varalias(msgwords[1])
@@ -852,7 +876,7 @@ class DeathBotProtocol(irc.IRCClient):
                 # !streak K2 UnNethHack
                 return (msgwords[1],pv)
             # !streak bogus garbage
-            self.respond(replyto,sender,"Usage: !" +msgwords[0] +" [variant] [player]") 
+            self.respond(replyto,sender,"Usage: !" +msgwords[0] +" [variant] [player]")
             return (None, None)
         if len(msgwords) == 2:
             vp = self.varalias(msgwords[1])
@@ -952,7 +976,7 @@ class DeathBotProtocol(irc.IRCClient):
             if clength > 0:
                 if cstart == lstart:
                     reply += "(current)"
-                else: 
+                else:
                     reply += ". Current: " + str(clength) + " (since " \
                                            + self.streakDate(cstart) + ")"
             reply += "."
@@ -967,7 +991,7 @@ class DeathBotProtocol(irc.IRCClient):
             if clength > cmax:
                 (cmax, cvar, csmax, cemax)  = (clength, var, cstart, cend)
         if lmax == 0:
-            self.respond(replyto,sender, "No streaks for " + PLR +".") 
+            self.respond(replyto,sender, "No streaks for " + PLR +".")
             return
         reply = PLR + " Max[" + self.displaystring[lvar] + "]: " + str(lmax)
         reply += " (" + self.streakDate(lsmax) \
@@ -980,7 +1004,7 @@ class DeathBotProtocol(irc.IRCClient):
                 reply += " (since " + self.streakDate(csmax) + ")"
         reply += "."
         self.respond(replyto,sender, reply)
- 
+
     def lastGame(self, sender, replyto, msgwords):
         if (len(msgwords) >= 3): #var, plr, any order.
             vp = self.varalias(msgwords[1])
