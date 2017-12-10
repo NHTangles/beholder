@@ -179,7 +179,7 @@ class DeathBotProtocol(irc.IRCClient):
                    "slex" : "\x0312slex\x03",
                      "un" : "\x0308un\x03",
                  "hdf-us" : "\x0311hdf-us\x03",
-                 "hdf-eu" : "\x0312hdf-us\x03"}
+                 "hdf-eu" : "\x0312hdf-eu\x03"}
 
     # put the displaystring for a thing in square brackets
     def displaytag(self, thing):
