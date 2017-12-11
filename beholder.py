@@ -1068,9 +1068,13 @@ class DeathBotProtocol(irc.IRCClient):
     # turncount may not be the best metric for this - open to suggestions
     # player name must match nick, or can be set by an admin.
     def setPlrTC(self, sender, replyto, msgwords):
+        if SLAVE and not sender in MASTERS: return
         # set on all servers
-        for sl in self.slaves:
-            self.msg(sl," ".join(msgwords))
+        if self.slaves:
+            self.forwardQuery(sender,replyto,msgwords)
+        if SLAVE:
+            sender = msgwords[-1][1:] # use the replytag
+            msgwords = msgwords[0:-1] # strip the replytag - we're not sending anything back anyway
         if len(msgwords) == 2:
             if re.match(r'^\d+$',msgwords[1]):
                 self.plr_tc[sender.lower()] = int(msgwords[1])
