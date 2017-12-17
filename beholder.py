@@ -168,7 +168,7 @@ class DeathBotProtocol(irc.IRCClient):
     # for displaying variants and server tags in colour
     displaystring = {"nh" : "\x0315nh\x03",
                      "nd" : "\x0307nd\x03",
-                   "zapm" : "\x0311zapm\x03",
+                   "zapm" : "\x0303zapm\x03",
                      "gh" : "\x0304gh\x03",
                     "dnh" : "\x0313dnh\x03",
                      "fh" : "\x0310fh\x03",
@@ -178,8 +178,8 @@ class DeathBotProtocol(irc.IRCClient):
                      "sp" : "\x0314sp\x03",
                    "slex" : "\x0312slex\x03",
                      "un" : "\x0308un\x03",
-                 "hdf-us" : "\x0311hdf-us\x03",
-                 "hdf-eu" : "\x0312hdf-eu\x03"}
+                 "hdf-us" : "\x1D\x0304hdf-us\x03\x0F",
+                 "hdf-eu" : "\x1D\x0312hdf-eu\x03\x0F"}
 
     # put the displaystring for a thing in square brackets
     def displaytag(self, thing):
