@@ -519,6 +519,7 @@ class DeathBotProtocol(irc.IRCClient):
         message = re.sub(r'\x03\d\d,\d\d', '', message) # fg,bg pair
         message = re.sub(r'\x03\d\d', '', message) # fg only
         message = re.sub(r'[\x03\x0f]', '', message) # end of colour
+        message = re.sub(r'[\x1D\x03\x0f]', '', message) # end of colour and italics
         if time.strftime("%d") != self.logday: self.logRotate()
         self.chanLog.write(time.strftime("%H:%M ") + message + "\n")
         self.chanLog.flush()
