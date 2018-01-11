@@ -49,6 +49,8 @@ import glob     # for matching in !whereis
 from botconf import HOST, PORT, CHANNEL, NICK, USERNAME, REALNAME, BOTDIR
 from botconf import PWFILE, FILEROOT, WEBROOT, LOGROOT, PINOBOT, ADMIN
 from botconf import SERVERTAG
+try: from botconf import DCBRIDGE
+except: DCBRIDGE = None
 try: from botconf import TEST
 except: TEST = False
 try:
@@ -1121,6 +1123,10 @@ class DeathBotProtocol(irc.IRCClient):
         if (dest == CHANNEL): #public message
             self.log("<"+sender+"> " + message)
             replyto = CHANNEL
+            if (sender == DCBRIDGE and message[0] == '<'):
+                msgparts = message[1:].split('> ')
+                sender = msgparts[0]
+                message = "> ".join(msgparts[1:]) # in case there's more "> " in the message
         else: #private msg
             replyto = sender
         # Hello processing first.
