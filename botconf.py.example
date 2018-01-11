@@ -25,6 +25,9 @@ WEBROOT="https://www.hardfought.org/"
 LOGROOT="/var/www/hardfought.org/irclog/"
 # Name of bot to forward "pinobot"-style queries
 PINOBOT = "Pinoclone"
+# Name of bot in our channel that bridges discord network
+DCBRIDGE = "rld"
+
 
 # people allowed to do certain admin things.
 # This is not terribly secure, as it does not verify the nick is authenticated. 
