@@ -513,15 +513,18 @@ class DeathBotProtocol(irc.IRCClient):
         self.chanLog = open(self.chanLogName,'a') # 'w' is probably fine here
         os.chmod(self.chanLogName,stat.S_IRUSR|stat.S_IWUSR|stat.S_IRGRP|stat.S_IROTH)
 
+    def stripText(self, msg):
+        # strip the colour control stuff out
+        # This can probably all be done with a single RE but I have a headache.
+        message = re.sub(r'\x03\d\d,\d\d', '', msg) # fg,bg pair
+        message = re.sub(r'\x03\d\d', '', message) # fg only
+        message = re.sub(r'[\x1D\x03\x0f]', '', message) # end of colour and italics
+        return message
+
     # Write log
     def log(self, message):
         if SLAVE: return
-        # strip the colour control stuff out
-        # This can probably all be done with a single RE but I have a headache.
-        message = re.sub(r'\x03\d\d,\d\d', '', message) # fg,bg pair
-        message = re.sub(r'\x03\d\d', '', message) # fg only
-        message = re.sub(r'[\x03\x0f]', '', message) # end of colour
-        message = re.sub(r'[\x1D\x03\x0f]', '', message) # end of colour and italics
+        message = self.stripText(message)
         if time.strftime("%d") != self.logday: self.logRotate()
         self.chanLog.write(time.strftime("%H:%M ") + message + "\n")
         self.chanLog.flush()
@@ -797,10 +800,17 @@ class DeathBotProtocol(irc.IRCClient):
     def checkMessages(self, user):
         # this runs every time someone speaks on the channel,
         # so return quickly if there's nothing to do
-        if not self.tellbuf.get(user.lower(),False): return
-        for (forwardto,sender,ts,message) in self.tellbuf[user.lower()]:
+        # but first... deal with the "bonus" colours and leading @ symbols of discord users
+        if user[0] == '@':
+            plainuser = self.stripText(user).lower()
+            if not self.tellbuf.get(plainuser,None):
+                plainuser = plainuser[1:] # strip the leading @ and try again (below)
+        else:
+            plainuser = user.lower()
+        if not self.tellbuf.get(plainuser,None): return
+        for (forwardto,sender,ts,message) in self.tellbuf[plainuser]:
             self.respond(forwardto, user, "Message from " + sender + " at " + self.msgTime(ts) + ": " + message)
-        del self.tellbuf[user.lower()]
+        del self.tellbuf[plainuser]
         self.tellbuf.sync()
 
     def forwardQuery(self,sender,replyto,msgwords):
