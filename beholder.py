@@ -1041,40 +1041,72 @@ class DeathBotProtocol(irc.IRCClient):
         self.respond(replyto,sender, reply)
 
     def lastGame(self, sender, replyto, msgwords):
-        if (len(msgwords) >= 3): #var, plr, any order.
+        replytag = ""
+        minlen = 3
+        if SLAVE:
+            replytag = " " + msgwords[-1]
+            minlen = 4
+        if self.slaves:
+            self.forwardQuery(sender,replyto,msgwords)
+
+        if (len(msgwords) >= minlen): #var, plr, any order.
             vp = self.varalias(msgwords[1])
             pv = self.varalias(msgwords[2])
-            #dl = self.lg.get(":".join(msgwords[1:3]).lower(), False)
             dl = self.lg.get(":".join([vp,pv]).lower(), False)
             if not dl:
-                #dl = self.lg.get(":".join(msgwords[2:0:-1]).lower(),
-                dl = self.lg.get(":".join([pv,vp]).lower(),
-                                 "No last game for (" + ",".join(msgwords[1:3]) + ")")
-            self.respond(replyto, sender, dl)
+                dl = self.lg.get(":".join([pv,vp]).lower(),False)
+            if not dl:
+                if not slave:
+                    self.respond(replyto, sender, self.displaytag(SERVERTAG) +
+                                 " No last game for (" + ",".join(msgwords[1:3]) + ") on this server.")
+                return
+            self.respond(replyto, sender, self.displaytag(SERVERTAG) + " " + dl + replytag)
             return
-        if (len(msgwords) == 2): #var OR plr - don't care which
+        if (len(msgwords) == minlen -1): #var OR plr - don't care which
             vp = self.varalias(msgwords[1])
-            dl = self.lg.get(vp,"No last game for " + msgwords[1])
-            self.respond(replyto, sender, dl)
+            dl = self.lg.get(vp,False)
+            if not dl:
+                if not SLAVE:
+                    self.respond(replyto, sender, self.displaytag(SERVERTAG) +
+                                " No last game for " + msgwords[1] + " on this server.")
+                return
+            self.respond(replyto, sender, self.displaytag(SERVERTAG) + " " + dl + replytag)
             return
-        self.respond(replyto, sender, self.lastgame)
+        self.respond(replyto, sender, self.displaytag(SERVERTAG) + " " + self.lastgame + replytag)
 
     def lastAsc(self, sender, replyto, msgwords):
-        if (len(msgwords) >= 3): #var, plr, any order.
+        replytag = ""
+        minlen = 3
+        if SLAVE:
+            replytag = " " + msgwords[-1]
+            minlen = 4
+        if self.slaves:
+            self.forwardQuery(sender,replyto,msgwords)
+
+        if (len(msgwords) >= minlen): #var, plr, any order.
             vp = self.varalias(msgwords[1])
             pv = self.varalias(msgwords[2])
             dl = self.la.get(":".join(pv,vp).lower(),False)
-            if (dl == False):
-                dl = self.la.get(":".join(vp,pv).lower(),
-                                 "No last ascension for (" + ",".join(msgwords[1:3]) + ")")
-            self.respond(replyto, sender, dl)
+            if not dl:
+                dl = self.la.get(":".join(vp,pv).lower(),False)
+            if not dl:
+                if not SLAVE:
+                    self.respond(replyto, sender, self.displaytag(SERVERTAG) +
+                                 " No last ascension for (" + ",".join(msgwords[1:3]) + ") on this server.")
+                return
+            self.respond(replyto, sender, self.displaytag(SERVERTAG) + " " + dl + replytag)
             return
         if (len(msgwords) == 2): #var OR plr - don't care which
             vp = self.varalias(msgwords[1])
-            dl = self.la.get(vp,"No last ascension for " + msgwords[1])
-            self.respond(replyto, sender, dl)
+            dl = self.la.get(vp,False)
+            if not dl:
+                if not SLAVE:
+                    self.respond(replyto, sender, self.displaytag(SERVERTAG) +
+                                 " No last ascension for " + msgwords[1] + " on this server.")
+                return
+            self.respond(replyto, sender, self.displaytag(SERVERTAG) + " " + dl + replytag)
             return
-        self.respond(replyto, sender, self.lastasc)
+        self.respond(replyto, sender, self.displaytag(SERVERTAG) + " " + self.lastasc + replytag)
 
     # Allows players to set minimum turncount of their games to be reported
     # so they can manage their own deathspam
