@@ -164,7 +164,7 @@ class DeathBotProtocol(irc.IRCClient):
                "nh4" : [],
                 "4k" : [],
                 "sp" : [],
-              "slex" : ["FCCBot"],
+              "slex" : ["ro-bot"],
                 "un" : []}
 
     # for displaying variants and server tags in colour
