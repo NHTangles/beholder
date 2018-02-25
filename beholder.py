@@ -1392,6 +1392,8 @@ class DeathBotProtocol(irc.IRCClient):
             yield ("[{displaystring}] {player} ({role} {race} {gender} {align}) "
                    'shouted "{shout}", on T:{turns}').format(**event)
         elif "bones_killed" in event:
+            if not event.get("bones_rank",False): # fourk does not have bones rank so use role instead
+                event["bones_rank"] = event["bones_role"]
             yield ("[{displaystring}] {player} ({role} {race} {gender} {align}) "
                    "killed the {bones_monst} of {bones_killed}, "
                    "the former {bones_rank}, on T:{turns}").format(**event)
