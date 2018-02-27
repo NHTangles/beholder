@@ -394,7 +394,7 @@ class DeathBotProtocol(irc.IRCClient):
         "bat": "chiropteran",
         # 4k, includes vanilla
         "scu": "scurrier",
-        "syl": "sylph"
+        "syl": "sylph",
         # SLEX, includes vanilla, grunt, 4k, and dnh -- not all of dnh but close
         "add": "addict",
         "agg": "aggravator",
