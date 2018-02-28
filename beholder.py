@@ -580,7 +580,7 @@ class DeathBotProtocol(irc.IRCClient):
                        vanilla_roles, vanilla_races),
                 "4k": (["nhfourk", "nhf", "fourk"],
                        vanilla_roles, vanilla_races + ["gia", "scu", "syl"]),
-              "slex": (["slex", "sloth", "amy's weird thing"],
+              "slex": (["slex", "sloth", "amy's-weird-thing"],
                        vanilla_roles +
                           ["ana", "bin", "nob", "pir",
                            "trb", "con", "act", "alt",
