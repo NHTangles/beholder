@@ -142,6 +142,7 @@ class DeathBotProtocol(irc.IRCClient):
                  filepath.FilePath(FILEROOT+"fourkdir/save/xlogfile"): ("4k", "\t", "nhfourk/dumps/{dumplog}"),
                  filepath.FilePath(FILEROOT+"sporkhack-0.6.5/var/xlogfile"): ("sp", "\t", "sporkhack/dumplog/{starttime}.sp.txt"),
                  filepath.FilePath(FILEROOT+"slex-2.1.7/xlogfile"): ("slex", "\t", "slex/dumplog/{starttime}.slex.txt"),
+                 filepath.FilePath(FILEROOT+"xnethack/var/xlogfile"): ("xnh", "\t", "xnethack/dumplog/{starttime}.xnh.txt"),
                  filepath.FilePath(FILEROOT+"un531/var/unnethack/xlogfile"): ("un", ":", "un531/dumplog/{starttime}.un531.txt.html")}
     livelogs  = {filepath.FilePath(FILEROOT+"nh343/var/livelog"): ("nh", ":"),
                  filepath.FilePath(FILEROOT+"nhdev/var/livelog"): ("nd", "\t"),
@@ -151,6 +152,7 @@ class DeathBotProtocol(irc.IRCClient):
                  filepath.FilePath(FILEROOT+"fiqhackdir/data/livelog"): ("fh", ":"),
                  filepath.FilePath(FILEROOT+"sporkhack-0.6.5/var/livelog"): ("sp", ":"),
                  filepath.FilePath(FILEROOT+"slex-2.1.7/livelog"): ("slex", ":"),
+                 filepath.FilePath(FILEROOT+"xnethack/var/livelog"): ("xnh", "\t"),
                  filepath.FilePath(FILEROOT+"un531/var/unnethack/livelog"): ("un", ":")}
 
     # Forward events to other bots at the request of maintainers of other variant-specific channels
@@ -165,6 +167,7 @@ class DeathBotProtocol(irc.IRCClient):
                 "4k" : [],
                 "sp" : [],
               "slex" : ["ro-bot"],
+               "xnh" : [],
                 "un" : []}
 
     # for displaying variants and server tags in colour
@@ -179,6 +182,7 @@ class DeathBotProtocol(irc.IRCClient):
                      "4k" : "\x03114k\x03",
                      "sp" : "\x0314sp\x03",
                    "slex" : "\x0312slex\x03",
+                    "xnh" : "\x0309xnh\x03",
                      "un" : "\x0308un\x03",
                  "hdf-us" : "\x1D\x0304hdf-us\x03\x0F",
                  "hdf-eu" : "\x1D\x0312hdf-eu\x03\x0F"}
@@ -202,6 +206,7 @@ class DeathBotProtocol(irc.IRCClient):
               "nh4" : INPR+"nh4/",
                "sp" : INPR+"sp065/",
              "slex" : INPR+"slex217/",
+              "xnh" : INPR+"xnh/",
               "dyn" : INPR+"dyn/"}
 
     # for !whereis
@@ -216,6 +221,7 @@ class DeathBotProtocol(irc.IRCClient):
                "4k": FILEROOT+"fourkdir/save/",
                "sp": FILEROOT+"sporkhack-0.6.5/var/",
              "slex": FILEROOT+"slex-2.1.7/",
+              "xnh": FILEROOT+"xnethack/var/whereis/",
                "un": FILEROOT+"un531/var/unnethack/whereis/"}
 
     dungeons = {"nh": ["The Dungeons of Doom","Gehennom","The Gnomish Mines","The Quest",
@@ -242,6 +248,8 @@ class DeathBotProtocol(irc.IRCClient):
                 "sp": ["The Dungeons of Doom","Gehennom","The Gnomish Mines","The Quest",
                        "Sokoban","Fort Ludios","Vlad's Tower","The Elemental Planes"],
               "slex": ["The Dungeons of Doom","Gehennom","The Gnomish Mines","The Quest",
+                       "Sokoban","Fort Ludios","Vlad's Tower","The Elemental Planes"],
+               "xnh": ["The Dungeons of Doom","Gehennom","The Gnomish Mines","The Quest",
                        "Sokoban","Fort Ludios","Vlad's Tower","The Elemental Planes"],
                 "un": ["The Dungeons of Doom","Gehennom","Sheol","The Gnomish Mines",
                        "The Quest","Sokoban","Town","The Ruins of Moria","Fort Ludios",
@@ -572,6 +580,8 @@ class DeathBotProtocol(irc.IRCClient):
                          + ["clk", "con", "bat", "dro", "hlf", "inc", "vam", "swn"]),
                 "un": (["unnethack", "unh"],
                        vanilla_roles + ["con"], vanilla_races),
+               "xnh": (["xnh", "xnethack"],
+                       vanilla_roles, vanilla_races),
                 "dyn": (["dynahack", "dyna"],
                        vanilla_roles + ["con"], vanilla_races + ["vam"]),
                 "fh": (["fiqhack"], # not "fiq" see comment above
@@ -652,7 +662,7 @@ class DeathBotProtocol(irc.IRCClient):
                            "wor", "wra", "xor", "yee"])}
 
     # variants which support streaks - now tracking slex streaks, because that's totally possible.
-    streakvars = ["nh", "nd", "gh", "dnh", "un", "sp", "slex"]
+    streakvars = ["nh", "nd", "gh", "dnh", "un", "sp", "xnh", "slex"]
     # for !asc statistics - assume these are the same for all variants, or at least the sane ones.
     aligns = ["Law", "Neu", "Cha"]
     genders = ["Mal", "Fem"]
