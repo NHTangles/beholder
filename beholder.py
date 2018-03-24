@@ -1400,6 +1400,9 @@ class DeathBotProtocol(irc.IRCClient):
         elif "killed_uniq" in event:
             yield ("[{displaystring}] {player} ({role} {race} {gender} {align}) "
                    "killed {killed_uniq}, on T:{turns}").format(**event)
+        elif "defeated" in event: # fourk uses this instead of killed_uniq.
+            yield ("[{displaystring}] {player} ({role} {race} {gender} {align}) "
+                   "defeated {defeated}, on T:{turns}").format(**event)
 
     def connectionLost(self, reason=None):
         if self.looping_calls is None: return
