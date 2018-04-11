@@ -198,15 +198,15 @@ class DeathBotProtocol(irc.IRCClient):
     inprog = { "nh" : INPR+"nh343/",
                "nd" : INPR+"nhdev/",
              "zapm" : INPR+"zapm/",
-               "gh" : INPR+"gh022/",
-               "un" : INPR+"un531/",
-              "dnh" : INPR+"dnh3151/",
+               "gh" : INPR+"gh/",
+               "un" : INPR+"un/",
+              "dnh" : INPR+"dnh/",
                "fh" : INPR+"fh/",
                "4k" : INPR+"4k/",
               "nh4" : INPR+"nh4/",
-               "sp" : INPR+"sp065/",
-             "slex" : INPR+"slex217/",
-              "xnh" : INPR+"xnh011/",
+               "sp" : INPR+"sp/",
+             "slex" : INPR+"slex/",
+              "xnh" : INPR+"xnh/",
               "dyn" : INPR+"dyn/"}
 
     # for !whereis
