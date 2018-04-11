@@ -142,7 +142,7 @@ class DeathBotProtocol(irc.IRCClient):
                  filepath.FilePath(FILEROOT+"fourkdir/save/xlogfile"): ("4k", "\t", "nhfourk/dumps/{dumplog}"),
                  filepath.FilePath(FILEROOT+"sporkhack-0.6.5/var/xlogfile"): ("sp", "\t", "sporkhack/dumplog/{starttime}.sp.txt"),
                  filepath.FilePath(FILEROOT+"slex-2.1.7/xlogfile"): ("slex", "\t", "slex/dumplog/{starttime}.slex.txt"),
-                 filepath.FilePath(FILEROOT+"xnethack/var/xlogfile"): ("xnh", "\t", "xnethack/dumplog/{starttime}.xnh.txt"),
+                 filepath.FilePath(FILEROOT+"xnethack-0.1.1/var/xlogfile"): ("xnh", "\t", "xnethack/dumplog/{starttime}.xnh.txt"),
                  filepath.FilePath(FILEROOT+"un531/var/unnethack/xlogfile"): ("un", ":", "un531/dumplog/{starttime}.un531.txt.html")}
     livelogs  = {filepath.FilePath(FILEROOT+"nh343/var/livelog"): ("nh", ":"),
                  filepath.FilePath(FILEROOT+"nhdev/var/livelog"): ("nd", "\t"),
@@ -152,7 +152,7 @@ class DeathBotProtocol(irc.IRCClient):
                  filepath.FilePath(FILEROOT+"fiqhackdir/data/livelog"): ("fh", ":"),
                  filepath.FilePath(FILEROOT+"sporkhack-0.6.5/var/livelog"): ("sp", ":"),
                  filepath.FilePath(FILEROOT+"slex-2.1.7/livelog"): ("slex", ":"),
-                 filepath.FilePath(FILEROOT+"xnethack/var/livelog"): ("xnh", "\t"),
+                 filepath.FilePath(FILEROOT+"xnethack-0.1.1/var/livelog"): ("xnh", "\t"),
                  filepath.FilePath(FILEROOT+"un531/var/unnethack/livelog"): ("un", ":")}
 
     # Forward events to other bots at the request of maintainers of other variant-specific channels
@@ -206,7 +206,7 @@ class DeathBotProtocol(irc.IRCClient):
               "nh4" : INPR+"nh4/",
                "sp" : INPR+"sp065/",
              "slex" : INPR+"slex217/",
-              "xnh" : INPR+"xnh/",
+              "xnh" : INPR+"xnh011/",
               "dyn" : INPR+"dyn/"}
 
     # for !whereis
@@ -221,7 +221,7 @@ class DeathBotProtocol(irc.IRCClient):
                "4k": FILEROOT+"fourkdir/save/",
                "sp": FILEROOT+"sporkhack-0.6.5/var/",
              "slex": FILEROOT+"slex-2.1.7/",
-              "xnh": FILEROOT+"xnethack/var/whereis/",
+              "xnh": FILEROOT+"xnethack-0.1.1/var/whereis/",
                "un": FILEROOT+"un531/var/unnethack/whereis/"}
 
     dungeons = {"nh": ["The Dungeons of Doom","Gehennom","The Gnomish Mines","The Quest",
