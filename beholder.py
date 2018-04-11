@@ -195,20 +195,19 @@ class DeathBotProtocol(irc.IRCClient):
     # Reduce the repetitive crap
     DGLD=FILEROOT+"dgldir/"
     INPR=DGLD+"inprogress-"
-    inprog = { "nh" : INPR+"nh343/",
-               "nd" : INPR+"nhdev/",
-             "zapm" : INPR+"zapm/",
-               "gh" : INPR+"gh022/",
-               "un" : INPR+"un531/",
-              "dnh" : INPR+"dnh3151/",
-               "fh" : INPR+"fh/",
-               "4k" : INPR+"4k/",
-              "nh4" : INPR+"nh4/",
-               "sp" : INPR+"sp065/",
-             "slex" : INPR+"slex217/",
-              "xnh" : INPR+"xnh011/",
-              "xnh.old" : INPR+"xnh/",
-              "dyn" : INPR+"dyn/"}
+    inprog = { "nh" : [INPR+"nh343/"],
+               "nd" : [INPR+"nhdev/"],
+             "zapm" : [INPR+"zapm/"],
+               "gh" : [INPR+"gh022/"],
+               "un" : [INPR+"un531/"],
+              "dnh" : [INPR+"dnh3151/"],
+               "fh" : [INPR+"fh/"],
+               "4k" : [INPR+"4k/"],
+              "nh4" : [INPR+"nh4/"],
+               "sp" : [INPR+"sp065/"],
+             "slex" : [INPR+"slex217/"],
+              "xnh" : [INPR+"xnh011/", INPR+"xnh/"],
+              "dyn" : [INPR+"dyn/"]}
 
     # for !whereis
     # some of these don't exist yet, so paths may not be accurate
@@ -1184,10 +1183,11 @@ class DeathBotProtocol(irc.IRCClient):
 
         plrvar = ""
         for var in self.inprog.keys():
-            for inpfile in glob.iglob(self.inprog[var] + "*.ttyrec"):
-                # /stuff/crap/PLAYER:shit:garbage.ttyrec
-                # we want AFTER last '/', BEFORE 1st ':'
-                plrvar += inpfile.split("/")[-1].split(":")[0] + " " + self.displaytag(var) + " "
+            for inpdir in self.inprog[var]:
+                for inpfile in glob.iglob(inpdir + "*.ttyrec"):
+                    # /stuff/crap/PLAYER:shit:garbage.ttyrec
+                    # we want AFTER last '/', BEFORE 1st ':'
+                    plrvar += inpfile.split("/")[-1].split(":")[0] + " " + self.displaytag(var) + " "
         if len(plrvar) == 0:
             plrvar = "No current players"
         self.respond(replyto, sender, self.displaytag(SERVERTAG) + " " + plrvar + replytag)
@@ -1223,15 +1223,16 @@ class DeathBotProtocol(irc.IRCClient):
         if not found:
             # Look for inprogress in case player is playing something that does not do whereis
             for var in self.inprog.keys():
-                for inpfile in glob.iglob(self.inprog[var] + "*.ttyrec"):
-                    plr = inpfile.split("/")[-1].split(":")[0]
-                    if plr.lower() == msgwords[1].lower():
-                        found = True
-                        self.respond(replyto, sender, self.displaytag(SERVERTAG)
-                                                      + " " + plr + " "
-                                                      + self.displaytag(var)
-                                                      + ": No details available"
-                                                      + replytag)
+                for inpdir in self.inprog[var]:
+                    for inpfile in glob.iglob(inpdir + "*.ttyrec"):
+                        plr = inpfile.split("/")[-1].split(":")[0]
+                        if plr.lower() == msgwords[1].lower():
+                            found = True
+                            self.respond(replyto, sender, self.displaytag(SERVERTAG)
+                                                          + " " + plr + " "
+                                                          + self.displaytag(var)
+                                                          + ": No details available"
+                                                          + replytag)
             if not found and not SLAVE:
                 self.respond(replyto, sender, self.displaytag(SERVERTAG) + " "
                                               + msgwords[1]
