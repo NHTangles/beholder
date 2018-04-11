@@ -207,6 +207,7 @@ class DeathBotProtocol(irc.IRCClient):
                "sp" : INPR+"sp065/",
              "slex" : INPR+"slex217/",
               "xnh" : INPR+"xnh011/",
+              "xnh.old" : INPR+"xnh/",
               "dyn" : INPR+"dyn/"}
 
     # for !whereis
