@@ -571,7 +571,7 @@ class DeathBotProtocol(irc.IRCClient):
                        vanilla_roles, vanilla_races),
                 "nh4": (["nethack4", "n4"],
                        vanilla_roles, vanilla_races),
-                "gh": (["grunt", "grunthack"],
+                "gh": (["grunthack", "grunt"],
                        vanilla_roles, vanilla_races + ["gia", "kob", "ogr"]),
                "dnh": (["dnethack", "dn"],
                        vanilla_roles
@@ -580,7 +580,7 @@ class DeathBotProtocol(irc.IRCClient):
                          + ["clk", "con", "bat", "dro", "hlf", "inc", "vam", "swn"]),
                 "un": (["unnethack", "unh"],
                        vanilla_roles + ["con"], vanilla_races),
-               "xnh": (["xnh", "xnethack"],
+               "xnh": (["xnethack"],
                        vanilla_roles, vanilla_races),
                 "dyn": (["dynahack", "dyna"],
                        vanilla_roles + ["con"], vanilla_races + ["vam"]),
@@ -1243,7 +1243,7 @@ class DeathBotProtocol(irc.IRCClient):
         # for !streak and !asc, work out what player and variant they want
         if len(msgwords) > 3:
             # !streak tom dick harry
-            self.respond(replyto,sender,"Usage: !" +msgwords[0] +" [variant] [player]")
+            if not SLAVE: self.respond(replyto,sender,"Usage: !" +msgwords[0] +" [variant] [player]")
             return
         if len(msgwords) == 3:
             vp = self.varalias(msgwords[1])
@@ -1255,7 +1255,7 @@ class DeathBotProtocol(irc.IRCClient):
                 # !streak K2 UnNethHack
                 return (msgwords[1],pv)
             # !streak bogus garbage
-            self.respond(replyto,sender,"Usage: !" +msgwords[0] +" [variant] [player]")
+            if not SLAVE: self.respond(replyto,sender,"Usage: !" +msgwords[0] +" [variant] [player]")
             return (None, None)
         if len(msgwords) == 2:
             vp = self.varalias(msgwords[1])
@@ -1268,6 +1268,12 @@ class DeathBotProtocol(irc.IRCClient):
         return(sender, None)
 
     def doAsc(self, sender, replyto, msgwords):
+        replytag = ""
+        if SLAVE:
+            replytag = " " + msgwords[-1]
+            msgwords = msgwords[:-1]
+        if self.slaves:
+            self.forwardQuery(sender,replyto,msgwords)
         (PLR, var) = self.plrVar(sender,replyto,msgwords)
         if not PLR: return # bogus input, handled in plrVar
         plr = PLR.lower()
@@ -1275,10 +1281,10 @@ class DeathBotProtocol(irc.IRCClient):
         totasc = 0
         if var:
             if not plr in self.asc[var]:
-                repl = "No ascensions for " + PLR + " in "
+                repl = self.displaytag(SERVERTAG) + " No ascensions for " + PLR + " in "
                 if plr in self.allgames[var]:
                     repl += str(self.allgames[var][plr]) + " games of "
-                repl += self.variants[var][0][0] + "."
+                repl += self.variants[var][0][0] + "." + replytag
                 self.respond(replyto,sender,repl)
                 return
             for role in self.variants[var][1]:
@@ -1301,12 +1307,13 @@ class DeathBotProtocol(irc.IRCClient):
                     stats += " " + str(self.asc[var][plr][gend]) + "x" + gend
             stats += "."
             self.respond(replyto, sender,
-                         PLR + " has ascended " + self.variants[var][0][0] + " "
-                             + str(totasc) + " times in "
-                             + str(self.allgames[var][plr])
-                             + " games ({:0.2f}%):".format((100.0 * totasc)
-                                                           / self.allgames[var][plr])
-                             + stats)
+                         self.displaytag(SERVERTAG) + " " + PLR
+                         + " has ascended " + self.variants[var][0][0] + " "
+                         + str(totasc) + " times in "
+                         + str(self.allgames[var][plr])
+                         + " games ({:0.2f}%):".format((100.0 * totasc)
+                                                       / self.allgames[var][plr])
+                         + stats + replytag)
             return
         # no variant. Do player stats across variants.
         totgames = 0
@@ -1321,33 +1328,41 @@ class DeathBotProtocol(irc.IRCClient):
                                                                                              / self.allgames[var][plr])
         if totasc:
             self.respond(replyto, sender,
-                         PLR + " has ascended " + str(totasc) + " times in "
-                             + str(totgames)
-                             + " games ({:0.2f}%): ".format((100.0 * totasc) / totgames)
-                             + stats)
+                         self.displaytag(SERVERTAG) + " " + PLR
+                         + " has ascended " + str(totasc) + " times in "
+                         + str(totgames)
+                         + " games ({:0.2f}%): ".format((100.0 * totasc) / totgames)
+                         + stats + replytag)
             return
         if totgames:
-            self.respond(replyto, sender, PLR + " has not ascended in " + str(totgames) + " games.")
+            self.respond(replyto, sender, self.displaytag(SERVERTAG) + " " + PLR
+                                          + " has not ascended in " + str(totgames) + " games." + replytag)
             return
-        self.respond(replyto, sender, "No games for " + PLR + ".")
+        if not SLAVE: self.respond(replyto, sender, self.displaytag(SERVERTAG) + " No games for " + PLR + "." + replytag)
         return
 
     def streakDate(self,stamp):
         return datetime.datetime.fromtimestamp(float(stamp)).strftime("%Y-%m-%d")
 
     def doStreak(self, sender, replyto, msgwords):
+        replytag = ""
+        if SLAVE:
+            replytag = " " + msgwords[-1]
+            msgwords = msgwords[:-1]
+        if self.slaves:
+            self.forwardQuery(sender,replyto,msgwords)
         (PLR, var) = self.plrVar(sender,replyto,msgwords)
         if not PLR: return # bogus input, handled in plrVar
         plr = PLR.lower()
         if var:
             if var not in self.streakvars:
-                self.respond(replyto,sender,"Streaks are not recorded for " + var +".")
+                if not SLAVE: self.respond(replyto,sender,"Streaks are not recorded for " + var +".")
                 return
             (lstart,lend,llength) = self.longstreak[var].get(plr,(0,0,0))
             (cstart,cend,clength) = self.curstreak[var].get(plr,(0,0,0))
-            reply = PLR + "[" + self.displaystring[var] + "]"
+            reply = self.displaytag(SERVERTAG) + " " + PLR + "[" + self.displaystring[var] + "]"
             if llength == 0:
-                reply += ": No streaks."
+                reply += ": No streaks on this server." + replytag
                 self.respond(replyto,sender,reply)
                 return
             reply += " Max: " + str(llength) + " (" + self.streakDate(lstart) \
@@ -1358,7 +1373,7 @@ class DeathBotProtocol(irc.IRCClient):
                 else:
                     reply += ". Current: " + str(clength) + " (since " \
                                            + self.streakDate(cstart) + ")"
-            reply += "."
+            reply += "." + replytag
             self.respond(replyto,sender,reply)
             return
         (lmax,cmax) = (0,0)
@@ -1370,9 +1385,9 @@ class DeathBotProtocol(irc.IRCClient):
             if clength > cmax:
                 (cmax, cvar, csmax, cemax)  = (clength, var, cstart, cend)
         if lmax == 0:
-            self.respond(replyto,sender, "No streaks for " + PLR +".")
+            self.respond(replyto,sender, self.displaytag(SERVERTAG) + " No streaks for " + PLR +" on this server." + replytag)
             return
-        reply = PLR + " Max[" + self.displaystring[lvar] + "]: " + str(lmax)
+        reply = self.displaytag(SERVERTAG) + " " + PLR + " Max[" + self.displaystring[lvar] + "]: " + str(lmax)
         reply += " (" + self.streakDate(lsmax) \
                       + " - " + self.streakDate(lemax) + ")"
         if cmax > 0:
@@ -1381,7 +1396,7 @@ class DeathBotProtocol(irc.IRCClient):
             else:
                 reply += ". Current[" + self.displaystring[cvar] + "]: " + str(cmax)
                 reply += " (since " + self.streakDate(csmax) + ")"
-        reply += "."
+        reply += "." + replytag
         self.respond(replyto,sender, reply)
 
     def lastGame(self, sender, replyto, msgwords):
@@ -1400,7 +1415,7 @@ class DeathBotProtocol(irc.IRCClient):
             if not dl:
                 dl = self.lg.get(":".join([pv,vp]).lower(),False)
             if not dl:
-                if not slave:
+                if not SLAVE:
                     self.respond(replyto, sender, self.displaytag(SERVERTAG) +
                                  " No last game for (" + ",".join(msgwords[1:3]) + ") on this server.")
                 return
