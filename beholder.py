@@ -141,7 +141,7 @@ class DeathBotProtocol(irc.IRCClient):
                  filepath.FilePath(FILEROOT+"nh4dir/save/xlogfile"): ("nh4", ":", "nethack4/dumplog/{dumplog}"),
                  filepath.FilePath(FILEROOT+"fourkdir/save/xlogfile"): ("4k", "\t", "nhfourk/dumps/{dumplog}"),
                  filepath.FilePath(FILEROOT+"sporkhack-0.6.5/var/xlogfile"): ("sp", "\t", "sporkhack/dumplog/{starttime}.sp.txt"),
-                 filepath.FilePath(FILEROOT+"slex-2.1.7/xlogfile"): ("slex", "\t", "slex/dumplog/{starttime}.slex.txt"),
+                 filepath.FilePath(FILEROOT+"slex-2.2.2/xlogfile"): ("slex", "\t", "slex/dumplog/{starttime}.slex.txt"),
                  filepath.FilePath(FILEROOT+"xnethack-0.1.1/var/xlogfile"): ("xnh", "\t", "xnethack/dumplog/{starttime}.xnh.txt"),
                  filepath.FilePath(FILEROOT+"un531/var/unnethack/xlogfile"): ("un", ":", "un531/dumplog/{starttime}.un531.txt.html")}
     livelogs  = {filepath.FilePath(FILEROOT+"nh343/var/livelog"): ("nh343", ":"),
@@ -151,7 +151,7 @@ class DeathBotProtocol(irc.IRCClient):
                  filepath.FilePath(FILEROOT+"fourkdir/save/livelog"): ("4k", "\t"),
                  filepath.FilePath(FILEROOT+"fiqhackdir/data/livelog"): ("fh", ":"),
                  filepath.FilePath(FILEROOT+"sporkhack-0.6.5/var/livelog"): ("sp", ":"),
-                 filepath.FilePath(FILEROOT+"slex-2.1.7/livelog"): ("slex", ":"),
+                 filepath.FilePath(FILEROOT+"slex-2.2.2/livelog"): ("slex", ":"),
                  filepath.FilePath(FILEROOT+"xnethack-0.1.1/var/livelog"): ("xnh", "\t"),
                  filepath.FilePath(FILEROOT+"un531/var/unnethack/livelog"): ("un", ":")}
 
@@ -205,7 +205,7 @@ class DeathBotProtocol(irc.IRCClient):
                   "4k" : [INPR+"4k/"],
                  "nh4" : [INPR+"nh4/"],
                   "sp" : [INPR+"sp065/"],
-                "slex" : [INPR+"slex211/", INPR+"slex217/"],
+                "slex" : [INPR+"slex217/", INPR+"slex222/"],
                  "xnh" : [INPR+"xnh/", INPR+"xnh011/"],
                  "dyn" : [INPR+"dyn/"]}
 
@@ -220,7 +220,7 @@ class DeathBotProtocol(irc.IRCClient):
                  "nh4": FILEROOT+"nh4dir/save/whereis/",
                   "4k": FILEROOT+"fourkdir/save/",
                   "sp": FILEROOT+"sporkhack-0.6.5/var/",
-                "slex": FILEROOT+"slex-2.1.7/",
+                "slex": FILEROOT+"slex-2.2.2/whereis/",
                  "xnh": FILEROOT+"xnethack-0.1.1/var/whereis/",
                   "un": FILEROOT+"un531/var/unnethack/whereis/"}
 
