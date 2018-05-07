@@ -1269,12 +1269,14 @@ class DeathBotProtocol(irc.IRCClient):
 
     def doAsc(self, sender, replyto, msgwords):
         replytag = ""
+        requestor = sender
         if SLAVE:
+            requestor = msgwords[-1][1:]
             replytag = " " + msgwords[-1]
             msgwords = msgwords[:-1]
         if self.slaves:
             self.forwardQuery(sender,replyto,msgwords)
-        (PLR, var) = self.plrVar(sender,replyto,msgwords)
+        (PLR, var) = self.plrVar(requestor,replyto,msgwords)
         if not PLR: return # bogus input, handled in plrVar
         plr = PLR.lower()
         stats = ""
@@ -1346,12 +1348,14 @@ class DeathBotProtocol(irc.IRCClient):
 
     def doStreak(self, sender, replyto, msgwords):
         replytag = ""
+        requestor = sender
         if SLAVE:
+            requestor = msgwords[-1][1:]
             replytag = " " + msgwords[-1]
             msgwords = msgwords[:-1]
         if self.slaves:
             self.forwardQuery(sender,replyto,msgwords)
-        (PLR, var) = self.plrVar(sender,replyto,msgwords)
+        (PLR, var) = self.plrVar(requestor,replyto,msgwords)
         if not PLR: return # bogus input, handled in plrVar
         plr = PLR.lower()
         if var:
