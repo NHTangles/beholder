@@ -193,6 +193,7 @@ class DeathBotProtocol(irc.IRCClient):
                      "nh13d" : "\x0311nh13d\x03",
                         "un" : "\x0308un\x03",
                     "hdf-us" : "\x1D\x0304hdf-us\x03\x0F",
+                    "hdf-au" : "\x1D\x0303hdf-au\x03\x0F",
                     "hdf-eu" : "\x1D\x0312hdf-eu\x03\x0F"}
 
     # put the displaystring for a thing in square brackets
