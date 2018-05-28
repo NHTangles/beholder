@@ -1787,8 +1787,8 @@ class DeathBotProtocol(irc.IRCClient):
                 event["player"] = event["charname"]
 
         # 1.3d kludge again
-        if "race" not in game: game["race"] = "###"
-        if "align" not in game: game["align"] = "###"
+        if "race" not in event: event["race"] = "###"
+        if "align" not in event: event["align"] = "###"
 
         if "historic_event" in event and "message" not in event:
             if event["historic_event"].endswith("."):
