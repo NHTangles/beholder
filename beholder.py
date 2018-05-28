@@ -1697,6 +1697,11 @@ class DeathBotProtocol(irc.IRCClient):
             self.lastgame = dumpurl
             self.tlastgame = game["endtime"]
 
+        # Kludge for nethack 1.3d -
+        # populate race and align with dummy values.
+        if "race" not in game: game["race"] = "###"
+        if "align" not in game: game["align"] = "###"
+
         if game["death"][0:8] in ("ascended"):
             # append dump url to report for ascensions
             game["ascsuff"] = "\n" + dumpurl
@@ -1757,8 +1762,12 @@ class DeathBotProtocol(irc.IRCClient):
 
         if (game.get("mode", "normal") == "normal" and
               game.get("modes", "normal") == "normal"):
-            yield ("[{displaystring}] {name} ({role} {race} {gender} {align}), "
-                   "{points} points, T:{turns}, {death}{ascsuff}").format(**game)
+            if game.get("version","unknown") == "NH-1.3d":
+                yield ("[{displaystring}] {name} ({role} {gender}), "
+                       "{points} points, T:{turns}, {death}{ascsuff}").format(**game)
+            else:
+                yield ("[{displaystring}] {name} ({role} {race} {gender} {align}), "
+                       "{points} points, T:{turns}, {death}{ascsuff}").format(**game)
         else:
             if "modes" in game:
                 if game["modes"].startswith("normal,"):
@@ -1776,6 +1785,10 @@ class DeathBotProtocol(irc.IRCClient):
                     event["player"] = "{charname} ({player})".format(**event)
             else:
                 event["player"] = event["charname"]
+
+        # 1.3d kludge again
+        if "race" not in game: game["race"] = "###"
+        if "align" not in game: game["align"] = "###"
 
         if "historic_event" in event and "message" not in event:
             if event["historic_event"].endswith("."):
