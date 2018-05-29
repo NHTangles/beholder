@@ -1816,6 +1816,21 @@ class DeathBotProtocol(irc.IRCClient):
         elif "defeated" in event: # fourk uses this instead of killed_uniq.
             yield ("[{displaystring}] {player} ({role} {race} {gender} {align}) "
                    "defeated {defeated}, on T:{turns}").format(**event)
+        # more 1.3d shite
+        elif "genocided_monster" in event:
+            if event.get("dungeon_wide","yes") == "yes":
+                event["genoscope"] = "dungeon wide";
+            else:
+                event["genoscope"] = "locally";
+            yield ("[{displaystring}] {player} ({role} {race} {gender} {align}) "
+                   "genocided {genocided_monster} {genoscope} on T:{turns}").format(**event)
+        elif "shoplifted" in event:
+            yield ("[{displaystring}] {player} ({role} {race} {gender} {align}) "
+                   "stole {shoplifted} zorkmids of merchandise from the {shop} of"
+                   " {shopkeeper} on T:{turns}").format(**event)
+        elif "killed_shopkeeper" in event:
+            yield ("[{displaystring}] {player} ({role} {race} {gender} {align}) "
+                   "killed {killed_shopkeeper} on T:{turns}").format(**event)
 
     def connectionLost(self, reason=None):
         if self.looping_calls is None: return
