@@ -656,7 +656,7 @@ class DeathBotProtocol(irc.IRCClient):
                               "uds", "und", "use", "wan",
                               "war", "yeo", "yse", "zoo",
                               "zyb"],
-                          vanilla_races + 
+                          vanilla_races +
                              ["gia", "kob", "ogr", "clk",
                               "inc", "vam", "yuk", "yok",
                               "scu", "syl", "add", "agg",
@@ -1442,14 +1442,13 @@ class DeathBotProtocol(irc.IRCClient):
 
     def lastGame(self, sender, replyto, msgwords):
         replytag = ""
-        minlen = 3
         if SLAVE:
             replytag = " " + msgwords[-1]
-            minlen = 4
+            msgwords = msgwords[0:-1]
         if self.slaves:
             self.forwardQuery(sender,replyto,msgwords)
 
-        if (len(msgwords) >= minlen): #var, plr, any order.
+        if (len(msgwords) >= 3): #var, plr, any order.
             vp = self.varalias(msgwords[1])
             pv = self.varalias(msgwords[2])
             dl = self.lg.get(":".join([vp,pv]).lower(), False)
@@ -1462,7 +1461,7 @@ class DeathBotProtocol(irc.IRCClient):
                 return
             self.respond(replyto, sender, self.displaytag(SERVERTAG) + " " + dl + replytag)
             return
-        if (len(msgwords) == minlen -1): #var OR plr - don't care which
+        if (len(msgwords) == 2): #var OR plr - don't care which
             vp = self.varalias(msgwords[1])
             dl = self.lg.get(vp,False)
             if not dl:
@@ -1476,14 +1475,13 @@ class DeathBotProtocol(irc.IRCClient):
 
     def lastAsc(self, sender, replyto, msgwords):
         replytag = ""
-        minlen = 3
         if SLAVE:
             replytag = " " + msgwords[-1]
-            minlen = 4
+            msgwords = msgwords[0:-1]
         if self.slaves:
             self.forwardQuery(sender,replyto,msgwords)
 
-        if (len(msgwords) >= minlen): #var, plr, any order.
+        if (len(msgwords) >= 3): #var, plr, any order.
             vp = self.varalias(msgwords[1])
             pv = self.varalias(msgwords[2])
             dl = self.la.get(":".join(pv,vp).lower(),False)
