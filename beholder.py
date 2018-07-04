@@ -1187,8 +1187,31 @@ class DeathBotProtocol(irc.IRCClient):
         else:
             plainuser = user.lower()
         if not self.tellbuf.get(plainuser,None): return
-        for (forwardto,sender,ts,message) in self.tellbuf[plainuser]:
-            self.respond(forwardto, user, "Message from " + sender + " at " + self.msgTime(ts) + ": " + message)
+        nicksfrom = []
+        if len(self.tellbuf[plainuser]) > 4 and user[0] != '@':
+            for (forwardto,sender,ts,message) in self.tellbuf[plainuser]:
+                if forwardto.lower() != user.lower(): # don't add sender to list if message was private
+                    if sender not in nicksfrom: nicksfrom += [sender]
+                self.respond(user,user, "Message from " + sender + " at " + self.msgTime(ts) + ": " + message)
+            # "tom" "tom and dick" "tom, dick, and harry"
+            fromstr = ""
+            for (i,n) in enumerate(nicksfrom):
+                # first item
+                if (i == 0):
+                    fromstr = n
+                # last item
+                elif (i == len(nicksfrom)-1):
+                    if (i > 1): fromstr += "," # oxford comma :P
+                    fromstr += " and " + n
+                # middle items
+                else:
+                   fromstr += ", " + n
+
+            self.respond(CHANNEL, user, "Messages from: " + fromstr + " have been forwarded to you privately.");
+
+        else:
+            for (forwardto,sender,ts,message) in self.tellbuf[plainuser]:
+                self.respond(forwardto, user, "Message from " + sender + " at " + self.msgTime(ts) + ": " + message)
         del self.tellbuf[plainuser]
         self.tellbuf.sync()
 
