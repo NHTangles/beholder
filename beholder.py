@@ -1161,13 +1161,16 @@ class DeathBotProtocol(irc.IRCClient):
 
     def takeMessage(self, sender, replyto, msgwords):
         rcpt = msgwords[1].split(":")[0] # remove any trailing colon - could check for other things here.
+        message = " ".join(msgwords[2:])
         if (replyto == sender): #this was a privmsg
             forwardto = rcpt # so we pass a privmsg
+            # and mark it so rcpt knows it was sent privately
+            message = "[private] " + message
         else: # !tell on channel
             forwardto = replyto # so pass to channel
         if not self.tellbuf.get(rcpt.lower(),False):
             self.tellbuf[rcpt.lower()] = []
-        self.tellbuf[rcpt.lower()].append((forwardto,sender,time.time()," ".join(msgwords[2:])))
+        self.tellbuf[rcpt.lower()].append((forwardto,sender,time.time(),message))
         self.tellbuf.sync()
         self.msgLog(replyto,"Will do, " + sender + "!")
 
