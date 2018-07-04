@@ -1191,7 +1191,7 @@ class DeathBotProtocol(irc.IRCClient):
             plainuser = user.lower()
         if not self.tellbuf.get(plainuser,None): return
         nicksfrom = []
-        if len(self.tellbuf[plainuser]) > 4 and user[0] != '@':
+        if len(self.tellbuf[plainuser]) > 2 and user[0] != '@':
             for (forwardto,sender,ts,message) in self.tellbuf[plainuser]:
                 if forwardto.lower() != user.lower(): # don't add sender to list if message was private
                     if sender not in nicksfrom: nicksfrom += [sender]
