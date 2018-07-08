@@ -1210,7 +1210,8 @@ class DeathBotProtocol(irc.IRCClient):
                 else:
                    fromstr += ", " + n
 
-            self.respond(CHANNEL, user, "Messages from: " + fromstr + " have been forwarded to you privately.");
+            if fromstr: # don't say anything if all messages were private
+                self.respond(CHANNEL, user, "Messages from " + fromstr + " have been forwarded to you privately.");
 
         else:
             for (forwardto,sender,ts,message) in self.tellbuf[plainuser]:
