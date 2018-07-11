@@ -111,6 +111,11 @@ class DeathBotProtocol(irc.IRCClient):
     slaves = {}
     for r in REMOTES:
         slaves[REMOTES[r][1]] = r
+    # if we're the master, include ourself on the slaves list
+    if slaves:
+        slaves[NICK] = [WEBROOT,NICK,FILEROOT]
+        #...and the masters list
+        MASTERS += [NICK]
     try:
         password = open(PWFILE, "r").read().strip()
     except:
@@ -791,6 +796,7 @@ class DeathBotProtocol(irc.IRCClient):
         # for !setmintc
         self.plr_tc = shelve.open(BOTDIR + "/plrtc.db", writeback=True)
 
+        # Commands must be lowercase here.
         self.commands = {"ping"     : self.doPing,
                          "time"     : self.doTime,
                          "pom"      : self.doPom,
@@ -815,21 +821,54 @@ class DeathBotProtocol(irc.IRCClient):
                          "variant"  : self.doVariant,
                          "tell"     : self.takeMessage,
                          "source"   : self.doSource,
-                         "lastgame" : self.lastGame,
-                         "lastasc"  : self.lastAsc,
+                         "lastgame" : self.multiServerCmd,
+                         "lastasc"  : self.multiServerCmd,
                          "scores"   : self.doScoreboard,
                          "sb"       : self.doScoreboard,
                          "rcedit"   : self.doRCedit,
                          "commands" : self.doCommands,
                          "help"     : self.doHelp,
                          "coltest"  : self.doColTest,
-                         "players"  : self.doPlayers,
-                         "who"      : self.doPlayers,
-                         "asc"      : self.doAsc,
-                         "streak"   : self.doStreak,
-                         "whereis"  : self.doWhereIs,
+                         "players"  : self.multiServerCmd,
+                         "who"      : self.multiServerCmd,
+                         "asc"      : self.multiServerCmd,
+                         "streak"   : self.multiServerCmd,
+                         "whereis"  : self.multiServerCmd,
                          "8ball"    : self.do8ball,
-                         "setmintc" : self.setPlrTC}
+                         "setmintc" : self.multiServerCmd,
+                         # these ones are for control messages between master and slaves
+                         # sender is checked, so these can't be used by the public
+                         "#q#"      : self.doQuery,
+                         "#r#"      : self.doResponse}
+        # commands executed based on contents of #Q# message
+        self.qCommands = {"players" : self.getPlayers,
+                          "who"     : self.getPlayers,
+                          "whereis" : self.getWhereIs,
+                          "asc"     : self.getAsc,
+                          "streak"  : self.getStreak,
+                          "lastasc" : self.getLastAsc,
+                          "lastgame": self.getLastGame,
+                          "setmintc": self.setPlrTC}
+        # callbacks to run when all slaves have responded
+        self.callBacks = {"players" : self.outPlayers,
+                          "who"     : self.outPlayers,
+                          "whereis" : self.outWhereIs,
+                          "asc"     : self.outAscStreak,
+                          "streak"  : self.outAscStreak,
+                          # TODO: timestamp these so we can report the very last one
+                          # For now, use the !asc/!streak callback as it's generic enough
+                          "lastasc" : self.outAscStreak,
+                          "lastgame": self.outAscStreak,
+                          "setmintc": self.outPlrTC}
+
+        # checkUsage outputs a message and returns false if input is bad
+        # returns true if input is ok
+        self.checkUsage ={"whereis" : self.usageWhereIs,
+                          "asc"     : self.usageAsc,
+                          "streak"  : self.usageStreak,
+                          #"lastgame": self.usageLastGame,
+                          #"lastasc" : self.usageLastAsc,
+                          "setmintc": self.usagePlrTC}
 
         # seek to end of livelogs
         for filepath in self.livelogs:
@@ -929,6 +968,28 @@ class DeathBotProtocol(irc.IRCClient):
             self.msg(replyto, message)
         else: #channel - prepend "Nick: " to message
             self.msgLog(replyto, sender + ": " + message)
+
+    # Query/Response handling
+    def doQuery(self, sender, replyto, msgwords):
+        # called when slave gets queried by master.
+        # msgwords is [ #Q#, <query_id>, <orig_sender>, <command>, ... ]
+        if (sender in MASTERS) and (msgwords[3] in self.qCommands):
+            # sender is passed to master; msgwords[2] is passed tp sender
+            self.qCommands[msgwords[3]](sender,msgwords[2],msgwords[1],msgwords[3:])
+        else:
+            print "Bogus slave query from " + sender + ": " + " ".join(msgwords);
+
+    def doResponse(self, sender, replyto, msgwords):
+        # called when slave returns query response to master
+        # msgwords is [ #R#, <query_id>, [server-tag], command output, ...]
+        if sender in self.slaves and msgwords[1] in self.queries:
+            self.queries[msgwords[1]]["resp"][sender] = " ".join(msgwords[2:])
+            if set(self.queries[msgwords[1]]["resp"].keys()) >= set(self.slaves.keys()):
+                #all slaves have responded
+                self.queries[msgwords[1]]["callback"](self.queries.pop(msgwords[1]))
+        else:
+            print "Bogus slave response from " + sender + ": " + " ".join(msgwords);
+
 
     # implement commands here
     def doPing(self, sender, replyto, msgwords):
@@ -1219,32 +1280,43 @@ class DeathBotProtocol(irc.IRCClient):
         del self.tellbuf[plainuser]
         self.tellbuf.sync()
 
-    def forwardQuery(self,sender,replyto,msgwords):
-        # need to pass the sender through to slaves so we can tag the response when it comes back
-        # we call this the replytag
-        # eg, bob says "!players" on the channel.
-        # master sends privmsg to slave: "players #bob"
-        # slave responds with "[hdf-eu] [gh] mike [nd] maryjane #bob"
-        # master strips #bob from end of reply, and forwards to channel:
-        # bob: [hdf-eu] [gh] mike [nd] maryjane
-        # if bob sends private message, replytag is %bob instead.
-        # master will then forward response direct to bob privately.
-        if replyto == sender: # was a private message
-            tag = "%"
-        else:
-            tag = "#"
-        message = " ".join(msgwords + [tag + sender])
-        for sl in self.slaves:
+    QUERY_ID = 0 # just use a sequence number for now
+    def newQueryId(self):
+        self.QUERY_ID += 1
+        return str(self.QUERY_ID)
+
+    queries = {}
+
+    def forwardQuery(self,sender,replyto,msgwords,callback):
+        # [Here]
+        # Store a query reference locally, indexed by a unique identifier
+        # Store a callback function for when everyone responds to the query.
+        # forward the query tagged with the ID to the slaves.
+        # [elsewhere]
+        # record query responses, and call callback when all received (or timeout)
+        # This all becomes easier if we just treat ourself (master) as one of the slaves
+        q = self.newQueryId()
+        self.queries[q] = {}
+        self.queries[q]["callback"] = callback
+        self.queries[q]["replyto"] = replyto
+        self.queries[q]["sender"] = sender
+        self.queries[q]["resp"] = {}
+        message = "#Q# " + " ".join([q,sender] + msgwords)
+
+        for sl in self.slaves.keys():
+            print "forwardQuery: " + sl
             self.msg(sl,message)
 
-
-    def doPlayers(self,sender,replyto, msgwords):
+    # Multi-server command entry point (forwards query to slaves)
+    def multiServerCmd(self, sender, replyto, msgwords):
+        if msgwords[0] in self.checkUsage:
+            if not self.checkUsage[msgwords[0]](sender, replyto, msgwords):
+                return
         if self.slaves:
-            self.forwardQuery(sender,replyto,msgwords)
-        replytag = ""
-        if SLAVE:
-            replytag = " " + msgwords[-1]
+            self.forwardQuery(sender, replyto, msgwords, self.callBacks.get(msgwords[0],None))
 
+    # !players - respond to forwarded query and actually pull the info
+    def getPlayers(self, master, sender, query, msgwords):
         plrvar = ""
         for var in self.inprog.keys():
             for inpdir in self.inprog[var]:
@@ -1254,21 +1326,21 @@ class DeathBotProtocol(irc.IRCClient):
                     plrvar += inpfile.split("/")[-1].split(":")[0] + " " + self.displaytag(var) + " "
         if len(plrvar) == 0:
             plrvar = "No current players"
-        self.respond(replyto, sender, self.displaytag(SERVERTAG) + " " + plrvar + replytag)
+        response = "#R# " + query + " " + self.displaytag(SERVERTAG) + " " + plrvar
+        self.msg(master, response)
 
+    # !players callback. Actually print the output.
+    def outPlayers(self,q):
+        outmsg = " | ".join(q["resp"].values())
+        self.respond(q["replyto"],q["sender"],outmsg)
 
-    def doWhereIs(self,sender,replyto, msgwords):
-        replytag = ""
-        minlen = 2
-        if SLAVE:
-            replytag = " " + msgwords[-1]
-            minlen = 3
-        if (len(msgwords) < minlen):
-            #self.doPlayers(sender,replyto,msgwords)
+    def usageWhereIs(self, sender, replyto, msgwords):
+        if (len(msgwords) != 2):
             self.respond(replyto, sender, "!" + msgwords[0] + " <player> - finds a player in the dungeon." + replytag)
-            return
-        if self.slaves:
-            self.forwardQuery(sender,replyto,msgwords)
+            return False
+        return True
+
+    def getWhereIs(self, master, sender, query, msgwords):
         found = False
         ammy = ["", " (with Amulet)"]
         for var in self.whereis.keys():
@@ -1278,12 +1350,11 @@ class DeathBotProtocol(irc.IRCClient):
                     plr = wipath.split("/")[-1].split(".")[0] # Correct case
                     wirec = parse_xlogfile_line(open(wipath, "r").read().strip(),":")
 
-                    self.respond(replyto, sender, self.displaytag(SERVERTAG) + " " + plr
-                                 + " "+self.displaytag(var)+": ({role} {race} {gender} {align}) T:{turns} ".format(**wirec)
-                                 + self.dungeons[var][wirec["dnum"]]
-                                 + " level: " + str(wirec["depth"])
-                                 + ammy[wirec["amulet"]]
-                                 + replytag)
+                    self.msg(master, "#R# " + query + " " + self.displaytag(SERVERTAG) + " " + plr
+                             + " "+self.displaytag(var)+": ({role} {race} {gender} {align}) T:{turns} ".format(**wirec)
+                             + self.dungeons[var][wirec["dnum"]]
+                             + " level: " + str(wirec["depth"])
+                             + ammy[wirec["amulet"]])
         if not found:
             # Look for inprogress in case player is playing something that does not do whereis
             for var in self.inprog.keys():
@@ -1292,15 +1363,26 @@ class DeathBotProtocol(irc.IRCClient):
                         plr = inpfile.split("/")[-1].split(":")[0]
                         if plr.lower() == msgwords[1].lower():
                             found = True
-                            self.respond(replyto, sender, self.displaytag(SERVERTAG)
-                                                          + " " + plr + " "
-                                                          + self.displaytag(var)
-                                                          + ": No details available"
-                                                          + replytag)
-            if not found and not SLAVE:
-                self.respond(replyto, sender, self.displaytag(SERVERTAG) + " "
-                                              + msgwords[1]
-                                              + " is not currently playing on this server.")
+                            self.msg(master, "#R# " + query + " "
+                                                    + self.displaytag(SERVERTAG)
+                                                    + " " + plr + " "
+                                                    + self.displaytag(var)
+                                                    + ": No details available")
+            if not found:
+                self.msg(master, "#R# " + query + " "
+                                        + self.displaytag(SERVERTAG) + " "
+                                        + msgwords[1]
+                                        + " is not currently playing on this server.")
+
+    def outWhereIs(self,q):
+        player = ''
+        for server in q["resp"]:
+            if " is not currently playing" in q["resp"][server]:
+                player = q["resp"][server].split(" ")[1]
+                del q["resp"][server]
+        outmsg = " | ".join(q["resp"].values())
+        if not outmsg: outmsg = player + " is not playing."
+        self.respond(q["replyto"],q["sender"],outmsg)
 
 
     def plrVar(self, sender, replyto, msgwords):
@@ -1308,7 +1390,7 @@ class DeathBotProtocol(irc.IRCClient):
         if len(msgwords) > 3:
             # !streak tom dick harry
             if not SLAVE: self.respond(replyto,sender,"Usage: !" +msgwords[0] +" [variant] [player]")
-            return
+            return(None, None)
         if len(msgwords) == 3:
             vp = self.varalias(msgwords[1])
             pv = self.varalias(msgwords[2])
@@ -1331,17 +1413,14 @@ class DeathBotProtocol(irc.IRCClient):
         #!streak ...player is self, no variant
         return(sender, None)
 
-    def doAsc(self, sender, replyto, msgwords):
-        replytag = ""
-        requestor = sender
-        if SLAVE:
-            requestor = msgwords[-1][1:]
-            replytag = " " + msgwords[-1]
-            msgwords = msgwords[:-1]
-        if self.slaves:
-            self.forwardQuery(sender,replyto,msgwords)
-        (PLR, var) = self.plrVar(requestor,replyto,msgwords)
-        if not PLR: return # bogus input, handled in plrVar
+    def usageAsc(self, sender, replyto, msgwords):
+        if self.plrVar(sender, replyto, msgwords)[0]:
+            return True
+        return False
+
+    def getAsc(self, master, sender, query, msgwords):
+        (PLR, var) = self.plrVar(sender, "", msgwords)
+        if not PLR: return # bogus input, should have been handled in usage check above
         plr = PLR.lower()
         stats = ""
         totasc = 0
@@ -1350,8 +1429,8 @@ class DeathBotProtocol(irc.IRCClient):
                 repl = self.displaytag(SERVERTAG) + " No ascensions for " + PLR + " in "
                 if plr in self.allgames[var]:
                     repl += str(self.allgames[var][plr]) + " games of "
-                repl += self.variants[var][0][0] + "." + replytag
-                self.respond(replyto,sender,repl)
+                repl += self.variants[var][0][0] + "."
+                self.msg(master,"#R# " + query + " " + repl)
                 return
             for role in self.variants[var][1]:
                 role = role.title() # capitalise the first letter
@@ -1372,14 +1451,14 @@ class DeathBotProtocol(irc.IRCClient):
                 if gend in self.asc[var][plr]:
                     stats += " " + str(self.asc[var][plr][gend]) + "x" + gend
             stats += "."
-            self.respond(replyto, sender,
-                         self.displaytag(SERVERTAG) + " " + PLR
-                         + " has ascended " + self.variants[var][0][0] + " "
-                         + str(totasc) + " times in "
-                         + str(self.allgames[var][plr])
-                         + " games ({:0.2f}%):".format((100.0 * totasc)
-                                                       / self.allgames[var][plr])
-                         + stats + replytag)
+            self.msg(master, "#R# " + query + " " + self.displaytag(SERVERTAG)
+                             + " " + PLR
+                             + " has ascended " + self.variants[var][0][0] + " "
+                             + str(totasc) + " times in "
+                             + str(self.allgames[var][plr])
+                             + " games ({:0.2f}%):".format((100.0 * totasc)
+                                                   / self.allgames[var][plr])
+                             + stats)
             return
         # no variant. Do player stats across variants.
         totgames = 0
@@ -1393,46 +1472,55 @@ class DeathBotProtocol(irc.IRCClient):
                 stats += " " + self.displaystring[var] + ":" + str(varasc) + " ({:0.2f}%)".format((100.0 * varasc)
                                                                                              / self.allgames[var][plr])
         if totasc:
-            self.respond(replyto, sender,
-                         self.displaytag(SERVERTAG) + " " + PLR
+            self.msg(master, "#R# " + query + " "
+                         + self.displaytag(SERVERTAG) + " " + PLR
                          + " has ascended " + str(totasc) + " times in "
                          + str(totgames)
                          + " games ({:0.2f}%): ".format((100.0 * totasc) / totgames)
-                         + stats + replytag)
+                         + stats)
             return
         if totgames:
-            self.respond(replyto, sender, self.displaytag(SERVERTAG) + " " + PLR
-                                          + " has not ascended in " + str(totgames) + " games." + replytag)
+            self.msg(master, "#R# " + query + " " + self.displaytag(SERVERTAG) + " " + PLR
+                                    + " has not ascended in " + str(totgames) + " games.")
             return
-        if not SLAVE: self.respond(replyto, sender, self.displaytag(SERVERTAG) + " No games for " + PLR + "." + replytag)
+        self.msg(master, "#R# " + query + " No games for " + PLR + ".")
         return
+
+    def outAscStreak(self,q):
+        for server in q["resp"]:
+            if q["resp"][server].split(' ')[0] == 'No':
+                # If they all say "No streaks for bob", that becomes the eventual output
+                fallback_msg = q["resp"][server]
+                del q["resp"][server]
+        outmsg = " | ".join(q["resp"].values())
+        if not outmsg: outmsg = fallback_msg
+        self.respond(q["replyto"],q["sender"],outmsg)
+
+    def usageStreak(self, sender, replyto, msgwords):
+        (p,v) = self.plrVar(sender, replyto, msgwords)
+        if not p: return False
+        if v:
+            if v not in self.streakvars:
+                self.respond(replyto,sender,"Streaks are not recorded for " + v +".")
+                return False
+        return True
 
     def streakDate(self,stamp):
         return datetime.datetime.fromtimestamp(float(stamp)).strftime("%Y-%m-%d")
 
-    def doStreak(self, sender, replyto, msgwords):
-        replytag = ""
-        requestor = sender
-        if SLAVE:
-            requestor = msgwords[-1][1:]
-            replytag = " " + msgwords[-1]
-            msgwords = msgwords[:-1]
-        if self.slaves:
-            self.forwardQuery(sender,replyto,msgwords)
-        (PLR, var) = self.plrVar(requestor,replyto,msgwords)
-        if not PLR: return # bogus input, handled in plrVar
+    def getStreak(self, master, sender, query, msgwords):
+        (PLR, var) = self.plrVar(sender, "", msgwords)
+        if not PLR: return # bogus input, handled by usage check.
         plr = PLR.lower()
+        reply = "#R# " + query + " "
         if var:
-            if var not in self.streakvars:
-                if not SLAVE: self.respond(replyto,sender,"Streaks are not recorded for " + var +".")
-                return
             (lstart,lend,llength) = self.longstreak[var].get(plr,(0,0,0))
             (cstart,cend,clength) = self.curstreak[var].get(plr,(0,0,0))
-            reply = self.displaytag(SERVERTAG) + " " + PLR + "[" + self.displaystring[var] + "]"
             if llength == 0:
-                reply += ": No streaks on this server." + replytag
-                self.respond(replyto,sender,reply)
+                reply += "No streaks for " + PLR + self.displaytag(var) + "."
+                self.msg(master,reply)
                 return
+            reply += self.displaytag(SERVERTAG) + " " + PLR + self.displaytag(var)
             reply += " Max: " + str(llength) + " (" + self.streakDate(lstart) \
                               + " - " + self.streakDate(lend) + ")"
             if clength > 0:
@@ -1441,8 +1529,8 @@ class DeathBotProtocol(irc.IRCClient):
                 else:
                     reply += ". Current: " + str(clength) + " (since " \
                                            + self.streakDate(cstart) + ")"
-            reply += "." + replytag
-            self.respond(replyto,sender,reply)
+            reply += "."
+            self.msg(master,reply)
             return
         (lmax,cmax) = (0,0)
         for var in self.streakvars:
@@ -1453,9 +1541,10 @@ class DeathBotProtocol(irc.IRCClient):
             if clength > cmax:
                 (cmax, cvar, csmax, cemax)  = (clength, var, cstart, cend)
         if lmax == 0:
-            self.respond(replyto,sender, self.displaytag(SERVERTAG) + " No streaks for " + PLR +" on this server." + replytag)
+            reply += "No streaks for " + PLR + "."
+            self.msg(master, reply)
             return
-        reply = self.displaytag(SERVERTAG) + " " + PLR + " Max[" + self.displaystring[lvar] + "]: " + str(lmax)
+        reply += self.displaytag(SERVERTAG) + " " + PLR + " Max[" + self.displaystring[lvar] + "]: " + str(lmax)
         reply += " (" + self.streakDate(lsmax) \
                       + " - " + self.streakDate(lemax) + ")"
         if cmax > 0:
@@ -1464,17 +1553,10 @@ class DeathBotProtocol(irc.IRCClient):
             else:
                 reply += ". Current[" + self.displaystring[cvar] + "]: " + str(cmax)
                 reply += " (since " + self.streakDate(csmax) + ")"
-        reply += "." + replytag
-        self.respond(replyto,sender, reply)
+        reply += "."
+        self.msg(master, reply)
 
-    def lastGame(self, sender, replyto, msgwords):
-        replytag = ""
-        if SLAVE:
-            replytag = " " + msgwords[-1]
-            msgwords = msgwords[0:-1]
-        if self.slaves:
-            self.forwardQuery(sender,replyto,msgwords)
-
+    def getLastGame(self, master, sender, query, msgwords):
         if (len(msgwords) >= 3): #var, plr, any order.
             vp = self.varalias(msgwords[1])
             pv = self.varalias(msgwords[2])
@@ -1482,32 +1564,24 @@ class DeathBotProtocol(irc.IRCClient):
             if not dl:
                 dl = self.lg.get(":".join([pv,vp]).lower(),False)
             if not dl:
-                if not SLAVE:
-                    self.respond(replyto, sender, self.displaytag(SERVERTAG) +
-                                 " No last game for (" + ",".join(msgwords[1:3]) + ") on this server.")
+                self.msg(master, "#R# " + query +
+                                 " No last game for (" + ",".join(msgwords[1:3]) + ").")
                 return
-            self.respond(replyto, sender, self.displaytag(SERVERTAG) + " " + dl + replytag)
+            # TODO: Add timestamp to message so we can just output most recent across servers
+            self.msg(master, "#R# " + query + " " + self.displaytag(SERVERTAG) + " " + dl)
             return
         if (len(msgwords) == 2): #var OR plr - don't care which
             vp = self.varalias(msgwords[1])
             dl = self.lg.get(vp,False)
             if not dl:
-                if not SLAVE:
-                    self.respond(replyto, sender, self.displaytag(SERVERTAG) +
-                                " No last game for " + msgwords[1] + " on this server.")
+                self.msg(master, "#R# " + query +
+                                 " No last game for " + msgwords[1] + ".")
                 return
-            self.respond(replyto, sender, self.displaytag(SERVERTAG) + " " + dl + replytag)
+            self.msg(master, "#R# " + query + " " + self.displaytag(SERVERTAG) + " " + dl)
             return
-        self.respond(replyto, sender, self.displaytag(SERVERTAG) + " " + self.lastgame + replytag)
+        self.msg(master, "#R# " + query + " " + self.displaytag(SERVERTAG) + " " + self.lastgame)
 
-    def lastAsc(self, sender, replyto, msgwords):
-        replytag = ""
-        if SLAVE:
-            replytag = " " + msgwords[-1]
-            msgwords = msgwords[0:-1]
-        if self.slaves:
-            self.forwardQuery(sender,replyto,msgwords)
-
+    def getLastAsc(self, master, sender, query, msgwords):
         if (len(msgwords) >= 3): #var, plr, any order.
             vp = self.varalias(msgwords[1])
             pv = self.varalias(msgwords[2])
@@ -1515,70 +1589,86 @@ class DeathBotProtocol(irc.IRCClient):
             if not dl:
                 dl = self.la.get(":".join(vp,pv).lower(),False)
             if not dl:
-                if not SLAVE:
-                    self.respond(replyto, sender, self.displaytag(SERVERTAG) +
-                                 " No last ascension for (" + ",".join(msgwords[1:3]) + ") on this server.")
+                self.msg(master, "#R# " + query +
+                                 " No last ascension for (" + ",".join(msgwords[1:3]) + ").")
                 return
-            self.respond(replyto, sender, self.displaytag(SERVERTAG) + " " + dl + replytag)
+            # TODO: Add timestamp to message so we can just output most recent across servers
+            self.msg(master, "#R# " + query + " " + self.displaytag(SERVERTAG) + " " + dl)
             return
         if (len(msgwords) == 2): #var OR plr - don't care which
             vp = self.varalias(msgwords[1])
             dl = self.la.get(vp,False)
             if not dl:
-                if not SLAVE:
-                    self.respond(replyto, sender, self.displaytag(SERVERTAG) +
-                                 " No last ascension for " + msgwords[1] + " on this server.")
+                self.msg(master, "#R# " + query +
+                                 " No last ascension for " + msgwords[1] + ".")
                 return
-            self.respond(replyto, sender, self.displaytag(SERVERTAG) + " " + dl + replytag)
+            self.msg(master, "#R# " + query + " " + self.displaytag(SERVERTAG) + " " + dl)
             return
-        self.respond(replyto, sender, self.displaytag(SERVERTAG) + " " + self.lastasc + replytag)
+        self.msg(master, "#R# " + query + " " + self.displaytag(SERVERTAG) + " " + self.lastasc)
 
     # Allows players to set minimum turncount of their games to be reported
     # so they can manage their own deathspam
     # turncount may not be the best metric for this - open to suggestions
     # player name must match nick, or can be set by an admin.
-    def setPlrTC(self, sender, replyto, msgwords):
-        if SLAVE and not sender in MASTERS: return
-        # set on all servers
-        if self.slaves:
-            self.forwardQuery(sender,replyto,msgwords)
-        if SLAVE:
-            sender = msgwords[-1][1:] # use the replytag
-            msgwords = msgwords[0:-1] # strip the replytag - we're not sending anything back anyway
+
+    def usagePlrTC(self, sender, replyto, msgwords):
+        if len(msgwords) > 2 and sender not in self.admin:
+            self.respond(replyto, sender, "Usage: !" + msgwords[0] + " [turncount]")
+            return False
+        return True
+
+    def setPlrTC(self, master, sender, query, msgwords):
         if len(msgwords) == 2:
             if re.match(r'^\d+$',msgwords[1]):
                 self.plr_tc[sender.lower()] = int(msgwords[1])
                 self.plr_tc.sync()
-                if not SLAVE: self.respond(replyto, sender, "Min reported turncount for " + sender.lower()
-                                              + " set to " + msgwords[1])
+                self.msg(master, "#R# " + query + " " + self.displaytag(SERVERTAG)
+                                 + " Min reported turncount for " + sender.lower()
+                                 + " set to " + msgwords[1])
                 return
         if len(msgwords) == 1:
             if sender.lower() in self.plr_tc.keys():
                 del self.plr_tc[sender.lower()]
                 self.plr_tc.sync()
-                if not SLAVE: self.respond(replyto, sender, "Min reported turncount for " + sender.lower()
-                                              + " removed.")
-                return
+                self.msg(master, "#R# " + query + " " + self.displaytag(SERVERTAG)
+                                 + " Min reported turncount for " + sender.lower()
+                                 + " removed.")
+            else:
+                self.msg(master, "#R# " + query + " No min turncount for " + sender.lower())
+            return
         if sender in self.admin:
             if len(msgwords) == 3:
                 if re.match(r'^\d+$',msgwords[2]):
                     self.plr_tc[msgwords[1].lower()] = int(msgwords[2])
                     self.plr_tc.sync()
-                    if not SLAVE: self.respond(replyto, sender, "Min reported turncount for " + msgwords[1].lower()
-                                                  + " set to " + msgwords[2])
+                    self.msg(master, "#R# " + query + " " + self.displaytag(SERVERTAG)
+                                     + " Min reported turncount for " + msgwords[1].lower()
+                                     + " set to " + msgwords[2])
                     return
             if len(msgwords) == 2:
                 if msgwords[1].lower() in self.plr_tc.keys():
                     del self.plr_tc[msgwords[1].lower()]
                     self.plr_tc.sync()
-                    if not SLAVE: self.respond(replyto, sender, "Min reported turncount for " + msgwords[1].lower()
-                                                 + " removed.")
+                    self.msg(master, "#R# " + query + " " + self.displaytag(SERVERTAG)
+                                     + " Min reported turncount for " + msgwords[1].lower()
+                                     + " removed.")
                 else:
-                    if not SLAVE: self.respond(replyto, sender, "No min turncount for " + msgwords[1].lower())
+                    self.msg(master, "#R# " + query + " No min turncount for " + msgwords[1].lower())
                 return
-        else:
-            if not SLAVE: self.respond(replyto, sender, "Usage: !" + msgwords[0] + " [turncount]")
 
+    def outPlrTC(self,q):
+        outmsg = ''
+        for server in q["resp"]:
+            firstword = q["resp"][server].split(' ')[0]
+            if firstword == 'No':
+                fallback_msg = q["resp"][server]
+                del q["resp"][server]
+            elif not outmsg:
+                outmsg = q["resp"][server]
+            else: # just prepend server tags to message
+                outmsg = firstword + outmsg
+        if not outmsg: outmsg = fallback_msg
+        self.respond(q["replyto"],q["sender"],outmsg)
 
     # Listen to the chatter
     def privmsg(self, sender, dest, message):
@@ -1614,24 +1704,14 @@ class DeathBotProtocol(irc.IRCClient):
         else: # pop the '!'
             message = message[1:]
         msgwords = message.strip().split(" ")
-        if dest != CHANNEL and sender in self.slaves: # response to slave query, or game announcement
-            #msgwords = ["[" + self.slaves[sender] + "]"] + msgwords
-            #queries need the response tag used and stripped
-            if msgwords[-1][0] == '%': # response to private query
-                sender = msgwords[-1][1:]
-                self.respond(sender, sender, " ".join(msgwords[0:-1]))
-                return
-            if msgwords[-1][0] == '#': # resp to public query
-                sender = msgwords[-1][1:]
-                self.respond(CHANNEL, sender, " ".join(msgwords[0:-1]))
-                return
-            # game announcement, just throw it out there
-            self.msg(CHANNEL, " ".join(msgwords))
         if re.match(r'^\d*d\d*$', msgwords[0]):
             self.rollDice(sender, replyto, msgwords)
             return
         if self.commands.get(msgwords[0].lower(), False):
             self.commands[msgwords[0].lower()](sender, replyto, msgwords)
+            return
+        if dest != CHANNEL and sender in self.slaves: # game announcement from slave
+            self.msg(CHANNEL, " ".join(msgwords))
 
     #other events for logging
     def action(self, doer, dest, message):
