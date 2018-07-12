@@ -1100,7 +1100,14 @@ class DeathBotProtocol(irc.IRCClient):
             return
         if len(msgwords) == 2:
             rngrange = msgwords[1].split('-')
-            self.respond(replyto, sender, str(random.randrange(int(rngrange[0]), int(rngrange[-1])+1)))
+            try:
+                self.respond(replyto, sender, str(random.randrange(int(rngrange[0]), int(rngrange[-1])+1)))
+            except ValueError:
+                try: # maybe some smart arse reversed the values
+                    self.respond(replyto, sender, str(random.randrange(int(rngrange[-1]), int(rngrange[0])+1)))
+                except ValueError:
+                    # Nonsense input. Recurse with no args for usage message.
+                    self.doRng(sender, replyto, [msgwords[0]])
         else:
             self.respond(replyto, sender, random.choice(msgwords[1:]))
 
