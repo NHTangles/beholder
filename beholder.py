@@ -226,7 +226,6 @@ class DeathBotProtocol(irc.IRCClient):
                  "dyn" : [INPR+"dyn/"]}
 
     # for !whereis
-    # some of these don't exist yet, so paths may not be accurate
     whereis = {"nh343": FILEROOT+"nh343/var/whereis/",
                "nh361": FILEROOT+"nh361-hdf/var/whereis/",
                   "gh": FILEROOT+"grunthack-0.2.4/var/whereis/",
@@ -1383,11 +1382,13 @@ class DeathBotProtocol(irc.IRCClient):
 
     def outWhereIs(self,q):
         player = ''
+        msgs = []
         for server in q["resp"]:
             if " is not currently playing" in q["resp"][server]:
                 player = q["resp"][server].split(" ")[1]
-                del q["resp"][server]
-        outmsg = " | ".join(q["resp"].values())
+            else:
+                msgs += [q["resp"][server]]
+        outmsg = " | ".join(msgs)
         if not outmsg: outmsg = player + " is not playing."
         self.respond(q["replyto"],q["sender"],outmsg)
 
@@ -1494,12 +1495,14 @@ class DeathBotProtocol(irc.IRCClient):
         return
 
     def outAscStreak(self,q):
+        msgs = []
         for server in q["resp"]:
             if q["resp"][server].split(' ')[0] == 'No':
                 # If they all say "No streaks for bob", that becomes the eventual output
                 fallback_msg = q["resp"][server]
-                del q["resp"][server]
-        outmsg = " | ".join(q["resp"].values())
+            else:
+               msgs += [q["resp"][server]]
+        outmsg = " | ".join(msgs)
         if not outmsg: outmsg = fallback_msg
         self.respond(q["replyto"],q["sender"],outmsg)
 
@@ -1669,7 +1672,6 @@ class DeathBotProtocol(irc.IRCClient):
             firstword = q["resp"][server].split(' ')[0]
             if firstword == 'No':
                 fallback_msg = q["resp"][server]
-                del q["resp"][server]
             elif not outmsg:
                 outmsg = q["resp"][server]
             else: # just prepend server tags to message
