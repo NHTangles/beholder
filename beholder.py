@@ -239,7 +239,7 @@ class DeathBotProtocol(irc.IRCClient):
                  "xnh": FILEROOT+"xnethack-0.2.0/var/whereis/",
                  "spl": FILEROOT+"splicehack-0.4.0/var/whereis/",
                "nh13d": FILEROOT+"nh13d/whereis/",
-                  "un": FILEROOT+"un531/var/unnethack/whereis/"}
+                  "un": FILEROOT+"un531/var/unnethack/"}
 
     dungeons = {"nh343": ["The Dungeons of Doom","Gehennom","The Gnomish Mines","The Quest",
                           "Sokoban","Fort Ludios","Vlad's Tower","The Elemental Planes"],
