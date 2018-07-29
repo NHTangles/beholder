@@ -112,7 +112,7 @@ class DeathBotProtocol(irc.IRCClient):
     for r in REMOTES:
         slaves[REMOTES[r][1]] = r
     # if we're the master, include ourself on the slaves list
-    if slaves:
+    if not SLAVE:
         slaves[NICK] = [WEBROOT,NICK,FILEROOT]
         #...and the masters list
         MASTERS += [NICK]
@@ -226,20 +226,23 @@ class DeathBotProtocol(irc.IRCClient):
                  "dyn" : [INPR+"dyn/"]}
 
     # for !whereis
-    whereis = {"nh343": FILEROOT+"nh343/var/whereis/",
-               "nh361": FILEROOT+"nh361-hdf/var/whereis/",
-                  "gh": FILEROOT+"grunthack-0.2.4/var/whereis/",
-                 "dnh": FILEROOT+"dnethack-3.16.0/whereis/",
-                  "fh": FILEROOT+"fiqhackdir/data/",
-                 "dyn": FILEROOT+"dynahack/dynahack-data/var/whereis/",
-                 "nh4": FILEROOT+"nh4dir/save/whereis/",
-                  "4k": FILEROOT+"fourkdir/save/",
-                  "sp": FILEROOT+"sporkhack-0.6.5/var/",
-                "slex": FILEROOT+"slex-2.2.2/whereis/",
-                 "xnh": FILEROOT+"xnethack-0.3.0/var/whereis/",
-                 "spl": FILEROOT+"splicehack-0.5.1/var/whereis/",
-               "nh13d": FILEROOT+"nh13d/whereis/",
-                  "un": FILEROOT+"un531/var/unnethack/whereis/"}
+    whereis = {"nh343": [FILEROOT+"nh343/var/whereis/"],
+               "nh361": [FILEROOT+"nh361-hdf/var/whereis/"],
+                  "gh": [FILEROOT+"grunthack-0.2.4/var/whereis/"],
+                 "dnh": [FILEROOT+"dnethack-3.16.0/whereis/"],
+                  "fh": [FILEROOT+"fiqhackdir/data/"],
+                 "dyn": [FILEROOT+"dynahack/dynahack-data/var/whereis/"],
+                 "nh4": [FILEROOT+"nh4dir/save/whereis/"],
+                  "4k": [FILEROOT+"fourkdir/save/"],
+                  "sp": [FILEROOT+"sporkhack-0.6.5/var/"],
+                "slex": [FILEROOT+"slex-2.2.2/whereis/"],
+                 "xnh": [FILEROOT+"xnethack-0.3.0/var/whereis/"],
+                 "spl": [FILEROOT+"splicehack-0.3.0/var/whereis/",
+                         FILEROOT+"splicehack-0.4.0/var/whereis/",
+                         FILEROOT+"splicehack-0.5.0/var/whereis/",
+                         FILEROOT+"splicehack-0.5.1/var/whereis/"],
+               "nh13d": [FILEROOT+"nh13d/whereis/"],
+                  "un": [FILEROOT+"un531/var/unnethack/whereis/"]}
 
     dungeons = {"nh343": ["The Dungeons of Doom","Gehennom","The Gnomish Mines","The Quest",
                           "Sokoban","Fort Ludios","Vlad's Tower","The Elemental Planes"],
@@ -1348,37 +1351,36 @@ class DeathBotProtocol(irc.IRCClient):
         return True
 
     def getWhereIs(self, master, sender, query, msgwords):
-        found = False
         ammy = ["", " (with Amulet)"]
-        for var in self.whereis.keys():
-            for wipath in glob.iglob(self.whereis[var] + "*.whereis"):
-                if wipath.split("/")[-1].lower() == (msgwords[1] + ".whereis").lower():
-                    found = True
-                    plr = wipath.split("/")[-1].split(".")[0] # Correct case
-                    wirec = parse_xlogfile_line(open(wipath, "r").read().strip(),":")
+        # look for inrpogress file first, only report active games
+        for var in self.inprog.keys():
+            for inpdir in self.inprog[var]:
+                for inpfile in glob.iglob(inpdir + "*.ttyrec"):
+                    plr = inpfile.split("/")[-1].split(":")[0]
+                    if plr.lower() == msgwords[1].lower():
+                        for widir in self.whereis[var]:
+                            for wipath in glob.iglob(widir + "*.whereis"):
+                                if wipath.split("/")[-1].lower() == (msgwords[1] + ".whereis").lower():
+                                    plr = wipath.split("/")[-1].split(".")[0] # Correct case
+                                    wirec = parse_xlogfile_line(open(wipath, "r").read().strip(),":")
 
-                    self.msg(master, "#R# " + query + " " + self.displaytag(SERVERTAG) + " " + plr
-                             + " "+self.displaytag(var)+": ({role} {race} {gender} {align}) T:{turns} ".format(**wirec)
-                             + self.dungeons[var][wirec["dnum"]]
-                             + " level: " + str(wirec["depth"])
-                             + ammy[wirec["amulet"]])
-        if not found:
-            # Look for inprogress in case player is playing something that does not do whereis
-            for var in self.inprog.keys():
-                for inpdir in self.inprog[var]:
-                    for inpfile in glob.iglob(inpdir + "*.ttyrec"):
-                        plr = inpfile.split("/")[-1].split(":")[0]
-                        if plr.lower() == msgwords[1].lower():
-                            found = True
-                            self.msg(master, "#R# " + query + " "
-                                                    + self.displaytag(SERVERTAG)
-                                                    + " " + plr + " "
-                                                    + self.displaytag(var)
-                                                    + ": No details available")
-            if not found:
-                self.msg(master, "#R# " + query + " "
-                                        + self.displaytag(SERVERTAG) + " "
-                                        + msgwords[1]
+                                    self.msg(master, "#R# " + query
+                                             + " " + self.displaytag(SERVERTAG) + " " + plr
+                                             + " "+self.displaytag(var)
+                                             + ": ({role} {race} {gender} {align}) T:{turns} ".format(**wirec)
+                                             + self.dungeons[var][wirec["dnum"]]
+                                             + " level: " + str(wirec["depth"])
+                                             + ammy[wirec["amulet"]])
+                                    return
+
+                        self.msg(master, "#R# " + query + " "
+                                                + self.displaytag(SERVERTAG)
+                                                + " " + plr + " "
+                                                + self.displaytag(var)
+                                                + ": No details available")
+                        return
+        self.msg(master, "#R# " + query + " " + self.displaytag(SERVERTAG)
+                                        + " " + msgwords[1]
                                         + " is not currently playing on this server.")
 
     def outWhereIs(self,q):
