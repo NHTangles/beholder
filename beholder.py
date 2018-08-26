@@ -183,7 +183,7 @@ class DeathBotProtocol(irc.IRCClient):
 
     # for displaying variants and server tags in colour
     displaystring = {"nh343" : "\x0315nh343\x03",
-                     "nh361" : "\x0307nh361\x03",
+                     "nh361" : "\x0307nh362\x03",
                       "zapm" : "\x0303zapm\x03",
                         "gh" : "\x0304gh\x03",
                        "dnh" : "\x0313dnh\x03",
