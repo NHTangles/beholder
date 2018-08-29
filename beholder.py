@@ -226,7 +226,7 @@ class DeathBotProtocol(irc.IRCClient):
                  "dyn" : [INPR+"dyn/"]}
 
     # for !whereis
-    whereis = {"nh343": [FILEROOT+"nh343/var/whereis/"],
+    whereis = {"nh343": [FILEROOT+"nh343/var/whereis/",
                          FILEROOT+"nh343-hdf/var/whereis/"],
                "nh361": [FILEROOT+"nh361-hdf/var/whereis/"],
                   "gh": [FILEROOT+"grunthack-0.2.4/var/whereis/"],
