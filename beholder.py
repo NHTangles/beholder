@@ -137,7 +137,7 @@ class DeathBotProtocol(irc.IRCClient):
         chanLog = open(chanLogName,'a')
         os.chmod(chanLogName,stat.S_IRUSR|stat.S_IWUSR|stat.S_IRGRP|stat.S_IROTH)
 
-    xlogfiles = {filepath.FilePath(FILEROOT+"nh343/var/xlogfile"): ("nh343", ":", "nh343/dumplog/{starttime}.nh343.txt"),
+    xlogfiles = {filepath.FilePath(FILEROOT+"nh343-hdf/var/xlogfile"): ("nh343", ":", "nh343/dumplog/{starttime}.nh343.txt"),
                  filepath.FilePath(FILEROOT+"nh361-hdf/var/xlogfile"): ("nh361", "\t", "nh361/dumplog/{starttime}.nh361.txt"),
                  filepath.FilePath(FILEROOT+"grunthack-0.2.4/var/xlogfile"): ("gh", ":", "gh/dumplog/{starttime}.gh.txt"),
                  filepath.FilePath(FILEROOT+"dnethack-3.16.0/xlogfile"): ("dnh", ":", "dnethack/dumplog/{starttime}.dnh.txt"),
@@ -151,7 +151,7 @@ class DeathBotProtocol(irc.IRCClient):
                  filepath.FilePath(FILEROOT+"splicehack-0.5.1/var/xlogfile"): ("spl", "\t", "splicehack/dumplog/{starttime}.splice.txt"),
                  filepath.FilePath(FILEROOT+"nh13d/xlogfile"): ("nh13d", ":", "nh13d/dumplog/{starttime}.nh13d.txt"),
                  filepath.FilePath(FILEROOT+"un531/var/unnethack/xlogfile"): ("un", ":", "un531/dumplog/{starttime}.un531.txt.html")}
-    livelogs  = {filepath.FilePath(FILEROOT+"nh343/var/livelog"): ("nh343", ":"),
+    livelogs  = {filepath.FilePath(FILEROOT+"nh343-hdf/var/livelog"): ("nh343", ":"),
                  filepath.FilePath(FILEROOT+"nh361-hdf/var/livelog"): ("nh361", "\t"),
                  filepath.FilePath(FILEROOT+"grunthack-0.2.4/var/livelog"): ("gh", ":"),
                  filepath.FilePath(FILEROOT+"dnethack-3.16.0/livelog"): ("dnh", ":"),
@@ -209,7 +209,7 @@ class DeathBotProtocol(irc.IRCClient):
     # Reduce the repetitive crap
     DGLD=FILEROOT+"dgldir/"
     INPR=DGLD+"inprogress-"
-    inprog = { "nh343" : [INPR+"nh343/"],
+    inprog = { "nh343" : [INPR+"nh343/", INPR+"nh343-hdf/"],
                "nh361" : [INPR+"nhdev/", INPR+"nh361/", INPR+"nh361-hdf/"],
                 "zapm" : [INPR+"zapm/"],
                   "gh" : [INPR+"gh023/", INPR+"gh024/"],
@@ -227,6 +227,7 @@ class DeathBotProtocol(irc.IRCClient):
 
     # for !whereis
     whereis = {"nh343": [FILEROOT+"nh343/var/whereis/"],
+                         FILEROOT+"nh343-hdf/var/whereis/"],
                "nh361": [FILEROOT+"nh361-hdf/var/whereis/"],
                   "gh": [FILEROOT+"grunthack-0.2.4/var/whereis/"],
                  "dnh": [FILEROOT+"dnethack-3.16.0/whereis/"],
