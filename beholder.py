@@ -150,6 +150,7 @@ class DeathBotProtocol(irc.IRCClient):
                  filepath.FilePath(FILEROOT+"xnethack-0.4.0/var/xlogfile"): ("xnh", "\t", "xnethack/dumplog/{starttime}.xnh.txt"),
                  filepath.FilePath(FILEROOT+"splicehack-0.5.1/var/xlogfile"): ("spl", "\t", "splicehack/dumplog/{starttime}.splice.txt"),
                  filepath.FilePath(FILEROOT+"nh13d/xlogfile"): ("nh13d", ":", "nh13d/dumplog/{starttime}.nh13d.txt"),
+                 filepath.FilePath(FILEROOT+"slashem-0.0.8E0F2/xlogfile"): ("slash", ":", "slashem/dumplog/{starttime}.slashem.txt"),
                  filepath.FilePath(FILEROOT+"un531/var/unnethack/xlogfile"): ("un", ":", "un531/dumplog/{starttime}.un531.txt.html")}
     livelogs  = {filepath.FilePath(FILEROOT+"nh343-hdf/var/livelog"): ("nh343", ":"),
                  filepath.FilePath(FILEROOT+"nh361-hdf/var/livelog"): ("nh361", "\t"),
@@ -162,6 +163,7 @@ class DeathBotProtocol(irc.IRCClient):
                  filepath.FilePath(FILEROOT+"xnethack-0.4.0/var/livelog"): ("xnh", "\t"),
                  filepath.FilePath(FILEROOT+"splicehack-0.5.1/var/livelog"): ("spl", "\t"),
                  filepath.FilePath(FILEROOT+"nh13d/livelog"): ("nh13d", ":"),
+                 filepath.FilePath(FILEROOT+"slashem-0.0.8E0F2/livelog"): ("slash", ":"),
                  filepath.FilePath(FILEROOT+"un531/var/unnethack/livelog"): ("un", ":")}
 
     # Forward events to other bots at the request of maintainers of other variant-specific channels
@@ -179,6 +181,7 @@ class DeathBotProtocol(irc.IRCClient):
                   "xnh" : [],
                   "spl" : [],
                 "nh13d" : [],
+                "slash" : [],
                    "un" : []}
 
     # for displaying variants and server tags in colour
@@ -196,6 +199,7 @@ class DeathBotProtocol(irc.IRCClient):
                        "xnh" : "\x0309xnh\x03",
                        "spl" : "\x0303spl\x03",
                      "nh13d" : "\x0311nh13d\x03",
+                     "slash" : "\x0314slash\x03",
                         "un" : "\x0308un\x03",
                     "hdf-us" : "\x1D\x0304hdf-us\x03\x0F",
                     "hdf-au" : "\x1D\x0303hdf-au\x03\x0F",
@@ -223,6 +227,7 @@ class DeathBotProtocol(irc.IRCClient):
                  "xnh" : [INPR+"xnh020/", INPR+"xnh030/", INPR+"xnh040/"],
                  "spl" : [INPR+"spl040/", INPR+"spl050/", INPR+"spl051/"],
                "nh13d" : [INPR+"nh13d/"],
+               "slash" : [INPR+"slashem/"],
                  "dyn" : [INPR+"dyn/"]}
 
     # for !whereis
@@ -245,6 +250,7 @@ class DeathBotProtocol(irc.IRCClient):
                          FILEROOT+"splicehack-0.5.0/var/whereis/",
                          FILEROOT+"splicehack-0.5.1/var/whereis/"],
                "nh13d": [FILEROOT+"nh13d/whereis/"],
+               "slash": [FILEROOT+"slashem-0.0.8E0F2/whereis/"],
                   "un": [FILEROOT+"un531/var/unnethack/whereis/"]}
 
     dungeons = {"nh343": ["The Dungeons of Doom","Gehennom","The Gnomish Mines","The Quest",
@@ -286,6 +292,10 @@ class DeathBotProtocol(irc.IRCClient):
                           "The Gnomish Mines","The Quest","Sokoban","Fort Ludios",
                           "Vlad's Tower","The Elemental Planes"],
                 "nh13d": ["The Dungeons of Doom"],
+                "slash": ["The Dungeons of Doom","Gehennom","The Gnomish Mines",
+                          "The Quest","Sokoban","Town","Fort Ludios",
+                          "One-eyed Sam's Market","Vlad's Tower","The Dragon Caves",
+                          "The Elemental Planes"],
                    "un": ["The Dungeons of Doom","Gehennom","Sheol","The Gnomish Mines",
                           "The Quest","Sokoban","Town","The Ruins of Moria","Fort Ludios",
                           "One-eyed Sam's Market","Vlad's Tower","The Dragon Caves",
@@ -319,7 +329,7 @@ class DeathBotProtocol(irc.IRCClient):
         # SpliceHack, includes all of vanilla
         "car": "cartomancer",
         "dgn": "dragonmaster",
-        # SLEX, includes all of dnh
+        # SLEX, includes all of dnh and slash
         "act": "activistor",
         "alt": "altmer",
         "ama": "amazon",
@@ -447,7 +457,7 @@ class DeathBotProtocol(irc.IRCClient):
         "inf": "infernal",
         "mer": "merfolk",
         "wlf": "werewolf",
-        # SLEX, includes vanilla, grunt, 4k, and dnh -- not all of dnh but close
+        # SLEX, includes vanilla, grunt, 4k, slash and dnh -- not all of dnh but close
         "add": "addict",
         "agg": "aggravator",
         "akt": "ak thief is dead!",
@@ -638,6 +648,9 @@ class DeathBotProtocol(irc.IRCClient):
                           vanilla_roles, vanilla_races),
                    "4k": (["nhfourk", "nhf", "fourk"],
                           vanilla_roles, vanilla_races + ["gia", "scu", "syl"]),
+                "slash": (["slash", "slash'em"],
+                          vanilla_roles + ["fla", "ice", "nec", "uds", "yeo"],
+                          vanilla_races + ["dop", "dro", "hob", "lyc", "vam"]),
                  "slex": (["slex", "sloth", "amy's-weird-thing"],
                           vanilla_roles +
                              ["ana", "bin", "nob", "pir",
