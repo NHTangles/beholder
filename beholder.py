@@ -148,7 +148,7 @@ class DeathBotProtocol(irc.IRCClient):
                  filepath.FilePath(FILEROOT+"sporkhack-0.6.5/var/xlogfile"): ("sp", "\t", "sporkhack/dumplog/{starttime}.sp.txt"),
                  filepath.FilePath(FILEROOT+"slex-2.3.2/xlogfile"): ("slex", "\t", "slex/dumplog/{starttime}.slex.txt"),
                  filepath.FilePath(FILEROOT+"xnethack-0.4.0/var/xlogfile"): ("xnh", "\t", "xnethack/dumplog/{starttime}.xnh.txt"),
-                 filepath.FilePath(FILEROOT+"splicehack-0.5.1/var/xlogfile"): ("spl", "\t", "splicehack/dumplog/{starttime}.splice.txt"),
+                 filepath.FilePath(FILEROOT+"splicehack-0.6.0/var/xlogfile"): ("spl", "\t", "splicehack/dumplog/{starttime}.splice.txt"),
                  filepath.FilePath(FILEROOT+"nh13d/xlogfile"): ("nh13d", ":", "nh13d/dumplog/{starttime}.nh13d.txt"),
                  filepath.FilePath(FILEROOT+"slashem-0.0.8E0F2/xlogfile"): ("slshm", ":", "slashem/dumplog/{starttime}.slashem.txt"),
                  filepath.FilePath(FILEROOT+"un531/var/unnethack/xlogfile"): ("un", ":", "un531/dumplog/{starttime}.un531.txt.html")}
@@ -161,7 +161,7 @@ class DeathBotProtocol(irc.IRCClient):
                  filepath.FilePath(FILEROOT+"sporkhack-0.6.5/var/livelog"): ("sp", ":"),
                  filepath.FilePath(FILEROOT+"slex-2.3.2/livelog"): ("slex", ":"),
                  filepath.FilePath(FILEROOT+"xnethack-0.4.0/var/livelog"): ("xnh", "\t"),
-                 filepath.FilePath(FILEROOT+"splicehack-0.5.1/var/livelog"): ("spl", "\t"),
+                 filepath.FilePath(FILEROOT+"splicehack-0.6.0/var/livelog"): ("spl", "\t"),
                  filepath.FilePath(FILEROOT+"nh13d/livelog"): ("nh13d", ":"),
                  filepath.FilePath(FILEROOT+"slashem-0.0.8E0F2/livelog"): ("slshm", ":"),
                  filepath.FilePath(FILEROOT+"un531/var/unnethack/livelog"): ("un", ":")}
@@ -225,7 +225,7 @@ class DeathBotProtocol(irc.IRCClient):
                   "sp" : [INPR+"sp065/"],
                 "slex" : [INPR+"slex217/", INPR+"slex222/", INPR+"slex232/"],
                  "xnh" : [INPR+"xnh020/", INPR+"xnh030/", INPR+"xnh040/"],
-                 "spl" : [INPR+"spl040/", INPR+"spl050/", INPR+"spl051/"],
+                 "spl" : [INPR+"spl051/", INPR+"spl060/"],
                "nh13d" : [INPR+"nh13d/"],
                "slshm" : [INPR+"slashem/"],
                  "dyn" : [INPR+"dyn/"]}
@@ -245,10 +245,8 @@ class DeathBotProtocol(irc.IRCClient):
                          FILEROOT+"slex-2.3.2/whereis/"],
                  "xnh": [FILEROOT+"xnethack-0.3.0/var/whereis/",
                          FILEROOT+"xnethack-0.4.0/var/whereis/"],
-                 "spl": [FILEROOT+"splicehack-0.3.0/var/whereis/",
-                         FILEROOT+"splicehack-0.4.0/var/whereis/",
-                         FILEROOT+"splicehack-0.5.0/var/whereis/",
-                         FILEROOT+"splicehack-0.5.1/var/whereis/"],
+                 "spl": [FILEROOT+"splicehack-0.5.1/var/whereis/",
+                         FILEROOT+"splicehack-0.6.0/var/whereis/"],
                "nh13d": [FILEROOT+"nh13d/whereis/"],
                "slshm": [FILEROOT+"slashem-0.0.8E0F2/whereis/"],
                   "un": [FILEROOT+"un531/var/unnethack/whereis/"]}
