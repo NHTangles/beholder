@@ -1,7 +1,10 @@
 """
 beholder.py - a game-reporting and general services IRC bot for
               the hardfought.org NetHack server.
-Copyright (c) 2017 A. Thomson, K. Simpson
+
+tnnt branch (2018) - adaptation specifically for the tnnt tournament
+
+Copyright (c) 2018 A. Thomson, K. Simpson
 Based on original code from:
 deathbot.py - a game-reporting IRC bot for AceHack
 Copyright (c) 2011, Edoardo Spadolini
@@ -122,14 +125,14 @@ class DeathBotProtocol(irc.IRCClient):
         password = "NotTHEPassword"
 
     sourceURL = "https://github.com/NHTangles/beholder"
-    versionName = "beholder.py"
+    versionName = "beholder.py (tnnt)"
     versionNum = "0.1"
 
     dump_url_prefix = WEBROOT + "userdata/{name[0]}/{name}/"
     dump_file_prefix = FILEROOT + "dgldir/userdata/{name[0]}/{name}/"
 
     if not SLAVE:
-        scoresURL = WEBROOT + "nethack/scoreboard (HDF) or https://scoreboard.xd.cm (ALL)"
+        scoresURL = "https://www.hardfought.org/tnnt/trophies.html or https://www.hardfought.org/tnnt/clans.html"
         rceditURL = WEBROOT + "nethack/rcedit"
         helpURL = WEBROOT + "nethack"
         logday = time.strftime("%d")
@@ -137,77 +140,13 @@ class DeathBotProtocol(irc.IRCClient):
         chanLog = open(chanLogName,'a')
         os.chmod(chanLogName,stat.S_IRUSR|stat.S_IWUSR|stat.S_IRGRP|stat.S_IROTH)
 
-    xlogfiles = {filepath.FilePath(FILEROOT+"nh343-hdf/var/xlogfile"): ("nh343", ":", "nh343/dumplog/{starttime}.nh343.txt"),
-                 filepath.FilePath(FILEROOT+"nh361-hdf/var/xlogfile"): ("nh361", "\t", "nh361/dumplog/{starttime}.nh361.txt"),
-                 filepath.FilePath(FILEROOT+"grunthack-0.2.4/var/xlogfile"): ("gh", ":", "gh/dumplog/{starttime}.gh.txt"),
-                 filepath.FilePath(FILEROOT+"dnethack-3.16.0/xlogfile"): ("dnh", ":", "dnethack/dumplog/{starttime}.dnh.txt"),
-                 filepath.FilePath(FILEROOT+"fiqhackdir/data/xlogfile"): ("fh", ":", "fiqhack/dumplog/{dumplog}"),
-                 filepath.FilePath(FILEROOT+"dynahack/dynahack-data/var/xlogfile"): ("dyn", ":", "dynahack/dumplog/{dumplog}"),
-                 filepath.FilePath(FILEROOT+"nh4dir/save/xlogfile"): ("nh4", ":", "nethack4/dumplog/{dumplog}"),
-                 filepath.FilePath(FILEROOT+"fourkdir/save/xlogfile"): ("4k", "\t", "nhfourk/dumps/{dumplog}"),
-                 filepath.FilePath(FILEROOT+"sporkhack-0.6.5/var/xlogfile"): ("sp", "\t", "sporkhack/dumplog/{starttime}.sp.txt"),
-                 filepath.FilePath(FILEROOT+"slex-2.3.2/xlogfile"): ("slex", "\t", "slex/dumplog/{starttime}.slex.txt"),
-                 filepath.FilePath(FILEROOT+"xnethack-0.4.0/var/xlogfile"): ("xnh", "\t", "xnethack/dumplog/{starttime}.xnh.txt"),
-                 filepath.FilePath(FILEROOT+"splicehack-0.6.0/var/xlogfile"): ("spl", "\t", "splicehack/dumplog/{starttime}.splice.txt"),
-                 filepath.FilePath(FILEROOT+"nh13d/xlogfile"): ("nh13d", ":", "nh13d/dumplog/{starttime}.nh13d.txt"),
-                 filepath.FilePath(FILEROOT+"slashem-0.0.8E0F2/xlogfile"): ("slshm", ":", "slashem/dumplog/{starttime}.slashem.txt"),
-                 filepath.FilePath(FILEROOT+"tnnt/var/xlogfile"): ("tnnt", "\t", "tnnt/dumplog/{starttime}.tnnt.txt"),
-                 filepath.FilePath(FILEROOT+"un531/var/unnethack/xlogfile"): ("un", ":", "un531/dumplog/{starttime}.un531.txt.html")}
-    livelogs  = {filepath.FilePath(FILEROOT+"nh343-hdf/var/livelog"): ("nh343", ":"),
-                 filepath.FilePath(FILEROOT+"nh361-hdf/var/livelog"): ("nh361", "\t"),
-                 filepath.FilePath(FILEROOT+"grunthack-0.2.4/var/livelog"): ("gh", ":"),
-                 filepath.FilePath(FILEROOT+"dnethack-3.16.0/livelog"): ("dnh", ":"),
-                 filepath.FilePath(FILEROOT+"fourkdir/save/livelog"): ("4k", "\t"),
-                 filepath.FilePath(FILEROOT+"fiqhackdir/data/livelog"): ("fh", ":"),
-                 filepath.FilePath(FILEROOT+"sporkhack-0.6.5/var/livelog"): ("sp", ":"),
-                 filepath.FilePath(FILEROOT+"slex-2.3.2/livelog"): ("slex", ":"),
-                 filepath.FilePath(FILEROOT+"xnethack-0.4.0/var/livelog"): ("xnh", "\t"),
-                 filepath.FilePath(FILEROOT+"splicehack-0.6.0/var/livelog"): ("spl", "\t"),
-                 filepath.FilePath(FILEROOT+"nh13d/livelog"): ("nh13d", ":"),
-                 filepath.FilePath(FILEROOT+"slashem-0.0.8E0F2/livelog"): ("slshm", ":"),
-                 filepath.FilePath(FILEROOT+"tnnt/var/livelog"): ("tnnt", "\t"),
-                 filepath.FilePath(FILEROOT+"un531/var/unnethack/livelog"): ("un", ":")}
-
-    # Forward events to other bots at the request of maintainers of other variant-specific channels
-    forwards = {"nh343" : [],
-                "nh361" : [],
-                 "zapm" : [],
-                   "gh" : [],
-                  "dnh" : [],
-                   "fh" : ["Arsinoe"],
-                  "dyn" : [],
-                  "nh4" : ["Arsinoe"],
-                   "4k" : ["Arsinoe"],
-                   "sp" : [],
-                 "slex" : ["ro-bot"],
-                  "xnh" : [],
-                  "spl" : [],
-                "nh13d" : [],
-                "slshm" : [],
-                 "tnnt" : [],
-                   "un" : []}
+    xlogfiles = {filepath.FilePath(FILEROOT+"tnnt/var/xlogfile"): ("tnnt", "\t", "tnnt/dumplog/{starttime}.tnnt.txt")}
+    livelogs  = {filepath.FilePath(FILEROOT+"tnnt/var/livelog"): ("tnnt", "\t")}
 
     # for displaying variants and server tags in colour
-    displaystring = {"nh343" : "\x0315nh343\x03",
-                     "nh361" : "\x0307nh362\x03",
-                      "zapm" : "\x0303zapm\x03",
-                        "gh" : "\x0304gh\x03",
-                       "dnh" : "\x0313dnh\x03",
-                        "fh" : "\x0310fh\x03",
-                       "dyn" : "\x0305dyn\x03",
-                       "nh4" : "\x0306nh4\x03",
-                        "4k" : "\x03114k\x03",
-                        "sp" : "\x0314sp\x03",
-                      "slex" : "\x0312slex\x03",
-                       "xnh" : "\x0309xnh\x03",
-                       "spl" : "\x0303spl\x03",
-                     "nh13d" : "\x0311nh13d\x03",
-                     "slshm" : "\x0314slshm\x03",
-                      "tnnt" : "\x0310tnnt\x03",
-                        "un" : "\x0308un\x03",
-                    "hdf-us" : "\x1D\x0304hdf-us\x03\x0F",
-                    "hdf-au" : "\x1D\x0303hdf-au\x03\x0F",
-                    "hdf-eu" : "\x1D\x0312hdf-eu\x03\x0F"}
+    displaystring = {"hdf-us" : "\x1D\x0304US\x03\x0F",
+                     "hdf-au" : "\x1D\x0303AU\x03\x0F",
+                     "hdf-eu" : "\x1D\x0312EU\x03\x0F"}
 
     # put the displaystring for a thing in square brackets
     def displaytag(self, thing):
@@ -217,527 +156,14 @@ class DeathBotProtocol(irc.IRCClient):
     # Reduce the repetitive crap
     DGLD=FILEROOT+"dgldir/"
     INPR=DGLD+"inprogress-"
-    inprog = { "nh343" : [INPR+"nh343/", INPR+"nh343-hdf/"],
-               "nh361" : [INPR+"nhdev/", INPR+"nh361/", INPR+"nh361-hdf/"],
-                "zapm" : [INPR+"zapm/"],
-                  "gh" : [INPR+"gh023/", INPR+"gh024/"],
-                  "un" : [INPR+"un531/"],
-                 "dnh" : [INPR+"dnh/", INPR+"dnh3151/", INPR+"dnh316/"],
-                  "fh" : [INPR+"fh/"],
-                  "4k" : [INPR+"4k/"],
-                 "nh4" : [INPR+"nh4/"],
-                  "sp" : [INPR+"sp065/"],
-                "slex" : [INPR+"slex217/", INPR+"slex222/", INPR+"slex232/"],
-                 "xnh" : [INPR+"xnh020/", INPR+"xnh030/", INPR+"xnh040/"],
-                 "spl" : [INPR+"spl051/", INPR+"spl060/"],
-               "nh13d" : [INPR+"nh13d/"],
-               "slshm" : [INPR+"slashem/"],
-                "tnnt" : [INPR+"tnnt/"],
-                 "dyn" : [INPR+"dyn/"]}
+    inprog = {"tnnt" : [INPR+"tnnt/"]}
 
     # for !whereis
-    whereis = {"nh343": [FILEROOT+"nh343/var/whereis/",
-                         FILEROOT+"nh343-hdf/var/whereis/"],
-               "nh361": [FILEROOT+"nh361-hdf/var/whereis/"],
-                  "gh": [FILEROOT+"grunthack-0.2.4/var/whereis/"],
-                 "dnh": [FILEROOT+"dnethack-3.16.0/whereis/"],
-                  "fh": [FILEROOT+"fiqhackdir/data/"],
-                 "dyn": [FILEROOT+"dynahack/dynahack-data/var/whereis/"],
-                 "nh4": [FILEROOT+"nh4dir/save/whereis/"],
-                  "4k": [FILEROOT+"fourkdir/save/"],
-                  "sp": [FILEROOT+"sporkhack-0.6.5/var/"],
-                "slex": [FILEROOT+"slex-2.2.2/whereis/",
-                         FILEROOT+"slex-2.3.2/whereis/"],
-                 "xnh": [FILEROOT+"xnethack-0.3.0/var/whereis/",
-                         FILEROOT+"xnethack-0.4.0/var/whereis/"],
-                 "spl": [FILEROOT+"splicehack-0.5.1/var/whereis/",
-                         FILEROOT+"splicehack-0.6.0/var/whereis/"],
-               "nh13d": [FILEROOT+"nh13d/whereis/"],
-               "slshm": [FILEROOT+"slashem-0.0.8E0F2/whereis/"],
-                "tnnt": [FILEROOT+"tnnt/var/whereis/"],
-                  "un": [FILEROOT+"un531/var/unnethack/whereis/"]}
+    whereis = {"tnnt": [FILEROOT+"tnnt/var/whereis/"]}
 
-    dungeons = {"nh343": ["The Dungeons of Doom","Gehennom","The Gnomish Mines","The Quest",
-                          "Sokoban","Fort Ludios","Vlad's Tower","The Elemental Planes"],
-                "nh361": ["The Dungeons of Doom","Gehennom","The Gnomish Mines","The Quest",
-                          "Sokoban","Fort Ludios","Vlad's Tower","The Elemental Planes"],
-                   "gh": ["The Dungeons of Doom","Gehennom","The Gnomish Mines","The Quest",
-                          "Sokoban","Fort Ludios","Vlad's Tower","The Elemental Planes"],
-                  "dnh": ["The Dungeons of Doom","Gehennom","The Gnomish Mines","Law Quest",
-                          "Neutral Quest","The Lost Cities","Chaos Quest","The Quest",
-                          "Sokoban","Fort Ludios","The Lost Tomb","The Sunless Sea",
-                          "The Temple of Moloch","The Dispensary","Vlad's Tower",
-                          "The Elemental Planes"],
-                   "fh": ["The Dungeons of Doom","Gehennom","The Gnomish Mines","The Quest",
-                          "Sokoban","Fort Ludios","Vlad's Tower","The Elemental Planes"],
-                  "dyn": ["The Dungeons of Doom","Gehennom","The Gnomish Mines","The Quest",
-                          "Sokoban","Town","Fort Ludios","One-eyed Sam's Market","Vlad's Tower",
-                          "The Dragon Caves","The Elemental Planes","Advent Calendar"],
-                  "nh4": ["The Dungeons of Doom","Gehennom","The Gnomish Mines","The Quest",
-                          "Sokoban","Fort Ludios","Vlad's Tower","The Elemental Planes"],
-                   "4k": ["The Dungeons of Doom","Gehennom","The Gnomish Mines","The Quest",
-                          "Sokoban","Fort Ludios","Advent Calendar","Vlad's Tower",
-                          "The Elemental Planes"],
-                   "sp": ["The Dungeons of Doom","Gehennom","The Gnomish Mines","The Quest",
-                          "Sokoban","Fort Ludios","Vlad's Tower","The Elemental Planes"],
-                 "slex": ["The Dungeons of Doom","Gehennom","The Gnomish Mines","The Quest",
-                          "The Subquest","Bell Caves","Lawful Quest","Neutral Quest","Chaotic Quest",
-                          "Sokoban","Town","Grund's Stronghold","Fort Ludios","The Wyrm Caves",
-                          "One-eyed Sam's Market","The Lost Tomb","The Spider Caves","The Sunless Sea",
-                          "The Temple of Moloch","Illusory Castle","Deep Mines","Space Base",
-                          "Sewer Plant","Gamma Caves","Mainframe","Void","Nether Realm","Angmar",
-                          "Swimming Pool","Hell's Bathroom",
-                          "The Giant Caverns","Frankenstein's Lab",
-                          "Sheol","Vlad's Tower","Yendorian Tower","Forging Chamber",
-                          "Dead Grounds","Ordered Chaos","The Elemental Planes"],
-                  "xnh": ["The Dungeons of Doom","Gehennom","The Gnomish Mines","The Quest",
-                          "Sokoban","Fort Ludios","Vlad's Tower","The Elemental Planes"],
-                  "spl": ["The Dungeons of Doom","The Icy Wastes","Mysterious Laboratory","Gehennom",
-                          "The Gnomish Mines","The Quest","Sokoban","Fort Ludios",
-                          "Vlad's Tower","The Elemental Planes"],
-                "nh13d": ["The Dungeons of Doom"],
-                "slshm": ["The Dungeons of Doom","Gehennom","The Gnomish Mines",
-                          "The Quest","Sokoban","Town","Fort Ludios",
-                          "One-eyed Sam's Market","Vlad's Tower","The Dragon Caves",
-                          "The Elemental Planes"],
-                 "tnnt": ["The Dungeons of Doom","Gehennom","The Gnomish Mines","The Quest",
-                          "Sokoban","Fort Ludios","Vlad's Tower","The Elemental Planes"],
-                   "un": ["The Dungeons of Doom","Gehennom","Sheol","The Gnomish Mines",
-                          "The Quest","Sokoban","Town","The Ruins of Moria","Fort Ludios",
-                          "One-eyed Sam's Market","Vlad's Tower","The Dragon Caves",
-                          "The Elemental Planes","Advent Calendar"]}
+    dungeons = ["The Dungeons of Doom","Gehennom","The Gnomish Mines","The Quest",
+                          "Sokoban","Fort Ludios","Vlad's Tower","The Elemental Planes"]
 
-    # variant related stuff that does not relate to xlogfile processing
-    rolename = 	{
-        # Vanilla
-        "arc": "archeologist",
-        "bar": "barbarian",
-        "cav": "caveman",
-        "hea": "healer",
-        "kni": "knight",
-        "mon": "monk",
-        "pri": "priest",
-        "ran": "ranger",
-        "rog": "rogue",
-        "sam": "samurai",
-        "tou": "tourist",
-        "val": "valkyrie",
-        "wiz": "wizard",
-        # NetHack 1.3d Vanilla has a role of 'Elf' as well as 'Fighter' and 'Ninja' (the latter already included below from Slash'EM Extended roles)
-        "elf": "elf",
-        # Dnh, includes all of vanilla
-        "ana": "anachrononaut",
-        "bin": "binder",
-        "nob": "noble",
-        "pir": "pirate",
-        "trb": "troubadour",
-        "con": "convict",
-        # SpliceHack, includes all of vanilla
-        "car": "cartomancer",
-        "dgn": "dragonmaster",
-        # SLEX, includes all of dnh and slash
-        "act": "activistor",
-        "alt": "altmer",
-        "ama": "amazon",
-        "art": "artist",
-        "ass": "assassin",
-        "aug": "augurer",
-        "brd": "bard",
-        "blo": "bloodseeker",
-        "bos": "bosmer",
-        "bul": "bully",
-        "cam": "camperstriker",
-        "cha": "chaos sorceror",
-        "che": "chevalier",
-        "coo": "cook",
-        "cou": "courier",
-        "cru": "cruel abuser",
-        "dea": "death eater",
-        "div": "diver",
-        "dol": "doll mistress",
-        "doo": "doom marine",
-        "dqs": "dq slime",
-        "dri": "druid",
-        "dru": "drunk",
-        "dun": "dunmer",
-        "elm": "electric mage",
-        "ele": "elementalist",
-        "elp": "elph",
-        "erd": "erdrick",
-        "fai": "failed existence",
-        "fea": "feat master",
-        "fem": "feminist",
-        "fen": "fencer",
-        "fig": "fighter",
-        "fla": "flame mage",
-        "for": "form changer",
-        "fox": "foxhound agent",
-        "gam": "gamer",
-        "gan": "gang scholar",
-        "gns": "gangster",
-        "gee": "geek",
-        "gla": "gladiator",
-        "gof": "goff",
-        "gol": "goldminer",
-        "gra": "graduate",
-        "gun": "gunner",
-        "ice": "ice mage",
-        "int": "intel scribe",
-        "jed": "jedi",
-        "jes": "jester",
-        "jus": "justice keeper",
-        "kor": "korsair",
-        "kur": "kurwa",
-        "lad": "ladiesman",
-        "lib": "librarian",
-        "loc": "locksmith",
-        "lun": "lunatic",
-        "mah": "mahou shoujo",
-        "med": "medium",
-        "mid": "midget",
-        "mur": "murderer",
-        "mus": "musician",
-        "nec": "necromancer",
-        "nin": "ninja",
-        "nuc": "nuclear physicist",
-        "occ": "occult master",
-        "off": "officer",
-        "ord": "ordinator",
-        "pal": "paladin",
-        "pic": "pickpocket",
-        "poi": "poison mage",
-        "pok": "pokemon",
-        "pol": "politician",
-        "pro": "prostitute",
-        "psi": "psion",
-        "rin": "ringseeker",
-        "roc": "rocker",
-        "sag": "sage",
-        "sai": "saiyan",
-        "sci": "scientist",
-        "sha": "shapeshifter",
-        "sla": "slave master",
-        "spa": "spacewars fighter",
-        "sup": "supermarket cashier",
-        "tha": "thalmor",
-        "top": "topmodel",
-        "trc": "tracer",
-        "trl": "transsylvanian",
-        "trv": "transvestite",
-        "twe": "twelph",
-        "unb": "unbeliever",
-        "uds": "undead slayer",
-        "und": "undertaker",
-        "use": "user of stand",
-        "wan": "wandkeeper",
-        "war": "warrior",
-        "yeo": "yeoman",
-        "yse": "ysexymate",
-        "zoo": "zookeeper",
-        "zyb": "zyborg"
-    }
-
-    racename = {
-        # Vanilla
-        "dwa": "dwarf",
-        "elf": "elf",
-        "gno": "gnome",
-        "hum": "human",
-        "orc": "orc",
-        # Grunt, includes vanilla
-        "gia": "giant",
-        "kob": "kobold",
-        "ogr": "ogre",
-        # Dnh, includes vanilla
-        "clk": "clockwork automaton",
-        "hlf": "half-dragon",
-        "inc": "incantifier",
-        "vam": "vampire",
-        "yuk": "yuki-onna",
-        "dro": "drow",
-        "bat": "chiropteran",
-        # 4k, includes vanilla
-        "scu": "scurrier",
-        "syl": "sylph",
-        #SpliceHack, includes vanilla and one race from SLEX (Angel)
-        "inf": "infernal",
-        "mer": "merfolk",
-        "wlf": "werewolf",
-        # SLEX, includes vanilla, grunt, 4k, slash and dnh -- not all of dnh but close
-        "add": "addict",
-        "agg": "aggravator",
-        "akt": "ak thief is dead!",
-        "alb": "albae",
-        "alc": "alchemist",
-        "ali": "alien",
-        "ame": "american",
-        "amn": "amnesiac",
-        "anc": "ancient",
-        "anp": "ancipital",
-        "agb": "angbander",
-        "ang": "angel",
-        "aqu": "aquarian",
-        "arg": "argonian",
-        "asg": "asgardian",
-        "bas": "bastard",
-        "btm": "batman",
-        "bor": "borg",
-        "bre": "breton",
-        "bur": "burninator",
-        "cen": "centaur",
-        "chi": "chiropteran",
-        "coc": "cockatrice",
-        "cor": "cortex",
-        "cur": "curser",
-        "dar": "dark seducer",
-        "dea": "deathmold",
-        "dee": "deep elf",
-        "des": "destabilizer",
-        "dev": "developer",
-        "dvl": "devil",
-        "din": "dinosaur",
-        "dol": "dolgsman",
-        "dop": "doppelganger",
-        "dra": "dragon",
-        "dry": "dryad",
-        "duf": "dufflepud",
-        "dun": "dunadan",
-        "ele": "elemental",
-        "ent": "ent",
-        "evi": "evilvariant",
-        "exp": "expert",
-        "faw": "fawn",
-        "fel": "felid",
-        "fen": "fenek",
-        "fie": "fiend",
-        "gas": "gastly",
-        "gel": "gelatinous cube",
-        "gol": "golden saint",
-        "gre": "green slime",
-        "grm": "gremlin",
-        "gri": "grid bug",
-        "hax": "haxor",
-        "hmd": "hemi-doppelganger",
-        "hem": "hemophage",
-        "hrb": "herbalist",
-        "het": "heretic",
-        "hob": "hobbit",
-        "hom": "homicider",
-        "hid": "hidden elf",
-        "ill": "illithid",
-        "imm": "immunizer",
-        "imp": "imp",
-        "ipl": "imperial",
-        "ink": "inka",
-        "ins": "insectoid",
-        "iro": "ironman",
-        "jel": "jelly",
-        "kha": "khajiit",
-        "kop": "kop",
-        "lep": "leprechaun",
-        "lvs": "levelscaler",
-        "lev": "levitator",
-        "lic": "lich",
-        "lis": "listener",
-        "liz": "lizardman",
-        "lol": "loli",
-        "lyc": "lycanthrope",
-        "mai": "maia",
-        "maz": "mazewalker",
-        "mim": "mimic",
-        "min": "minimalist",
-        "mis": "missingno",
-        "mon": "monkey",
-        "mnt": "monster",
-        "moo": "moon elf",
-        "mou": "mould",
-        "mum": "mummy",
-        "nag": "naga",
-        "nas": "nastinator",
-        "nav": "navi",
-        "nor": "nord",
-        "nul": "null",
-        "nym": "nymph",
-        "oct": "octopode",
-        "pea": "peacemaker",
-        "pha": "phantom",
-        "poi": "poisoner",
-        "pol": "polyinitor",
-        "pro": "problematic",
-        "rac": "race x",
-        "ran": "randomizer",
-        "red": "redditor",
-        "rdg": "redguard",
-        "rod": "rodneyan",
-        "roh": "rohirrim",
-        "rou": "rougelike",
-        "sal": "salamander",
-        "sat": "satre",
-        "sea": "sea elf",
-        "seg": "segfaulter",
-        "sen": "senser",
-        "sho": "shoe",
-        "sin": "sinner",
-        "ske": "skeleton",
-        "ski": "skillor",
-        "sna": "snail",
-        "sna": "snakeman",
-        "sok": "sokosolver",
-        "sov": "soviet",
-        "spe": "specialist",
-        "spd": "spiderman",
-        "spi": "spirit",
-        "spr": "spriggan",
-        "sti": "sticker",
-        "sus": "sustainer",
-        "sux": "suxxor",
-        "thu": "thunderlord",
-        "tri": "trainer",
-        "trs": "transformer",
-        "trp": "trapper",
-        "tro": "troll",
-        "tum": "tumblrer",
-        "tur": "turtle",
-        "una": "unalignment thing",
-        "und": "undefined",
-        "ung": "ungenomold",
-        "uni": "unicorn",
-        "unm": "unmagic",
-        "vmg": "vamgoyle",
-        "vee": "veela",
-        "ven": "venture capitalist",
-        "vor": "vortex",
-        "war": "warper",
-        "win": "wind inhabitant",
-        "wis": "wisp",
-        "wor": "worm that walks",
-        "wra": "wraith",
-        "xor": "xorn",
-        "yee": "yeek",
-        "yok": "yokuda"
-    }
-    # save typing these out in multiple places
-    vanilla_roles = ["arc","bar","cav","hea","kni","mon","pri",
-                     "ran","rog","sam","tou","val","wiz"]
-    vanilla_races = ["dwa","elf","gno","hum","orc"]
-
-    # varname: ([aliases],[roles],[races])
-    # first alias will be used for !variant
-    # note this breaks if a player has the same name as an alias
-    # so don't do that (I'm looking at you, FIQ)
-    variants = {"nh343": (["nh343", "nethack", "343"],
-                          vanilla_roles, vanilla_races),
-                "nh361": (["nh361", "361", "361-hdf"],
-                          vanilla_roles, vanilla_races),
-                "nh13d": (["nh13d", "13d"],
-                          vanilla_roles + ["elf", "fig", "nin"]),
-                   "nh4": (["nethack4", "n4"],
-                          vanilla_roles, vanilla_races),
-                   "gh": (["grunthack", "grunt"],
-                          vanilla_roles, vanilla_races + ["gia", "kob", "ogr"]),
-                  "dnh": (["dnethack", "dn"],
-                          vanilla_roles
-                            + ["ana", "bin", "nob", "pir", "trb", "con"],
-                          vanilla_races
-                            + ["clk", "con", "bat", "dro", "hlf", "inc", "vam", "swn"]),
-                   "un": (["unnethack", "unh"],
-                          vanilla_roles + ["con"], vanilla_races),
-                  "xnh": (["xnethack", "xnh"],
-                          vanilla_roles, vanilla_races),
-                  "spl": (["splicehack", "splice", "spl"],
-                          vanilla_roles + ["car", "dgn"], vanilla_races + ["ang", "inf", "mer", "wlf"]),
-                  "dyn": (["dynahack", "dyna"],
-                          vanilla_roles + ["con"], vanilla_races + ["vam"]),
-                   "fh": (["fiqhack"], # not "fiq" see comment above
-                          vanilla_roles, vanilla_races),
-                   "sp": (["sporkhack", "spork"],
-                          vanilla_roles, vanilla_races),
-                   "4k": (["nhfourk", "nhf", "fourk"],
-                          vanilla_roles, vanilla_races + ["gia", "scu", "syl"]),
-                "slshm": (["slash", "slash'em", "slshm"],
-                          vanilla_roles + ["fla", "ice", "nec", "uds", "yeo"],
-                          vanilla_races + ["dop", "dro", "hob", "lyc", "vam"]),
-                 "tnnt": (["tnnt"],
-                          vanilla_roles, vanilla_races),
-                 "slex": (["slex", "sloth", "amy's-weird-thing"],
-                          vanilla_roles +
-                             ["ana", "bin", "nob", "pir",
-                              "trb", "con", "act", "alt",
-                              "ama", "art", "ass", "aug",
-                              "brd", "blo", "bos", "bul",
-                              "cam", "cha", "che", "coo",
-                              "cou", "cru", "dea", "div",
-                              "dol", "doo", "dqs", "dri",
-                              "dru", "dun", "elm", "ele",
-                              "elp", "erd", "fai", "fea",
-                              "fem", "fen", "fig", "fla",
-                              "for", "fox", "gam", "gan",
-                              "gns", "gee", "gla", "gof",
-                              "gol", "gra", "gun", "ice",
-                              "int", "jed", "jes", "jus",
-                              "kor", "kur", "lad", "lib",
-                              "loc", "lun", "mah", "med",
-                              "mid", "mur", "mus", "nec",
-                              "nin", "nuc", "occ", "off",
-                              "ord", "pal", "pic", "poi",
-                              "pok", "pol", "pro", "psi",
-                              "rin", "roc", "sag", "sai",
-                              "sci", "sha", "sla", "spa",
-                              "sup", "tha", "top", "trc",
-                              "trl", "trv", "twe", "unb",
-                              "uds", "und", "use", "wan",
-                              "war", "yeo", "yse", "zoo",
-                              "zyb"],
-                          vanilla_races +
-                             ["gia", "kob", "ogr", "clk",
-                              "inc", "vam", "yuk", "yok",
-                              "scu", "syl", "add", "agg",
-                              "ak ", "alb", "alc", "ali",
-                              "ame", "amn", "anc", "anp",
-                              "agb", "ang", "aqu", "arg",
-                              "asg", "bas", "btm", "bor",
-                              "bre", "bur", "cen", "chi",
-                              "coc", "cor", "cur", "dar",
-                              "dea", "dee", "des", "dev",
-                              "dvl", "din", "dol", "dop",
-                              "dra", "dry", "duf", "dun",
-                              "ele", "ent", "evi", "exp",
-                              "faw", "fel", "fen", "fie",
-                              "gas", "gel", "gol", "gre",
-                              "grm", "gri", "hax", "hmd",
-                              "hem", "hrb", "het", "hob",
-                              "hom", "hid", "ill", "imm",
-                              "imp", "ipl", "ink", "ins",
-                              "iro", "jel", "kha", "kop",
-                              "lep", "lvs", "lev", "lic",
-                              "lis", "liz", "lol", "lyc",
-                              "mai", "maz", "mim", "min",
-                              "mis", "mnt", "mon", "moo",
-                              "mou", "mum", "nag", "nas",
-                              "nav", "nor", "nul", "nym",
-                              "oct", "pea", "pha", "poi",
-                              "pol", "pro", "rac", "ran",
-                              "red", "rdg", "rod", "roh",
-                              "rou", "sal", "sat", "sea",
-                              "seg", "sen", "sho", "sin",
-                              "ske", "ski", "sna", "sna",
-                              "sok", "sov", "spe", "spd",
-                              "spi", "spr", "sti", "sus",
-                              "sux", "thu", "tri", "trs",
-                              "trp", "tro", "tum", "tur",
-                              "una", "und", "ung", "uni",
-                              "unm", "vmg", "vee", "ven",
-                              "vor", "war", "win", "wis",
-                              "wor", "wra", "xor", "yee"])}
-
-    # variants which support streaks - now tracking slex streaks, because that's totally possible.
-    streakvars = ["nh343", "nh361", "nh13d", "gh", "dnh", "un", "sp", "xnh", "slex", "spl", "slshm", "tnnt"]
-    # for !asc statistics - assume these are the same for all variants, or at least the sane ones.
-    aligns = ["Law", "Neu", "Cha"]
-    genders = ["Mal", "Fem"]
-
-    #who is making tea? - bots of the nethack community who have influenced this project.
-    brethren = ["Rodney", "Athame", "Arsinoe", "Izchak", "TheresaMayBot", "FCCBot", "the late Pinobot", "Announcy", "demogorgon", "the /dev/null/oracle", "NotTheOracle\\dnt"]
     looping_calls = None
 
     # SASL auth nonsense required if we run on AWS
@@ -784,39 +210,23 @@ class DeathBotProtocol(irc.IRCClient):
         self.lg = {}
         self.lastasc = "No last ascension recorded"
         self.la = {}
-        # for populating lg/la per player at boot, we need to track game end times
-        # variant and variant:player don't need this if we assume the xlogfiles are
-        # ordered within variant.
-        self.lge = {}
-        self.tlastgame = 0
-        self.lae = {}
-        self.tlastasc = 0
 
         # streaks
         self.curstreak = {}
         self.longstreak = {}
-        for v in self.streakvars:
-            # curstreak[var][player] = (start, end, length)
-            self.curstreak[v] = {}
-            # longstreak - as above
-            self.longstreak[v] = {}
 
         # ascensions (for !asc)
-        # "!asc plr var" will give something like Rodney's output.
-        # "!asc plr" will give breakdown by variant.
-        # "!asc" or "!asc var" will be as above, assuming requestor's nick.
-        # asc[var][player][role] = count;
-        # asc[var][player][race] = count;
-        # asc[var][player][align] = count;
-        # asc[var][player][gender] = count;
+        # "!asc plr" will give asc stats for player.
+        # "!asc" will be as above, assuming requestor's nick.
+        # asc[player][role] = count;
+        # asc[player][race] = count;
+        # asc[player][align] = count;
+        # asc[player][gender] = count;
         # assumes 3-char abbreviations for role/race/align/gender, and no overlaps.
         # for asc ratio we need total games too
-        # allgames[var][player] = count;
+        # allgames[player] = count;
         self.asc = {}
         self.allgames = {}
-        for v in self.variants.keys():
-            self.asc[v] = {};
-            self.allgames[v] = {};
 
         # for !tell
         self.tellbuf = shelve.open(BOTDIR + "/tellmsg.db", writeback=True)
@@ -826,26 +236,6 @@ class DeathBotProtocol(irc.IRCClient):
         # Commands must be lowercase here.
         self.commands = {"ping"     : self.doPing,
                          "time"     : self.doTime,
-                         "pom"      : self.doPom,
-                         "porn"     : self.doPom,    #for Elronnd
-                         "hello"    : self.doHello,
-                         "beer"     : self.doBeer,
-                         "tea"      : self.doTea,
-                         "coffee"   : self.doTea,
-                         "whiskey"  : self.doTea,
-                         "whisky"   : self.doTea,
-                         "vodka"    : self.doTea,
-                         "rum"      : self.doTea,
-                         "tequila"  : self.doTea,
-                         "scotch"   : self.doTea,
-                         "booze"    : self.doTea,
-                         "potion"   : self.doTea,
-                         "goat"     : self.doGoat,
-                         "lotg"     : self.doLotg,
-                         "rng"      : self.doRng,
-                         "role"     : self.doRole,
-                         "race"     : self.doRace,
-                         "variant"  : self.doVariant,
                          "tell"     : self.takeMessage,
                          "source"   : self.doSource,
                          "lastgame" : self.multiServerCmd,
@@ -855,14 +245,11 @@ class DeathBotProtocol(irc.IRCClient):
                          "rcedit"   : self.doRCedit,
                          "commands" : self.doCommands,
                          "help"     : self.doHelp,
-                         "coltest"  : self.doColTest,
                          "players"  : self.multiServerCmd,
                          "who"      : self.multiServerCmd,
                          "asc"      : self.multiServerCmd,
                          "streak"   : self.multiServerCmd,
                          "whereis"  : self.multiServerCmd,
-                         "8ball"    : self.do8ball,
-                         "setmintc" : self.multiServerCmd,
                          # these ones are for control messages between master and slaves
                          # sender is checked, so these can't be used by the public
                          "#q#"      : self.doQuery,
@@ -874,8 +261,7 @@ class DeathBotProtocol(irc.IRCClient):
                           "asc"     : self.getAsc,
                           "streak"  : self.getStreak,
                           "lastasc" : self.getLastAsc,
-                          "lastgame": self.getLastGame,
-                          "setmintc": self.setPlrTC}
+                          "lastgame": self.getLastGame}
         # callbacks to run when all slaves have responded
         self.callBacks = {"players" : self.outPlayers,
                           "who"     : self.outPlayers,
@@ -885,17 +271,13 @@ class DeathBotProtocol(irc.IRCClient):
                           # TODO: timestamp these so we can report the very last one
                           # For now, use the !asc/!streak callback as it's generic enough
                           "lastasc" : self.outAscStreak,
-                          "lastgame": self.outAscStreak,
-                          "setmintc": self.outPlrTC}
+                          "lastgame": self.outAscStreak}
 
         # checkUsage outputs a message and returns false if input is bad
         # returns true if input is ok
         self.checkUsage ={"whereis" : self.usageWhereIs,
                           "asc"     : self.usageAsc,
-                          "streak"  : self.usageStreak,
-                          #"lastgame": self.usageLastGame,
-                          #"lastasc" : self.usageLastAsc,
-                          "setmintc": self.usagePlrTC}
+                          "streak"  : self.usageStreak}
 
         # seek to end of livelogs
         for filepath in self.livelogs:
@@ -910,10 +292,6 @@ class DeathBotProtocol(irc.IRCClient):
                     delim = self.logs[filepath][2]
                     game = parse_xlogfile_line(line, delim)
                     game["variant"] = self.logs[filepath][1]
-                    if game["variant"] == "fh":
-                        game["dumplog"] = fixdump(game["dumplog"])
-                    if game["variant"] == "nh4":
-                        game["dumplog"] = fixdump(game["dumplog"])
                     game["dumpfmt"] = self.logs[filepath][3]
                     for line in self.logs[filepath][0](game,False):
                         pass
@@ -939,17 +317,6 @@ class DeathBotProtocol(irc.IRCClient):
     def nickChanged(self, nn):
         # catch successful changing of nick from above and identify with nickserv
         self.msg("NickServ", "identify " + nn + " " + self.password)
-
-    #helper functions
-    #lookup canonical variant id from alias
-    def varalias(self,alias):
-        alias = alias.lower()
-        if alias in self.variants.keys(): return alias
-        for v in self.variants.keys():
-            if alias in self.variants[v][0]: return v
-        # return original (lowercase) if not found.
-        # this is used for variant/player agnosticism in !lastgame
-        return alias
 
     def logRotate(self):
         self.chanLog.close()
@@ -1023,7 +390,19 @@ class DeathBotProtocol(irc.IRCClient):
         self.respond(replyto, sender, "Pong! " + " ".join(msgwords[1:]))
 
     def doTime(self, sender, replyto, msgwords):
-        self.respond(replyto, sender, time.strftime("%c %Z"))
+        self.respond(replyto, sender, time.strftime("The time is %H:%M:%S(%Z) on %A, %B %d, %Y"))
+        timeLeft = self.countDown()
+        if timeLeft["countdown"] <= timedelta(0):
+            self.msgLog(c, "The " + YEAR + " tournament is OVER!")
+            return
+        verbs = { "start" : "begins",
+                  "end" : "closes"
+                }
+
+        self.respond(replyto, sender, "The time remaining until the " + YEAR + " Tournament "
+                                      + verbs[timeLeft["event"]]
+                                      + " is '00-00-{days:0>2}:{hours:0>2}-{minutes:0>2}-{seconds:0>2}'".format(**timeLeft))
+
 
     def doSource(self, sender, replyto, msgwords):
         self.respond(replyto, sender, self.sourceURL )
@@ -1037,222 +416,8 @@ class DeathBotProtocol(irc.IRCClient):
     def doHelp(self, sender, replyto, msgwords):
         self.respond(replyto, sender, self.helpURL )
 
-    def doColTest(self, sender, replyto, msgwords):
-        code = chr(3)
-        code += msgwords[1]
-        self.respond(replyto, sender, msgwords[1] + " " + code + "TEST!" )
-
     def doCommands(self, sender, replyto, msgwords):
-        self.respond(replyto, sender, "available commands are !help !ping !time !pom !hello !booze !beer !potion !tea !coffee !whiskey !vodka !rum !tequila !scotch !goat !lotg !d(1-1000) !(1-50)d(1-1000) !8ball !rng !role !race !variant !tell !source !lastgame !lastasc !asc !streak !rcedit !scores !sb !setmintc !whereis !players !who !commands")
-
-    def getPom(self, dt):
-        # this is a direct translation of the NetHack method of working out pom.
-        # I'm SURE there's easier ways to do this, but they may not give perfectly
-        # consistent results with nh.
-        # Note that timetuple gives diy 1..366, C/Perl libs give 0..365,
-        # so need to adjust in final calculation.
-        (year,m,d,H,M,S,diw,diy,ds) = dt.timetuple()
-        goldn = (year % 19) + 1
-        epact = (11 * goldn + 18) % 30
-        if ((epact == 25 and goldn > 11) or epact == 24):
-            epact += 1
-        return ((((((diy-1 + epact) * 6) + 11) % 177) // 22) & 7)
-
-    def doPom(self, sender, replyto, msgwords):
-        # only info we have is that this yields 0..7, with 0 = new, 4 = full.
-        # the rest is assumption.
-        mp = ["new", "waxing crescent", "at first quarter", "waxing gibbous",
-              "full", "waning gibbous", "at last quarter", "waning crescent"]
-        dt = datetime.datetime.now()
-        nowphase = self.getPom(dt)
-        resp = "The moon is " + mp[nowphase]
-        aday = datetime.timedelta(days=1)
-        if nowphase in [0, 4]:
-            daysleft = 1 # counting today
-            dt += aday
-            while self.getPom(dt) == nowphase:
-                daysleft += 1
-                dt += aday
-            days = "days."
-            if daysleft == 1: days = "day."
-            resp += " for " + str(daysleft) + " more " + days
-        else:
-            daysuntil = 1 # again, we are counting today
-            dt += aday
-            while (self.getPom(dt)) not in [0, 4]:
-               daysuntil += 1
-               dt += aday
-            days = " days."
-            if daysuntil == 1: days = " day."
-            resp += "; " + mp[self.getPom(dt)] + " moon in " + str(daysuntil) + days
-
-        self.respond(replyto, sender, resp)
-
-    def doHello(self, sender, replyto, msgwords = 0):
-        self.msgLog(replyto, "Hello " + sender + ", Welcome to " + CHANNEL)
-
-    def doLotg(self, sender, replyto, msgwords):
-        if len(msgwords) > 1: target = " ".join(msgwords[1:])
-        else: target = sender
-        self.msgLog(replyto, "May the Luck of the Grasshopper be with you always, " + target + "!")
-
-    def doGoat(self, sender, replyto, msgwords):
-        act = random.choice(['kicks', 'rams', 'headbutts'])
-        part = random.choice(['arse', 'nose', 'face', 'kneecap'])
-        if len(msgwords) > 1:
-            self.msgLog(replyto, sender + "'s goat runs up and " + act + " " + " ".join(msgwords[1:]) + " in the " + part + "! Baaaaaa!")
-        else:
-            self.msgLog(replyto, NICK + "'s goat runs up and " + act + " " + sender + " in the " + part + "! Baaaaaa!")
-
-    def doRng(self, sender, replyto, msgwords):
-        if len(msgwords) == 1:
-            if (sender[0:11].lower()) == "grasshopper": # always troll the grasshopper
-                self.msgLog(replyto, "The RNG only has eyes for you, " + sender)
-            elif random.randrange(20): # 95% of the time, print usage
-                self.respond(replyto, sender, "!rng thomas richard harold ; !rng do dishes|play nethack ; !rng 1-100")
-            elif not random.randrange(5): #otherwise, trololol
-                self.respond(replyto, sender, "How doth the RNG hate thee? Let me count the ways...")
-            else:
-                self.respond(replyto, sender, "The RNG " + random.choice(["hates you.",
-                                                                          "is thinking of Grasshopper <3",
-                                                                          "hates everyone (except you-know-who)",
-                                                                          "cares not for your whining.",
-                                                                          "is feeling generous (maybe).",
-                                                                          "doesn't care.",
-                                                                          "is indifferent to your plight."]))
-            return
-        multiword = [i.strip() for i in " ".join(msgwords[1:]).split('|')]
-        if len(multiword) > 1:
-            self.respond(replyto, sender, random.choice(multiword))
-            return
-        if len(msgwords) == 2:
-            rngrange = msgwords[1].split('-')
-            try:
-                self.respond(replyto, sender, str(random.randrange(int(rngrange[0]), int(rngrange[-1])+1)))
-            except ValueError:
-                try: # maybe some smart arse reversed the values
-                    self.respond(replyto, sender, str(random.randrange(int(rngrange[-1]), int(rngrange[0])+1)))
-                except ValueError:
-                    # Nonsense input. Recurse with no args for usage message.
-                    self.doRng(sender, replyto, [msgwords[0]])
-        else:
-            self.respond(replyto, sender, random.choice(msgwords[1:]))
-
-    def rollDice(self, sender, replyto, msgwords):
-        if re.match(r'^\d*d$', msgwords[0]): # !d, !4d is rubbish input.
-            self.respond(replyto, sender, "No dice!")
-            return
-        dice = msgwords[0].split('d')
-        if dice[0] == "": dice[0] = "1" #d6 -> 1d6
-        (d0,d1) = (int(dice[0]),int(dice[1]))
-        if d0 > 50:
-            self.respond(replyto, sender, "Sorry, I don't have that many dice.")
-            return
-        if d1 > 1000:
-            self.respond(replyto, sender, "Those dice are too big!")
-            return
-        (s, tot) = (None, 0)
-        for i in range(0,d0):
-            d = random.randrange(1,d1+1)
-            if s: s += " + " + str(d)
-            else: s = str(d)
-            tot += d
-        if "+" in s: s += " = " + str(tot)
-        else: s = str(tot)
-        self.respond(replyto, sender, s)
-
-    def doRole(self, sender, replyto, msgwords):
-        if len(msgwords) > 1:
-           v = self.varalias(msgwords[1])
-           #error if variant not found
-           if not self.variants.get(v,False):
-               self.respond(replyto, sender, "No variant " + msgwords[1] + " on server.")
-               return
-           self.respond(replyto, sender, self.rolename[random.choice(self.variants[v][1])])
-        else:
-           #pick variant first
-           v = random.choice(self.variants.keys())
-           self.respond(replyto, sender, self.variants[v][0][0] + " " + self.rolename[random.choice(self.variants[v][1])])
-
-    def doRace(self, sender, replyto, msgwords):
-        if len(msgwords) > 1:
-           v = self.varalias(msgwords[1])
-           #error if variant not found
-           if not self.variants.get(v,False):
-               self.respond(replyto, sender, "No variant " + msgwords[1] + " on server.")
-           self.respond(replyto, sender, self.racename[random.choice(self.variants[v][2])])
-        else:
-           v = random.choice(self.variants.keys())
-           self.respond(replyto, sender, self.variants[v][0][0] + " " + self.racename[random.choice(self.variants[v][2])])
-
-    def doVariant(self, sender, replyto, msgwords):
-        self.respond(replyto, sender, self.variants[random.choice(self.variants.keys())][0][0])
-
-    def doBeer(self, sender, replyto, msgwords):
-        self.respond(replyto, sender, random.choice(["It's your shout!", "I thought you'd never ask!",
-                                                           "Burrrrp!", "We're not here to f#%k spiders, mate!",
-                                                           "One Darwin stubby, coming up!"]))
-
-    def do8ball(self, sender, replyto, msgwords):
-        self.respond(replyto, sender, random.choice(["\x1DIt is certain\x0F", "\x1DIt is decidedly so\x0F", "\x1DWithout a doubt\x0F", "\x1DYes definitely\x0F", "\x1DYou may rely on it\x0F",
-                                                           "\x1DAs I see it, yes\x0F", "\x1DMost likely\x0F", "\x1DOutlook good\x0F", "\x1DYes\x0F", "\x1DSigns point to yes\x0F", "\x1DReply hazy try again\x0F",
-                                                           "\x1DAsk again later\x0F", "\x1DBetter not tell you now\x0F", "\x1DCannot predict now\x0F", "\x1DConcentrate and ask again\x0F",
-                                                           "\x1DDon't count on it\x0F", "\x1DMy reply is no\x0F", "\x1DMy sources say no\x0F", "\x1DOutlook not so good\x0F", "\x1DVery doubtful\x0F"]))
-
-    # The following started as !tea resulting in the bot making a cup of tea.
-    # Now it does other stuff.
-    bev = { "serves": ["delivers", "tosses", "passes", "pours", "hands", "throws"],
-            # Attempt to make a sensible choice of vessel.
-            # pick from "all", and check against specific drink. Loop a few times for a match, then give up.
-            "vessel": {"all"   : ["cup", "mug", "shot", "tall glass", "tumbler", "glass", "schooner", "pint", "fifth", "vial", "potion", "barrel", "droplet", "bucket", "esky"],
-                       "tea"   : ["cup", "mug"],
-                       "potion": ["potion", "vial", "droplet"],
-                       "booze" : ["shot", "tall glass", "tumbler", "glass", "schooner", "pint", "fifth", "barrel"],
-                       "coffee": ["cup", "mug"],
-                       "vodka" : ["shot", "tall glass", "tumbler", "glass"],
-                       "whiskey":["shot", "tall glass", "tumbler", "glass"],
-                       "rum"   : ["shot", "tall glass", "tumbler", "glass"],
-                       "tequila":["shot", "tall glass", "tumbler", "glass"],
-                       "scotch": ["shot", "tall glass", "tumbler", "glass"]
-                       # others omitted - anything goes for them
-                      },
-
-            "drink" : {"tea"   : ["black", "white", "green", "polka-dot", "Earl Grey", "oolong", "darjeeling"],
-                       "potion": ["water", "fruit juice", "see invisible", "sickness", "confusion", "extra healing", "hallucination", "healing", "holy water", "unholy water", "restore ability", "sleeping", "blindness", "gain energy", "invisibility", "monster detection", "object detection", "booze", "enlightenment", "full healing", "levitation", "polymorph", "speed", "acid", "oil", "gain ability", "gain level", "paralysis"],
-                       "booze" : ["booze", "the hooch", "moonshine", "the sauce", "grog", "suds", "the hard stuff", "liquid courage", "grappa"],
-                       "coffee": ["coffee", "espresso", "cafe latte", "Blend 43"],
-                       "vodka" : ["Stolichnaya", "Absolut", "Grey Goose", "Ketel One", "Belvedere", "Luksusowa", "SKYY", "Finlandia", "Smirnoff"],
-                       "whiskey":["Irish", "Jack Daniels", "Evan Williams", "Crown Royal", "Crown Royal Reserve", "Johnnie Walker Black", "Johnnie Walker Red", "Johnnie Walker Blue"],
-                       "rum"   : ["Bundy", "Jamaican", "white", "dark", "spiced"],
-                       "fictional": ["Romulan ale", "Blood wine", "Kanar", "Pan Galactic Gargle Blaster", "jynnan tonyx", "gee-N'N-T'N-ix", "jinond-o-nicks", "chinanto/mnigs", "tzjin-anthony-ks", "Moloko Plus", "Duff beer", "Panther Pilsner beer", "Screaming Viking", "Blue milk", "Fizzy Bubblech", "Butterbeer", "Ent-draught", "Nectar of the Gods", "Frobscottle"],
-                       "tequila":["blanco", "oro", "reposado", "añejo", "extra añejo", "Patron Silver", "Jose Cuervo 1800"],
-                       "scotch": ["single malt", "single grain", "blended malt", "blended grain", "blended", "Glenfiddich", "Glenlivet", "Dalwhinnie"],
-                       "junk"  : ["blended kale", "pickle juice", "poorly-distilled rocket fuel", "caustic gas", "liquid smoke", "protein shake", "wheatgrass nonsense", "olive oil", "saline solution", "napalm", "synovial fluid", "drool"]},
-            "prepared":["brewed", "distilled", "fermented", "decanted", "prayed over", "replicated", "conjured"],
-            "degrees" :{"Kelvin": [0, 500], "degrees Celsius": [-20,95], "degrees Fahrenheit": [-20,200]}, #sane-ish ranges
-            "suppress": ["coffee", "junk", "booze", "potion", "fictional"] } # do not append these to the random description
-
-
-    def doTea(self, sender, replyto, msgwords):
-        if len(msgwords) > 1: target = msgwords[1]
-        else: target = sender
-        drink = random.choice([msgwords[0]] * 50 + self.bev["drink"].keys())
-        for vchoice in xrange(10):
-            vessel = random.choice(self.bev["vessel"]["all"])
-            if drink not in self.bev["vessel"].keys(): break # anything goes for these
-            if vessel in self.bev["vessel"][drink]: break # match!
-        fulldrink = random.choice(self.bev["drink"][drink])
-        if drink not in self.bev["suppress"]: fulldrink += " " + drink
-        tempunit = random.choice(self.bev["degrees"].keys())
-        [tmin,tmax] = self.bev["degrees"][tempunit]
-        temp = random.randrange(tmin,tmax)
-        self.describeLog(replyto, random.choice(self.bev["serves"]) + " " + target
-                + " a "  + vessel
-                + " of " + fulldrink
-                + ", "   + random.choice(self.bev["prepared"])
-                + " by " + random.choice(self.brethren)
-                + " at " + str(temp)
-                + " " + tempunit + ".")
+        self.respond(replyto, sender, "available commands are !help !ping !time !tell !source !lastgame !lastasc !asc !streak !rcedit !scores !sb !whereis !players !who !commands")
 
     def takeMessage(self, sender, replyto, msgwords):
         rcpt = msgwords[1].split(":")[0] # remove any trailing colon - could check for other things here.
@@ -1357,7 +522,7 @@ class DeathBotProtocol(irc.IRCClient):
                 for inpfile in glob.iglob(inpdir + "*.ttyrec"):
                     # /stuff/crap/PLAYER:shit:garbage.ttyrec
                     # we want AFTER last '/', BEFORE 1st ':'
-                    plrvar += inpfile.split("/")[-1].split(":")[0] + " " + self.displaytag(var) + " "
+                    plrvar += inpfile.split("/")[-1].split(":")[0] + " "
         if len(plrvar) == 0:
             plrvar = "No current players"
         response = "#R# " + query + " " + self.displaytag(SERVERTAG) + " " + plrvar
@@ -1390,9 +555,8 @@ class DeathBotProtocol(irc.IRCClient):
 
                                     self.msg(master, "#R# " + query
                                              + " " + self.displaytag(SERVERTAG) + " " + plr
-                                             + " "+self.displaytag(var)
-                                             + ": ({role} {race} {gender} {align}) T:{turns} ".format(**wirec)
-                                             + self.dungeons[var][wirec["dnum"]]
+                                             + " : ({role} {race} {gender} {align}) T:{turns} ".format(**wirec)
+                                             + self.dungeons[wirec["dnum"]]
                                              + " level: " + str(wirec["depth"])
                                              + ammy[wirec["amulet"]])
                                     return
@@ -1400,7 +564,6 @@ class DeathBotProtocol(irc.IRCClient):
                         self.msg(master, "#R# " + query + " "
                                                 + self.displaytag(SERVERTAG)
                                                 + " " + plr + " "
-                                                + self.displaytag(var)
                                                 + ": No details available")
                         return
         self.msg(master, "#R# " + query + " " + self.displaytag(SERVERTAG)
@@ -1420,105 +583,54 @@ class DeathBotProtocol(irc.IRCClient):
         self.respond(q["replyto"],q["sender"],outmsg)
 
 
-    def plrVar(self, sender, replyto, msgwords):
-        # for !streak and !asc, work out what player and variant they want
-        if len(msgwords) > 3:
-            # !streak tom dick harry
-            if not SLAVE: self.respond(replyto,sender,"Usage: !" +msgwords[0] +" [variant] [player]")
-            return(None, None)
-        if len(msgwords) == 3:
-            vp = self.varalias(msgwords[1])
-            pv = self.varalias(msgwords[2])
-            if vp in self.variants.keys():
-                # !streak dnh Tangles
-                return (msgwords[2], vp)
-            if pv in self.variants.keys():
-                # !streak K2 UnNethHack
-                return (msgwords[1],pv)
-            # !streak bogus garbage
-            if not SLAVE: self.respond(replyto,sender,"Usage: !" +msgwords[0] +" [variant] [player]")
-            return (None, None)
-        if len(msgwords) == 2:
-            vp = self.varalias(msgwords[1])
-            if vp in self.variants.keys():
-                # !streak Grunthack
-                return (sender, vp)
-            # !streak Grasshopper
-            return (msgwords[1],None)
-        #!streak ...player is self, no variant
-        return(sender, None)
-
     def usageAsc(self, sender, replyto, msgwords):
-        if self.plrVar(sender, replyto, msgwords)[0]:
+        if len(msgwords) < 3:
             return True
         return False
 
     def getAsc(self, master, sender, query, msgwords):
-        (PLR, var) = self.plrVar(sender, "", msgwords)
+        if len(msgwords) == 2:
+            PLR = msgwords[1]
+        else:
+            PLR = sender
         if not PLR: return # bogus input, should have been handled in usage check above
         plr = PLR.lower()
         stats = ""
         totasc = 0
-        if var:
-            if not plr in self.asc[var]:
-                repl = self.displaytag(SERVERTAG) + " No ascensions for " + PLR + " in "
-                if plr in self.allgames[var]:
-                    repl += str(self.allgames[var][plr]) + " games of "
-                repl += self.variants[var][0][0] + "."
-                self.msg(master,"#R# " + query + " " + repl)
-                return
-            for role in self.variants[var][1]:
-                role = role.title() # capitalise the first letter
-                if role in self.asc[var][plr]:
-                    totasc += self.asc[var][plr][role]
-                    stats += " " + str(self.asc[var][plr][role]) + "x" + role
-            stats += ", "
-            for race in self.variants[var][2]:
-                race = race.title()
-                if race in self.asc[var][plr]:
-                    stats += " " + str(self.asc[var][plr][race]) + "x" + race
-            stats += ", "
-            for alig in self.aligns:
-                if alig in self.asc[var][plr]:
-                    stats += " " + str(self.asc[var][plr][alig]) + "x" + alig
-            stats += ", "
-            for gend in self.genders:
-                if gend in self.asc[var][plr]:
-                    stats += " " + str(self.asc[var][plr][gend]) + "x" + gend
-            stats += "."
-            self.msg(master, "#R# " + query + " " + self.displaytag(SERVERTAG)
-                             + " " + PLR
-                             + " has ascended " + self.variants[var][0][0] + " "
-                             + str(totasc) + " times in "
-                             + str(self.allgames[var][plr])
-                             + " games ({:0.2f}%):".format((100.0 * totasc)
-                                                   / self.allgames[var][plr])
-                             + stats)
+        if not plr in self.asc:
+            repl = self.displaytag(SERVERTAG) + " No ascensions for " + PLR
+            if plr in self.allgames:
+                repl += " in " + str(self.allgames[plr]) + " games"
+            repl += "."
+            self.msg(master,"#R# " + query + " " + repl)
             return
-        # no variant. Do player stats across variants.
-        totgames = 0
-        for var in self.asc:
-            totgames += self.allgames[var].get(plr,0)
-            if plr in self.asc[var]:
-                varasc = self.asc[var][plr].get("Mal",0)
-                varasc += self.asc[var][plr].get("Fem",0)
-                totasc += varasc
-                if stats: stats += ","
-                stats += " " + self.displaystring[var] + ":" + str(varasc) + " ({:0.2f}%)".format((100.0 * varasc)
-                                                                                             / self.allgames[var][plr])
-        if totasc:
-            self.msg(master, "#R# " + query + " "
-                         + self.displaytag(SERVERTAG) + " " + PLR
-                         + " has ascended " + str(totasc) + " times in "
-                         + str(totgames)
-                         + " games ({:0.2f}%): ".format((100.0 * totasc) / totgames)
+        for role in config["nethack"]["roles"]:
+             role = role.title() # capitalise the first letter
+             if role in self.asc[plr]:
+                totasc += self.asc[plr][role]
+                stats += " " + str(self.asc[plr][role]) + "x" + role
+        stats += ", "
+        for race in config["nethack"]["races"]:
+            race = race.title()
+            if race in self.asc[plr]:
+                stats += " " + str(self.asc[plr][race]) + "x" + race
+        stats += ", "
+        for alig in config["nethack"]["aligns"]:
+            if alig in self.asc[plr]:
+                stats += " " + str(self.asc[plr][alig]) + "x" + alig
+        stats += ", "
+        for gend in config["nethack"]["genders"]:
+            if gend in self.asc[plr]:
+                stats += " " + str(self.asc[plr][gend]) + "x" + gend
+        stats += "."
+        self.msg(master, "#R# " + query + " " + self.displaytag(SERVERTAG)
+                         + " " + PLR
+                         + " has ascended " 
+                         + str(totasc) + " times in "
+                         + str(self.allgames[plr])
+                         + " games ({:0.2f}%):".format((100.0 * totasc)
+                                               / self.allgames[plr])
                          + stats)
-            return
-        if totgames:
-            self.msg(master, "#R# " + query + " " + self.displaytag(SERVERTAG) + " " + PLR
-                                    + " has not ascended in " + str(totgames) + " games.")
-            return
-        self.msg(master, "#R# " + query + " No games for " + PLR + ".")
         return
 
     def outAscStreak(self,q):
@@ -1534,107 +646,56 @@ class DeathBotProtocol(irc.IRCClient):
         self.respond(q["replyto"],q["sender"],outmsg)
 
     def usageStreak(self, sender, replyto, msgwords):
-        (p,v) = self.plrVar(sender, replyto, msgwords)
-        if not p: return False
-        if v:
-            if v not in self.streakvars:
-                self.respond(replyto,sender,"Streaks are not recorded for " + v +".")
-                return False
+        if len(msgwords) > 2: return False
         return True
 
     def streakDate(self,stamp):
         return datetime.datetime.fromtimestamp(float(stamp)).strftime("%Y-%m-%d")
 
     def getStreak(self, master, sender, query, msgwords):
-        (PLR, var) = self.plrVar(sender, "", msgwords)
+        if len(msgwords) == 2:
+            PLR = msgwords[1]
+        else:
+            PLR = sender
         if not PLR: return # bogus input, handled by usage check.
         plr = PLR.lower()
         reply = "#R# " + query + " "
-        if var:
-            (lstart,lend,llength) = self.longstreak[var].get(plr,(0,0,0))
-            (cstart,cend,clength) = self.curstreak[var].get(plr,(0,0,0))
-            if llength == 0:
-                reply += "No streaks for " + PLR + self.displaytag(var) + "."
-                self.msg(master,reply)
-                return
-            reply += self.displaytag(SERVERTAG) + " " + PLR + self.displaytag(var)
-            reply += " Max: " + str(llength) + " (" + self.streakDate(lstart) \
-                              + " - " + self.streakDate(lend) + ")"
-            if clength > 0:
-                if cstart == lstart:
-                    reply += "(current)"
-                else:
-                    reply += ". Current: " + str(clength) + " (since " \
-                                           + self.streakDate(cstart) + ")"
-            reply += "."
+        (lstart,lend,llength) = self.longstreak.get(plr,(0,0,0))
+        (cstart,cend,clength) = self.curstreak.get(plr,(0,0,0))
+        if llength == 0:
+            reply += "No streaks for " + PLR + "."
             self.msg(master,reply)
             return
-        (lmax,cmax) = (0,0)
-        for var in self.streakvars:
-            (lstart,lend,llength) = self.longstreak[var].get(plr,(0,0,0))
-            (cstart,cend,clength) = self.curstreak[var].get(plr,(0,0,0))
-            if llength > lmax:
-                (lmax, lvar, lsmax, lemax)  = (llength, var, lstart, lend)
-            if clength > cmax:
-                (cmax, cvar, csmax, cemax)  = (clength, var, cstart, cend)
-        if lmax == 0:
-            reply += "No streaks for " + PLR + "."
-            self.msg(master, reply)
-            return
-        reply += self.displaytag(SERVERTAG) + " " + PLR + " Max[" + self.displaystring[lvar] + "]: " + str(lmax)
-        reply += " (" + self.streakDate(lsmax) \
-                      + " - " + self.streakDate(lemax) + ")"
-        if cmax > 0:
-            if csmax == lsmax:
+        reply += self.displaytag(SERVERTAG) + " " + PLR 
+        reply += " Max: " + str(llength) + " (" + self.streakDate(lstart) \
+                          + " - " + self.streakDate(lend) + ")"
+        if clength > 0:
+            if cstart == lstart:
                 reply += "(current)"
             else:
-                reply += ". Current[" + self.displaystring[cvar] + "]: " + str(cmax)
-                reply += " (since " + self.streakDate(csmax) + ")"
+                reply += ". Current: " + str(clength) + " (since " \
+                                       + self.streakDate(cstart) + ")"
         reply += "."
-        self.msg(master, reply)
+        self.msg(master,reply)
+        return
 
     def getLastGame(self, master, sender, query, msgwords):
-        if (len(msgwords) >= 3): #var, plr, any order.
-            vp = self.varalias(msgwords[1])
-            pv = self.varalias(msgwords[2])
-            dl = self.lg.get(":".join([vp,pv]).lower(), False)
-            if not dl:
-                dl = self.lg.get(":".join([pv,vp]).lower(),False)
-            if not dl:
-                self.msg(master, "#R# " + query +
-                                 " No last game for (" + ",".join(msgwords[1:3]) + ").")
-                return
-            # TODO: Add timestamp to message so we can just output most recent across servers
-            self.msg(master, "#R# " + query + " " + self.displaytag(SERVERTAG) + " " + dl)
-            return
-        if (len(msgwords) == 2): #var OR plr - don't care which
-            vp = self.varalias(msgwords[1])
-            dl = self.lg.get(vp,False)
+        if (len(msgwords) >= 2): #player specified
+            plr = msgwords[1].lower()
+            dl = self.lg.get(plr,False)
             if not dl:
                 self.msg(master, "#R# " + query +
                                  " No last game for " + msgwords[1] + ".")
                 return
             self.msg(master, "#R# " + query + " " + self.displaytag(SERVERTAG) + " " + dl)
             return
+        # no player
         self.msg(master, "#R# " + query + " " + self.displaytag(SERVERTAG) + " " + self.lastgame)
 
     def getLastAsc(self, master, sender, query, msgwords):
-        if (len(msgwords) >= 3): #var, plr, any order.
-            vp = self.varalias(msgwords[1])
-            pv = self.varalias(msgwords[2])
-            dl = self.la.get(":".join(pv,vp).lower(),False)
-            if not dl:
-                dl = self.la.get(":".join(vp,pv).lower(),False)
-            if not dl:
-                self.msg(master, "#R# " + query +
-                                 " No last ascension for (" + ",".join(msgwords[1:3]) + ").")
-                return
-            # TODO: Add timestamp to message so we can just output most recent across servers
-            self.msg(master, "#R# " + query + " " + self.displaytag(SERVERTAG) + " " + dl)
-            return
-        if (len(msgwords) == 2): #var OR plr - don't care which
-            vp = self.varalias(msgwords[1])
-            dl = self.la.get(vp,False)
+        if (len(msgwords) >= 2):  #player specified
+            plr = msgwords[1].lower()
+            dl = self.la.get(plr,False)
             if not dl:
                 self.msg(master, "#R# " + query +
                                  " No last ascension for " + msgwords[1] + ".")
@@ -1642,69 +703,6 @@ class DeathBotProtocol(irc.IRCClient):
             self.msg(master, "#R# " + query + " " + self.displaytag(SERVERTAG) + " " + dl)
             return
         self.msg(master, "#R# " + query + " " + self.displaytag(SERVERTAG) + " " + self.lastasc)
-
-    # Allows players to set minimum turncount of their games to be reported
-    # so they can manage their own deathspam
-    # turncount may not be the best metric for this - open to suggestions
-    # player name must match nick, or can be set by an admin.
-
-    def usagePlrTC(self, sender, replyto, msgwords):
-        if len(msgwords) > 2 and sender not in self.admin:
-            self.respond(replyto, sender, "Usage: !" + msgwords[0] + " [turncount]")
-            return False
-        return True
-
-    def setPlrTC(self, master, sender, query, msgwords):
-        if len(msgwords) == 2:
-            if re.match(r'^\d+$',msgwords[1]):
-                self.plr_tc[sender.lower()] = int(msgwords[1])
-                self.plr_tc.sync()
-                self.msg(master, "#R# " + query + " " + self.displaytag(SERVERTAG)
-                                 + " Min reported turncount for " + sender.lower()
-                                 + " set to " + msgwords[1])
-                return
-        if len(msgwords) == 1:
-            if sender.lower() in self.plr_tc.keys():
-                del self.plr_tc[sender.lower()]
-                self.plr_tc.sync()
-                self.msg(master, "#R# " + query + " " + self.displaytag(SERVERTAG)
-                                 + " Min reported turncount for " + sender.lower()
-                                 + " removed.")
-            else:
-                self.msg(master, "#R# " + query + " No min turncount for " + sender.lower())
-            return
-        if sender in self.admin:
-            if len(msgwords) == 3:
-                if re.match(r'^\d+$',msgwords[2]):
-                    self.plr_tc[msgwords[1].lower()] = int(msgwords[2])
-                    self.plr_tc.sync()
-                    self.msg(master, "#R# " + query + " " + self.displaytag(SERVERTAG)
-                                     + " Min reported turncount for " + msgwords[1].lower()
-                                     + " set to " + msgwords[2])
-                    return
-            if len(msgwords) == 2:
-                if msgwords[1].lower() in self.plr_tc.keys():
-                    del self.plr_tc[msgwords[1].lower()]
-                    self.plr_tc.sync()
-                    self.msg(master, "#R# " + query + " " + self.displaytag(SERVERTAG)
-                                     + " Min reported turncount for " + msgwords[1].lower()
-                                     + " removed.")
-                else:
-                    self.msg(master, "#R# " + query + " No min turncount for " + msgwords[1].lower())
-                return
-
-    def outPlrTC(self,q):
-        outmsg = ''
-        for server in q["resp"]:
-            firstword = q["resp"][server].split(' ')[0]
-            if firstword == 'No':
-                fallback_msg = q["resp"][server]
-            elif not outmsg:
-                outmsg = q["resp"][server]
-            else: # just prepend server tags to message
-                outmsg = firstword + outmsg
-        if not outmsg: outmsg = fallback_msg
-        self.respond(q["replyto"],q["sender"],outmsg)
 
     # Listen to the chatter
     def privmsg(self, sender, dest, message):
@@ -1801,25 +799,16 @@ class DeathBotProtocol(irc.IRCClient):
     def startscummed(self, game):
         return game["death"] in ("quit", "escaped") and game["points"] < 1000
 
-    # players can request that their deaths not be reported if less than x turns
-    def plr_tc_notreached(self, game):
-        return (game["death"][0:8] not in ("ascended") #report these anyway!
-           and game["name"].lower() in self.plr_tc.keys()
-           and game["turns"] < self.plr_tc[game["name"].lower()])
-
     def xlogfileReport(self, game, report = True):
-        var = game["variant"] # Make code less ugly
         # lowercased name is used for lookups
         lname = game["name"].lower()
         # "allgames" for a player even counts scummed games
-        if not lname in self.allgames[var]:
-            self.allgames[var][lname] = 0
-        self.allgames[var][lname] += 1
+        if not lname in self.allgames:
+            self.allgames[lname] = 0
+        self.allgames[lname] += 1
         if self.startscummed(game): return
 
         dumplog = game.get("dumplog",False)
-        if dumplog and var != "dyn":
-            game["dumplog"] = fixdump(dumplog)
         # Need to figure out the dump path before messing with the name below
         dumpfile = (self.dump_file_prefix + game["dumpfmt"]).format(**game)
         dumpurl = "(sorry, no dump exists for {variant}:{name})".format(**game)
@@ -1829,62 +818,42 @@ class DeathBotProtocol(irc.IRCClient):
             # assume the rest of the url prefix is safe.
             dumpurl = urllib.quote(game["dumpfmt"].format(**game))
             dumpurl = self.dump_url_prefix.format(**game) + dumpurl
-        self.lg["{variant}:{name}".format(**game).lower()] = dumpurl
-        if (game["endtime"] > self.lge.get(lname, 0)):
-            self.lge[lname] = game["endtime"]
-            self.lg[lname] = dumpurl
-        self.lg[var] = dumpurl
-        if (game["endtime"] > self.tlastgame):
-            self.lastgame = dumpurl
-            self.tlastgame = game["endtime"]
-
-        # Kludge for nethack 1.3d -
-        # populate race and align with dummy values.
-        if "race" not in game: game["race"] = "###"
-        if "align" not in game: game["align"] = "###"
+        self.lg[lname] = dumpurl
+        self.lastgame = dumpurl
 
         if game["death"][0:8] in ("ascended"):
             # append dump url to report for ascensions
             game["ascsuff"] = "\n" + dumpurl
             # !lastasc stats.
-            self.la["{variant}:{name}".format(**game).lower()] = dumpurl
-            if (game["endtime"] > self.lae.get(lname, 0)):
-                self.lae[lname] = game["endtime"]
-                self.la[lname] = dumpurl
-            self.la[var] = dumpurl
-            if (game["endtime"] > self.tlastasc):
-                self.lastasc = dumpurl
-                self.tlastasc = game["endtime"]
+            self.la[lname] = dumpurl
+            self.lastasc = dumpurl
 
             # !asc stats
-            if not lname in self.asc[var]: self.asc[var][lname] = {}
-            if not game["role"]   in self.asc[var][lname]: self.asc[var][lname][game["role"]]   = 0
-            if not game["race"]   in self.asc[var][lname]: self.asc[var][lname][game["race"]]   = 0
-            if not game["gender"] in self.asc[var][lname]: self.asc[var][lname][game["gender"]] = 0
-            if not game["align"]  in self.asc[var][lname]: self.asc[var][lname][game["align"]]  = 0
-            self.asc[var][lname][game["role"]]   += 1
-            self.asc[var][lname][game["race"]]   += 1
-            self.asc[var][lname][game["gender"]] += 1
-            self.asc[var][lname][game["align"]]  += 1
+            if not lname in self.asc: self.asc[lname] = {}
+            if not game["role"]   in self.asc[lname]: self.asc[lname][game["role"]]   = 0
+            if not game["race"]   in self.asc[lname]: self.asc[lname][game["race"]]   = 0
+            if not game["gender"] in self.asc[lname]: self.asc[lname][game["gender"]] = 0
+            if not game["align"]  in self.asc[lname]: self.asc[lname][game["align"]]  = 0
+            self.asc[lname][game["role"]]   += 1
+            self.asc[lname][game["race"]]   += 1
+            self.asc[lname][game["gender"]] += 1
+            self.asc[lname][game["align"]]  += 1
 
             # streaks
-            if var in self.streakvars:
-                (cs_start, cs_end,
-                 cs_length) = self.curstreak[var].get(lname,
+            (cs_start, cs_end, cs_length) = self.curstreak.get(lname,
                                                       (game["starttime"],0,0))
                 cs_end = game["endtime"]
                 cs_length += 1
-                self.curstreak[var][lname] = (cs_start, cs_end, cs_length)
+                self.curstreak[lname] = (cs_start, cs_end, cs_length)
                 (ls_start, ls_end,
-                 ls_length) = self.longstreak[var].get(lname, (0,0,0))
+                 ls_length) = self.longstreak.get(lname, (0,0,0))
                 if cs_length > ls_length:
-                    self.longstreak[var][lname] = self.curstreak[var][lname]
+                    self.longstreak[lname] = self.curstreak[lname]
 
         else:   # not ascended - kill off any streak
             game["ascsuff"] = ""
-            if var in self.streakvars:
-                if lname in self.curstreak[var]:
-                    del self.curstreak[var][lname]
+            if lname in self.curstreak:
+                del self.curstreak[lname]
         # end of statistics gathering
 
         if (not report): return # we're just reading through old entries at startup
@@ -1903,11 +872,7 @@ class DeathBotProtocol(irc.IRCClient):
 
         if (game.get("mode", "normal") == "normal" and
               game.get("modes", "normal") == "normal"):
-            if game.get("version","unknown") == "NH-1.3d":
-                yield ("[{displaystring}] {name} ({role} {gender}), "
-                       "{points} points, T:{turns}, {death}{ascsuff}").format(**game)
-            else:
-                yield ("[{displaystring}] {name} ({role} {race} {gender} {align}), "
+            yield ("{name} ({role} {race} {gender} {align}), "
                        "{points} points, T:{turns}, {death}{ascsuff}").format(**game)
         else:
             if "modes" in game:
@@ -1915,7 +880,7 @@ class DeathBotProtocol(irc.IRCClient):
                     game["mode"] = game["modes"][7:]
                 else:
                     game["mode"] = game["modes"]
-            yield ("[{displaystring}] {name} ({role} {race} {gender} {align}), "
+            yield ("{name} ({role} {race} {gender} {align}), "
                    "{points} points, T:{turns}, {death}, "
                    "in {mode} mode{ascsuff}").format(**game)
 
@@ -1927,35 +892,31 @@ class DeathBotProtocol(irc.IRCClient):
             else:
                 event["player"] = event["charname"]
 
-        # 1.3d kludge again
-        if "race" not in event: event["race"] = "###"
-        if "align" not in event: event["align"] = "###"
-
         if "historic_event" in event and "message" not in event:
             if event["historic_event"].endswith("."):
                 event["historic_event"] = event["historic_event"][:-1]
             event["message"] = event["historic_event"]
 
         if "message" in event:
-            yield ("[{displaystring}] {player} ({role} {race} {gender} {align}) "
+            yield ("{player} ({role} {race} {gender} {align}) "
                    "{message}, on T:{turns}").format(**event)
         elif "wish" in event:
-            yield ("[{displaystring}] {player} ({role} {race} {gender} {align}) "
+            yield ("{player} ({role} {race} {gender} {align}) "
                    'wished for "{wish}", on T:{turns}').format(**event)
         elif "shout" in event:
-            yield ("[{displaystring}] {player} ({role} {race} {gender} {align}) "
+            yield ("{player} ({role} {race} {gender} {align}) "
                    'shouted "{shout}", on T:{turns}').format(**event)
         elif "bones_killed" in event:
             if not event.get("bones_rank",False): # fourk does not have bones rank so use role instead
                 event["bones_rank"] = event["bones_role"]
-            yield ("[{displaystring}] {player} ({role} {race} {gender} {align}) "
+            yield ("{player} ({role} {race} {gender} {align}) "
                    "killed the {bones_monst} of {bones_killed}, "
                    "the former {bones_rank}, on T:{turns}").format(**event)
         elif "killed_uniq" in event:
-            yield ("[{displaystring}] {player} ({role} {race} {gender} {align}) "
+            yield ("{player} ({role} {race} {gender} {align}) "
                    "killed {killed_uniq}, on T:{turns}").format(**event)
         elif "defeated" in event: # fourk uses this instead of killed_uniq.
-            yield ("[{displaystring}] {player} ({role} {race} {gender} {align}) "
+            yield ("{player} ({role} {race} {gender} {align}) "
                    "defeated {defeated}, on T:{turns}").format(**event)
         # more 1.3d shite
         elif "genocided_monster" in event:
@@ -1963,14 +924,14 @@ class DeathBotProtocol(irc.IRCClient):
                 event["genoscope"] = "dungeon wide";
             else:
                 event["genoscope"] = "locally";
-            yield ("[{displaystring}] {player} ({role} {race} {gender} {align}) "
+            yield ("{player} ({role} {race} {gender} {align}) "
                    "genocided {genocided_monster} {genoscope} on T:{turns}").format(**event)
         elif "shoplifted" in event:
-            yield ("[{displaystring}] {player} ({role} {race} {gender} {align}) "
+            yield ("{player} ({role} {race} {gender} {align}) "
                    "stole {shoplifted} zorkmids of merchandise from the {shop} of"
                    " {shopkeeper} on T:{turns}").format(**event)
         elif "killed_shopkeeper" in event:
-            yield ("[{displaystring}] {player} ({role} {race} {gender} {align}) "
+            yield ("{player} ({role} {race} {gender} {align}) "
                    "killed {killed_shopkeeper} on T:{turns}").format(**event)
 
     def connectionLost(self, reason=None):
@@ -1985,8 +946,6 @@ class DeathBotProtocol(irc.IRCClient):
             for line in handle:
                 delim = self.logs[filepath][2]
                 game = parse_xlogfile_line(line, delim)
-                game["variant"] = self.logs[filepath][1]
-                game["displaystring"] = self.displaystring.get(game["variant"],game["variant"])
                 game["dumpfmt"] = self.logs[filepath][3]
                 for line in self.logs[filepath][0](game):
                     line = self.displaytag(SERVERTAG) + " " + line
@@ -1995,8 +954,6 @@ class DeathBotProtocol(irc.IRCClient):
                             self.msg(master, line)
                     else:
                         self.msgLog(CHANNEL, line)
-                    for fwd in self.forwards[game["variant"]]:
-                        self.msg(fwd, line)
 
             self.logs_seek[filepath] = handle.tell()
 
