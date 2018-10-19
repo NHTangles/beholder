@@ -1255,6 +1255,14 @@ class DeathBotProtocol(irc.IRCClient):
                 + " " + tempunit + ".")
 
     def takeMessage(self, sender, replyto, msgwords):
+        if len(msgwords) < 3:
+            self.respond(replyto, sender, "!tell <recipient> <message> (leave a message for someone)")
+            return
+        willDo = [ "Will do, {0}!",
+                   "I'm on it, {0}.",
+                   "No worries, {0}, I've got this!",
+                   "{1} shall be duly informed at the first opportunity, {0}." ]
+
         rcpt = msgwords[1].split(":")[0] # remove any trailing colon - could check for other things here.
         message = " ".join(msgwords[2:])
         if (replyto == sender): #this was a privmsg
@@ -1267,7 +1275,7 @@ class DeathBotProtocol(irc.IRCClient):
             self.tellbuf[rcpt.lower()] = []
         self.tellbuf[rcpt.lower()].append((forwardto,sender,time.time(),message))
         self.tellbuf.sync()
-        self.msgLog(replyto,"Will do, " + sender + "!")
+        self.msgLog(replyto,random.choice(willDo).format(sender,rcpt))
 
     def msgTime(self, stamp):
         # Timezone handling is not great, but the following seems to work.
