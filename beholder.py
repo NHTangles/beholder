@@ -152,7 +152,7 @@ class DeathBotProtocol(irc.IRCClient):
                  filepath.FilePath(FILEROOT+"nh13d/xlogfile"): ("nh13d", ":", "nh13d/dumplog/{starttime}.nh13d.txt"),
                  filepath.FilePath(FILEROOT+"slashem-0.0.8E0F2/xlogfile"): ("slshm", ":", "slashem/dumplog/{starttime}.slashem.txt"),
                  #filepath.FilePath(FILEROOT+"tnnt/var/xlogfile"): ("tnnt", "\t", "tnnt/dumplog/{starttime}.tnnt.txt"),
-                 filepath.FilePath(FILEROOT+"un532/var/unnethack/xlogfile"): ("un", "\t", "un532/dumplog/{starttime}.un532.txt.html")}
+                 filepath.FilePath(FILEROOT+"un532/var/unnethack/xlogfile"): ("un", "\t", "unnethack/dumplog/{starttime}.un.txt.html")}
     livelogs  = {filepath.FilePath(FILEROOT+"nh343-hdf/var/livelog"): ("nh343", ":"),
                  filepath.FilePath(FILEROOT+"nh361-hdf/var/livelog"): ("nh361", "\t"),
                  filepath.FilePath(FILEROOT+"grunthack-0.2.4/var/livelog"): ("gh", ":"),
