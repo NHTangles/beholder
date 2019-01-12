@@ -1019,6 +1019,10 @@ class DeathBotProtocol(irc.IRCClient):
         else:
             print "Bogus slave response from " + sender + ": " + " ".join(msgwords);
 
+    def timeoutQuery(self, query):
+        if query not in self.queries: return # query was completed before timeout
+        # probably should handle the 'no slaves responded' case better than this.
+        self.queries[query]["callback"](self.queries.pop(query))
 
     # implement commands here
     def doPing(self, sender, replyto, msgwords):
@@ -1350,6 +1354,8 @@ class DeathBotProtocol(irc.IRCClient):
         for sl in self.slaves.keys():
             print "forwardQuery: " + sl
             self.msg(sl,message)
+        # set up the timeout in 5 seconds.
+        reactor.callLater(5, self.timeoutQuery, q)
 
     # Multi-server command entry point (forwards query to slaves)
     def multiServerCmd(self, sender, replyto, msgwords):
