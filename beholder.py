@@ -151,7 +151,7 @@ class DeathBotProtocol(irc.IRCClient):
                  filepath.FilePath(FILEROOT+"splicehack-0.6.2/var/xlogfile"): ("spl", "\t", "splicehack/dumplog/{starttime}.splice.txt"),
                  filepath.FilePath(FILEROOT+"nh13d/xlogfile"): ("nh13d", ":", "nh13d/dumplog/{starttime}.nh13d.txt"),
                  filepath.FilePath(FILEROOT+"slashem-0.0.8E0F2/xlogfile"): ("slshm", ":", "slashem/dumplog/{starttime}.slashem.txt"),
-                 #filepath.FilePath(FILEROOT+"tnnt/var/xlogfile"): ("tnnt", "\t", "tnnt/dumplog/{starttime}.tnnt.txt"),
+                 filepath.FilePath(FILEROOT+"notdnethack-2019.04.8/xlogfile"): ("ndnh", ":", "notdnethack/dumplog/{starttime}.ndnh.txt"),
                  filepath.FilePath(FILEROOT+"un532/var/unnethack/xlogfile"): ("un", "\t", "unnethack/dumplog/{starttime}.un.txt.html")}
     livelogs  = {filepath.FilePath(FILEROOT+"nh343-hdf/var/livelog"): ("nh343", ":"),
                  filepath.FilePath(FILEROOT+"nh361-hdf/var/livelog"): ("nh361", "\t"),
@@ -165,7 +165,7 @@ class DeathBotProtocol(irc.IRCClient):
                  filepath.FilePath(FILEROOT+"splicehack-0.6.2/var/livelog"): ("spl", "\t"),
                  filepath.FilePath(FILEROOT+"nh13d/livelog"): ("nh13d", ":"),
                  filepath.FilePath(FILEROOT+"slashem-0.0.8E0F2/livelog"): ("slshm", ":"),
-                 #filepath.FilePath(FILEROOT+"tnnt/var/livelog"): ("tnnt", "\t"),
+                 filepath.FilePath(FILEROOT+"notdnethack-2019.04.8/livelog"): ("ndnh", ":"),
                  filepath.FilePath(FILEROOT+"un532/var/unnethack/livelog"): ("un", ":")}
 
     # Forward events to other bots at the request of maintainers of other variant-specific channels
@@ -185,6 +185,7 @@ class DeathBotProtocol(irc.IRCClient):
                 "nh13d" : [],
                 "slshm" : [],
                  "tnnt" : [],
+                 "ndnh" : [],
                    "un" : []}
 
     # for displaying variants and server tags in colour
@@ -203,6 +204,7 @@ class DeathBotProtocol(irc.IRCClient):
                        "spl" : "\x0303spl\x03",
                      "nh13d" : "\x0311nh13d\x03",
                      "slshm" : "\x0314slshm\x03",
+                      "ndnh" : "\x0313ndnh\x03",
                       "tnnt" : "\x0310tnnt\x03",
                         "un" : "\x0308un\x03",
                     "hdf-us" : "\x1D\x0304hdf-us\x03\x0F",
@@ -232,7 +234,7 @@ class DeathBotProtocol(irc.IRCClient):
                  "spl" : [INPR+"spl061/", INPR+"spl062/"],
                "nh13d" : [INPR+"nh13d/"],
                "slshm" : [INPR+"slashem/"],
-               #"tnnt" : [INPR+"tnnt/"],
+                "ndnh" : [INPR+"ndnh-048/"],
                  "dyn" : [INPR+"dyn/"]}
 
     # for !whereis
@@ -255,7 +257,7 @@ class DeathBotProtocol(irc.IRCClient):
                          FILEROOT+"splicehack-0.6.2/var/whereis/"],
                "nh13d": [FILEROOT+"nh13d/whereis/"],
                "slshm": [FILEROOT+"slashem-0.0.8E0F2/whereis/"],
-               #"tnnt": [FILEROOT+"tnnt/var/whereis/"],
+                "ndnh": [FILEROOT+"notdnethack-2019.04.8/whereis/"],
                   "un": [FILEROOT+"un531/var/unnethack/",
                          FILEROOT+"un532/var/unnethack/"]}
 
@@ -270,6 +272,12 @@ class DeathBotProtocol(irc.IRCClient):
                           "Sokoban","Fort Ludios","The Lost Tomb","The Sunless Sea",
                           "The Temple of Moloch","The Dispensary","Vlad's Tower",
                           "The Elemental Planes"],
+                 "ndnh": ["The Dungeons of Doom","Gehennom","The Gnomish Mines","The Ice Caves",
+                          "The Black Forest","The Dismal Swamp","The Archipelago","Law Quest",
+                          "Neutral Quest","The Lost Cities","Chaos Quest","The Quest",
+                          "Lokoban","Fort Ludios","The Void","Sacristy","The Lost Tomb",
+                          "The Sunless Sea","The Temple of Moloch","The Dispensary","The Spire",
+                          "Vlad's Tower","The Elemental Planes"],
                    "fh": ["The Dungeons of Doom","Gehennom","The Gnomish Mines","The Quest",
                           "Sokoban","Fort Ludios","Vlad's Tower","The Elemental Planes"],
                   "dyn": ["The Dungeons of Doom","Gehennom","The Gnomish Mines","The Quest",
@@ -334,6 +342,8 @@ class DeathBotProtocol(irc.IRCClient):
         "pir": "pirate",
         "trb": "troubadour",
         "con": "convict",
+        # Ndnh, includes all of vanilla and dnh
+        "acu": "illithanachronounbinder",
         # SpliceHack, includes all of vanilla
         "car": "cartomancer",
         "dgn": "dragonmaster",
@@ -642,6 +652,11 @@ class DeathBotProtocol(irc.IRCClient):
                             + ["ana", "bin", "nob", "pir", "trb", "con"],
                           vanilla_races
                             + ["clk", "con", "bat", "dro", "hlf", "inc", "vam", "swn"]),
+                 "ndnh": (["notdnethack", "ndn"],
+                          vanilla_roles
+                            + ["ana", "bin", "nob", "pir", "trb", "con", "acu"],
+                          vanilla_races
+                            + ["clk", "con", "bat", "dro", "hlf", "inc", "vam", "swn", "sal"]),
                    "un": (["unnethack", "unh"],
                           vanilla_roles + ["con"], vanilla_races),
                   "xnh": (["xnethack", "xnh"],
@@ -733,7 +748,7 @@ class DeathBotProtocol(irc.IRCClient):
                               "wor", "wra", "xor", "yee"])}
 
     # variants which support streaks - now tracking slex streaks, because that's totally possible.
-    streakvars = ["nh343", "nh361", "nh13d", "gh", "dnh", "un", "sp", "xnh", "slex", "spl", "slshm", "tnnt"]
+    streakvars = ["nh343", "nh361", "nh13d", "gh", "dnh", "un", "sp", "xnh", "slex", "spl", "slshm", "tnnt", "ndnh"]
     # for !asc statistics - assume these are the same for all variants, or at least the sane ones.
     aligns = ["Law", "Neu", "Cha"]
     genders = ["Mal", "Fem"]
