@@ -245,8 +245,7 @@ class DeathBotProtocol(irc.IRCClient):
     # for !whereis
     whereis = {"nh343": [FILEROOT+"nh343/var/whereis/",
                          FILEROOT+"nh343-hdf/var/whereis/"],
-                  "nh": [FILEROOT+"nh361-hdf/var/whereis/",
-                         FILEROOT+"nh362-hdf/var/whereis/"],
+                  "nh": [FILEROOT+"nh362-hdf/var/whereis/"],
                   "gh": [FILEROOT+"grunthack-0.2.4/var/whereis/"],
                  "dnh": [FILEROOT+"dnethack-3.16.0/whereis/"],
                   "fh": [FILEROOT+"fiqhackdir/data/"],
@@ -271,7 +270,7 @@ class DeathBotProtocol(irc.IRCClient):
 
     dungeons = {"nh343": ["The Dungeons of Doom","Gehennom","The Gnomish Mines","The Quest",
                           "Sokoban","Fort Ludios","Vlad's Tower","The Elemental Planes"],
-                "nh361": ["The Dungeons of Doom","Gehennom","The Gnomish Mines","The Quest",
+                   "nh": ["The Dungeons of Doom","Gehennom","The Gnomish Mines","The Quest",
                           "Sokoban","Fort Ludios","Vlad's Tower","The Elemental Planes"],
                    "gh": ["The Dungeons of Doom","Gehennom","The Gnomish Mines","The Quest",
                           "Sokoban","Fort Ludios","Vlad's Tower","The Elemental Planes"],
