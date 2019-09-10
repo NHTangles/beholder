@@ -147,7 +147,7 @@ class DeathBotProtocol(irc.IRCClient):
                  filepath.FilePath(FILEROOT+"fourkdir/save/xlogfile"): ("4k", "\t", "nhfourk/dumps/{dumplog}"),
                  filepath.FilePath(FILEROOT+"sporkhack-0.6.5/var/xlogfile"): ("sp", "\t", "sporkhack/dumplog/{starttime}.sp.txt"),
                  filepath.FilePath(FILEROOT+"slex-2.5.0/xlogfile"): ("slex", "\t", "slex/dumplog/{starttime}.slex.txt"),
-                 filepath.FilePath(FILEROOT+"xnethack-0.4.1/var/xlogfile"): ("xnh", "\t", "xnethack/dumplog/{starttime}.xnh.txt"),
+                 filepath.FilePath(FILEROOT+"xnethack-0.4.1/var/xlogfile"): ("xnh", "\t", "xnethack/dumplog/{starttime}.xnh.html"),
                  filepath.FilePath(FILEROOT+"splicehack-0.6.4/var/xlogfile"): ("spl", "\t", "splicehack/dumplog/{starttime}.splice.html"),
                  filepath.FilePath(FILEROOT+"nh13d/xlogfile"): ("nh13d", ":", "nh13d/dumplog/{starttime}.nh13d.txt"),
                  filepath.FilePath(FILEROOT+"slashem-0.0.8E0F2/xlogfile"): ("slshm", ":", "slashem/dumplog/{starttime}.slashem.txt"),
