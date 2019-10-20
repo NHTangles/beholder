@@ -240,6 +240,7 @@ class DeathBotProtocol(irc.IRCClient):
                "slshm" : [INPR+"slashem/"],
                 "ndnh" : [INPR+"ndnh-048/", INPR+"ndnh-524/"],
                 "evil" : [INPR+"evil032/", INPR+"evil040/"],
+                "tnnt" : [INPR+"tnnt/"],
                  "dyn" : [INPR+"dyn/"]}
 
     # for !whereis
@@ -267,6 +268,7 @@ class DeathBotProtocol(irc.IRCClient):
                          FILEROOT+"notdnethack-2019.05.24/whereis/"],
                 "evil": [FILEROOT+"evilhack-0.3.2/var/whereis/",
                          FILEROOT+"evilhack-0.4.0/var/whereis/"],
+                "tnnt": [FILEROOT+"tnnt/var/whereis/"],
                   "un": [FILEROOT+"un531/var/unnethack/",
                          FILEROOT+"un532/var/unnethack/"]}
 
