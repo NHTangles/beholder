@@ -138,7 +138,8 @@ class DeathBotProtocol(irc.IRCClient):
         os.chmod(chanLogName,stat.S_IRUSR|stat.S_IWUSR|stat.S_IRGRP|stat.S_IROTH)
 
     xlogfiles = {filepath.FilePath(FILEROOT+"nh343-hdf/var/xlogfile"): ("nh343", ":", "nh343/dumplog/{starttime}.nh343.txt"),
-                 filepath.FilePath(FILEROOT+"nh363-hdf/var/xlogfile"): ("nh", "\t", "nethack/dumplog/{starttime}.nh.html"),
+                 filepath.FilePath(FILEROOT+"nh363-hdf/var/xlogfile"): ("nh363", "\t", "nethack/dumplog/{starttime}.nh.html"),
+                 filepath.FilePath(FILEROOT+"nh370-hdf/var/xlogfile"): ("nh370", "\t", "nethack/dumplog/{starttime}.nh.html"),
                  filepath.FilePath(FILEROOT+"grunthack-0.2.4/var/xlogfile"): ("gh", ":", "gh/dumplog/{starttime}.gh.txt"),
                  filepath.FilePath(FILEROOT+"dnethack-3.18.0/xlogfile"): ("dnh", ":", "dnethack/dumplog/{starttime}.dnh.txt"),
                  filepath.FilePath(FILEROOT+"fiqhackdir/data/xlogfile"): ("fh", ":", "fiqhack/dumplog/{dumplog}"),
@@ -155,7 +156,8 @@ class DeathBotProtocol(irc.IRCClient):
                  filepath.FilePath(FILEROOT+"evilhack-0.4.1/var/xlogfile"): ("evil", "\t", "evilhack/dumplog/{starttime}.evil.html"),
                  filepath.FilePath(FILEROOT+"un532/var/unnethack/xlogfile"): ("un", "\t", "unnethack/dumplog/{starttime}.un.txt.html")}
     livelogs  = {filepath.FilePath(FILEROOT+"nh343-hdf/var/livelog"): ("nh343", ":"),
-                 filepath.FilePath(FILEROOT+"nh363-hdf/var/livelog"): ("nh", "\t"),
+                 filepath.FilePath(FILEROOT+"nh363-hdf/var/livelog"): ("nh363", "\t"),
+                 filepath.FilePath(FILEROOT+"nh370-hdf/var/livelog"): ("nh370", "\t"),
                  filepath.FilePath(FILEROOT+"grunthack-0.2.4/var/livelog"): ("gh", ":"),
                  filepath.FilePath(FILEROOT+"dnethack-3.18.0/livelog"): ("dnh", ":"),
                  filepath.FilePath(FILEROOT+"fourkdir/save/livelog"): ("4k", "\t"),
@@ -172,7 +174,8 @@ class DeathBotProtocol(irc.IRCClient):
 
     # Forward events to other bots at the request of maintainers of other variant-specific channels
     forwards = {"nh343" : [],
-                   "nh" : [],
+                "nh363" : [],
+                "nh370" : [],
                  "zapm" : [],
                    "gh" : [],
                   "dnh" : [],
@@ -193,7 +196,8 @@ class DeathBotProtocol(irc.IRCClient):
 
     # for displaying variants and server tags in colour
     displaystring = {"nh343" : "\x0315nh343\x03",
-                        "nh" : "\x0307nh363\x03",
+                     "nh363" : "\x0307nh363\x03",
+                     "nh370" : "\x0307nh370\x03",
                       "zapm" : "\x0303zapm\x03",
                         "gh" : "\x0304gh\x03",
                        "dnh" : "\x0313dnh\x03",
@@ -223,8 +227,9 @@ class DeathBotProtocol(irc.IRCClient):
     # Reduce the repetitive crap
     DGLD=FILEROOT+"dgldir/"
     INPR=DGLD+"inprogress-"
-    inprog = { "nh343" : [INPR+"nh343/", INPR+"nh343-hdf/"],
-                  "nh" : [INPR+"nh363-hdf/"],
+    inprog = { "nh343" : [INPR+"nh343-hdf/"],
+               "nh363" : [INPR+"nh363-hdf/"],
+               "nh370" : [INPR+"nh370-hdf/"],
                 "zapm" : [INPR+"zapm/"],
                   "gh" : [INPR+"gh024/"],
                   "un" : [INPR+"un531/", INPR+"un532/"],
@@ -244,9 +249,9 @@ class DeathBotProtocol(irc.IRCClient):
                  "dyn" : [INPR+"dyn/"]}
 
     # for !whereis
-    whereis = {"nh343": [FILEROOT+"nh343/var/whereis/",
-                         FILEROOT+"nh343-hdf/var/whereis/"],
-                  "nh": [FILEROOT+"nh363-hdf/var/whereis/"],
+    whereis = {"nh343": [FILEROOT+"nh343-hdf/var/whereis/"],
+               "nh363": [FILEROOT+"nh363-hdf/var/whereis/"],
+               "nh370": [FILEROOT+"nh370-hdf/var/whereis/"],
                   "gh": [FILEROOT+"grunthack-0.2.4/var/whereis/"],
                  "dnh": [FILEROOT+"dnethack-3.17.0/whereis/",
                          FILEROOT+"dnethack-3.17.1/whereis/",
@@ -276,7 +281,9 @@ class DeathBotProtocol(irc.IRCClient):
 
     dungeons = {"nh343": ["The Dungeons of Doom","Gehennom","The Gnomish Mines","The Quest",
                           "Sokoban","Fort Ludios","Vlad's Tower","The Elemental Planes"],
-                   "nh": ["The Dungeons of Doom","Gehennom","The Gnomish Mines","The Quest",
+                "nh363": ["The Dungeons of Doom","Gehennom","The Gnomish Mines","The Quest",
+                          "Sokoban","Fort Ludios","Vlad's Tower","The Elemental Planes"],
+                "nh370": ["The Dungeons of Doom","Gehennom","The Gnomish Mines","The Quest",
                           "Sokoban","Fort Ludios","Vlad's Tower","The Elemental Planes"],
                    "gh": ["The Dungeons of Doom","Gehennom","The Gnomish Mines","The Quest",
                           "Sokoban","Fort Ludios","Vlad's Tower","The Elemental Planes"],
@@ -706,11 +713,13 @@ class DeathBotProtocol(irc.IRCClient):
     # so don't do that (I'm looking at you, FIQ)
     variants = {"nh343": (["nh343", "nethack", "343"],
                           vanilla_roles, vanilla_races),
-                   "nh": (["nh", "362", "362-hdf"],
+                "nh363": (["nh363", "363", "363-hdf"],
+                          vanilla_roles, vanilla_races),
+                "nh370": (["nh363", "370", "370-hdf"],
                           vanilla_roles, vanilla_races),
                 "nh13d": (["nh13d", "13d"],
                           vanilla_roles + ["elf", "fig", "nin"]),
-                   "nh4": (["nethack4", "n4"],
+                  "nh4": (["nethack4", "n4"],
                           vanilla_roles, vanilla_races),
                    "gh": (["grunthack", "grunt"],
                           vanilla_roles, vanilla_races + ["gia", "kob", "ogr"]),
@@ -817,7 +826,7 @@ class DeathBotProtocol(irc.IRCClient):
                               "wor", "wra", "xor", "yee"])}
 
     # variants which support streaks - now tracking slex streaks, because that's totally possible.
-    streakvars = ["nh343", "nh", "nh13d", "gh", "dnh", "un", "sp", "xnh", "slex", "spl", "slshm", "tnnt", "ndnh", "evil"]
+    streakvars = ["nh343", "nh363", "nh370", "nh13d", "gh", "dnh", "un", "sp", "xnh", "slex", "spl", "slshm", "tnnt", "ndnh", "evil"]
     # for !asc statistics - assume these are the same for all variants, or at least the sane ones.
     aligns = ["Law", "Neu", "Cha"]
     genders = ["Mal", "Fem"]
