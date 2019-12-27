@@ -152,7 +152,7 @@ class DeathBotProtocol(irc.IRCClient):
                  filepath.FilePath(FILEROOT+"splicehack-0.7.0/var/xlogfile"): ("spl", "\t", "splicehack/dumplog/{starttime}.splice.html"),
                  filepath.FilePath(FILEROOT+"nh13d/xlogfile"): ("nh13d", ":", "nh13d/dumplog/{starttime}.nh13d.txt"),
                  filepath.FilePath(FILEROOT+"slashem-0.0.8E0F2/xlogfile"): ("slshm", ":", "slashem/dumplog/{starttime}.slashem.txt"),
-                 filepath.FilePath(FILEROOT+"notdnethack-2019.05.24/xlogfile"): ("ndnh", ":", "notdnethack/dumplog/{starttime}.ndnh.txt"),
+                 filepath.FilePath(FILEROOT+"notdnethack-2019.12.24/xlogfile"): ("ndnh", ":", "notdnethack/dumplog/{starttime}.ndnh.txt"),
                  filepath.FilePath(FILEROOT+"evilhack-0.4.2/var/xlogfile"): ("evil", "\t", "evilhack/dumplog/{starttime}.evil.html"),
                  filepath.FilePath(FILEROOT+"un532/var/unnethack/xlogfile"): ("un", "\t", "unnethack/dumplog/{starttime}.un.txt.html")}
     livelogs  = {filepath.FilePath(FILEROOT+"nh343-hdf/var/livelog"): ("nh343", ":"),
@@ -168,7 +168,7 @@ class DeathBotProtocol(irc.IRCClient):
                  filepath.FilePath(FILEROOT+"splicehack-0.7.0/var/livelog"): ("spl", "\t"),
                  filepath.FilePath(FILEROOT+"nh13d/livelog"): ("nh13d", ":"),
                  filepath.FilePath(FILEROOT+"slashem-0.0.8E0F2/livelog"): ("slshm", ":"),
-                 filepath.FilePath(FILEROOT+"notdnethack-2019.05.24/livelog"): ("ndnh", ":"),
+                 filepath.FilePath(FILEROOT+"notdnethack-2019.12.24/livelog"): ("ndnh", ":"),
                  filepath.FilePath(FILEROOT+"evilhack-0.4.2/var/livelog"): ("evil", "\t"),
                  filepath.FilePath(FILEROOT+"un532/var/unnethack/livelog"): ("un", ":")}
 
@@ -243,7 +243,7 @@ class DeathBotProtocol(irc.IRCClient):
                  "spl" : [INPR+"spl063/", INPR+"spl064/", INPR+"spl070/"],
                "nh13d" : [INPR+"nh13d/"],
                "slshm" : [INPR+"slashem/"],
-                "ndnh" : [INPR+"ndnh-048/", INPR+"ndnh-524/"],
+                "ndnh" : [INPR+"ndnh-524/", INPR+"ndnh-1224/"],
                 "evil" : [INPR+"evil032/", INPR+"evil040/", INPR+"evil041/", INPR+"evil042/"],
                 "tnnt" : [INPR+"tnnt/"],
                  "dyn" : [INPR+"dyn/"]}
@@ -271,8 +271,8 @@ class DeathBotProtocol(irc.IRCClient):
                          FILEROOT+"splicehack-0.7.0/var/whereis/"],
                "nh13d": [FILEROOT+"nh13d/whereis/"],
                "slshm": [FILEROOT+"slashem-0.0.8E0F2/whereis/"],
-                "ndnh": [FILEROOT+"notdnethack-2019.04.8/whereis/",
-                         FILEROOT+"notdnethack-2019.05.24/whereis/"],
+                "ndnh": [FILEROOT+"notdnethack-2019.05.24/whereis/",
+                         FILEROOT+"notdnethack-2019.12.24/whereis/"],
                 "evil": [FILEROOT+"evilhack-0.3.2/var/whereis/",
                          FILEROOT+"evilhack-0.4.0/var/whereis/",
                          FILEROOT+"evilhack-0.4.1/var/whereis/",
