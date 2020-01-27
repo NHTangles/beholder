@@ -138,7 +138,7 @@ class DeathBotProtocol(irc.IRCClient):
         os.chmod(chanLogName,stat.S_IRUSR|stat.S_IWUSR|stat.S_IRGRP|stat.S_IROTH)
 
     xlogfiles = {filepath.FilePath(FILEROOT+"nh343-hdf/var/xlogfile"): ("nh343", ":", "nh343/dumplog/{starttime}.nh343.txt"),
-                 filepath.FilePath(FILEROOT+"nh361-hdf/var/xlogfile"): ("nh361", "\t", "nh361/dumplog/{starttime}.nh361.txt"),
+                 filepath.FilePath(FILEROOT+"nh370-hdf/var/xlogfile"): ("nh370", "\t", "nh370/dumplog/{starttime}.nh361.txt"),
                  filepath.FilePath(FILEROOT+"grunthack-0.2.4/var/xlogfile"): ("gh", ":", "gh/dumplog/{starttime}.gh.txt"),
                  filepath.FilePath(FILEROOT+"dnethack-3.16.0/xlogfile"): ("dnh", ":", "dnethack/dumplog/{starttime}.dnh.txt"),
                  filepath.FilePath(FILEROOT+"fiqhackdir/data/xlogfile"): ("fh", ":", "fiqhack/dumplog/{dumplog}"),
@@ -148,7 +148,7 @@ class DeathBotProtocol(irc.IRCClient):
                  filepath.FilePath(FILEROOT+"sporkhack-0.6.5/var/xlogfile"): ("sp", "\t", "sporkhack/dumplog/{starttime}.sp.txt"),
                  filepath.FilePath(FILEROOT+"slex-2.4.2/xlogfile"): ("slex", "\t", "slex/dumplog/{starttime}.slex.txt"),
                  filepath.FilePath(FILEROOT+"xnethack-0.4.0/var/xlogfile"): ("xnh", "\t", "xnethack/dumplog/{starttime}.xnh.txt"),
-                 filepath.FilePath(FILEROOT+"splicehack-0.6.1/var/xlogfile"): ("spl", "\t", "splicehack/dumplog/{starttime}.splice.txt"),
+                 filepath.FilePath(FILEROOT+"splicehack-0.7.0/var/xlogfile"): ("spl", "\t", "splicehack/dumplog/{starttime}.splice.txt"),
                  filepath.FilePath(FILEROOT+"nh13d/xlogfile"): ("nh13d", ":", "nh13d/dumplog/{starttime}.nh13d.txt"),
                  filepath.FilePath(FILEROOT+"slashem-0.0.8E0F2/xlogfile"): ("slshm", ":", "slashem/dumplog/{starttime}.slashem.txt"),
                  #filepath.FilePath(FILEROOT+"tnnt/var/xlogfile"): ("tnnt", "\t", "tnnt/dumplog/{starttime}.tnnt.txt"),
@@ -162,7 +162,7 @@ class DeathBotProtocol(irc.IRCClient):
                  filepath.FilePath(FILEROOT+"sporkhack-0.6.5/var/livelog"): ("sp", ":"),
                  filepath.FilePath(FILEROOT+"slex-2.4.2/livelog"): ("slex", ":"),
                  filepath.FilePath(FILEROOT+"xnethack-0.4.0/var/livelog"): ("xnh", "\t"),
-                 filepath.FilePath(FILEROOT+"splicehack-0.6.1/var/livelog"): ("spl", "\t"),
+                 filepath.FilePath(FILEROOT+"splicehack-0.7.0/var/livelog"): ("spl", "\t"),
                  filepath.FilePath(FILEROOT+"nh13d/livelog"): ("nh13d", ":"),
                  filepath.FilePath(FILEROOT+"slashem-0.0.8E0F2/livelog"): ("slshm", ":"),
                  #filepath.FilePath(FILEROOT+"tnnt/var/livelog"): ("tnnt", "\t"),
@@ -1817,11 +1817,10 @@ class DeathBotProtocol(irc.IRCClient):
     def startscummed(self, game):
         return game["death"] in ("quit", "escaped") and game["points"] < 1000
 
-    # players can request that their deaths not be reported if less than x turns
-    def plr_tc_notreached(self, game):
-        return (game["death"][0:8] not in ("ascended") #report these anyway!
-           and game["name"].lower() in self.plr_tc.keys()
-           and game["turns"] < self.plr_tc[game["name"].lower()])
+    # players can request their deaths and other events not be reported if less than x turns
+    def plr_tc_notreached(self, name, turns):
+        return (name.lower() in self.plr_tc.keys()
+           and turns < self.plr_tc[name.lower()])
 
     def xlogfileReport(self, game, report = True):
         var = game["variant"] # Make code less ugly
@@ -1901,10 +1900,10 @@ class DeathBotProtocol(irc.IRCClient):
             if var in self.streakvars:
                 if lname in self.curstreak[var]:
                     del self.curstreak[var][lname]
+            if self.plr_tc_notreached(game["name"], game["turns"]): return # ignore due to !setmintc, only if not ascended
         # end of statistics gathering
 
         if (not report): return # we're just reading through old entries at startup
-        if self.plr_tc_notreached(game): return # ignore due to !setmintc
 
         # start of actual reporting
         if game.get("charname", False):
@@ -1939,9 +1938,12 @@ class DeathBotProtocol(irc.IRCClient):
         if event.get("charname", False):
             if event.get("player", False):
                 if event["player"] != event["charname"]:
+                    if self.plr_tc_notreached(event["player"], event["turns"]): return
                     event["player"] = "{charname} ({player})".format(**event)
             else:
                 event["player"] = event["charname"]
+
+        if self.plr_tc_notreached(event["player"], event["turns"]): return
 
         # 1.3d kludge again
         if "race" not in event: event["race"] = "###"
