@@ -154,7 +154,7 @@ class DeathBotProtocol(irc.IRCClient):
                  filepath.FilePath(FILEROOT+"slashem-0.0.8E0F2/xlogfile"): ("slshm", ":", "slashem/dumplog/{starttime}.slashem.txt"),
                  filepath.FilePath(FILEROOT+"notdnethack-2019.12.24/xlogfile"): ("ndnh", ":", "notdnethack/dumplog/{starttime}.ndnh.txt"),
                  filepath.FilePath(FILEROOT+"evilhack-0.4.2/var/xlogfile"): ("evil", "\t", "evilhack/dumplog/{starttime}.evil.html"),
-                 filepath.FilePath(FILEROOT+"gnollhack-4.0.20/var/xlogfile"): ("gnoll", "\t", "gnollhack/dumplog/{starttime}.gnoll.txt"),
+                 #filepath.FilePath(FILEROOT+"gnollhack-4.0.20/var/xlogfile"): ("gnoll", "\t", "gnollhack/dumplog/{starttime}.gnoll.txt"),
                  filepath.FilePath(FILEROOT+"un532/var/unnethack/xlogfile"): ("un", "\t", "unnethack/dumplog/{starttime}.un.txt.html")}
     livelogs  = {filepath.FilePath(FILEROOT+"nh343-hdf/var/livelog"): ("nh343", ":"),
                  filepath.FilePath(FILEROOT+"nh363-hdf/var/livelog"): ("nh363", "\t"),
@@ -251,7 +251,7 @@ class DeathBotProtocol(irc.IRCClient):
                 "ndnh" : [INPR+"ndnh-524/", INPR+"ndnh-1224/"],
                 "evil" : [INPR+"evil032/", INPR+"evil040/", INPR+"evil041/", INPR+"evil042/"],
                 "tnnt" : [INPR+"tnnt/"],
-               "gnoll" : [INPR+"gnoll4020/"],
+               #"gnoll" : [INPR+"gnoll4020/"],
                  "dyn" : [INPR+"dyn/"]}
 
     # for !whereis
