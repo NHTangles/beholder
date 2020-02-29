@@ -49,6 +49,8 @@ import glob     # for matching in !whereis
 from botconf import HOST, PORT, CHANNEL, NICK, USERNAME, REALNAME, BOTDIR
 from botconf import PWFILE, FILEROOT, WEBROOT, LOGROOT, PINOBOT, ADMIN
 from botconf import SERVERTAG
+try: from botconf import LL_TURNCOUNTS
+except: LL_TURNCOUNTS = {}
 try: from botconf import DCBRIDGE
 except: DCBRIDGE = None
 try: from botconf import TEST
@@ -78,7 +80,7 @@ def fixdump(s):
 
 xlogfile_parse = dict.fromkeys(
     ("points", "deathdnum", "deathlev", "maxlvl", "hp", "maxhp", "deaths",
-     "uid", "turns", "xplevel", "exp","depth","dnum","score","amulet"), int)
+     "uid", "turns", "xplevel", "exp","depth","dnum","score","amulet", "lltype"), int)
 xlogfile_parse.update(dict.fromkeys(
     ("conduct", "event", "carried", "flags", "achieve"), ast.literal_eval))
 #xlogfile_parse["starttime"] = fromtimestamp_int
@@ -2066,7 +2068,11 @@ class DeathBotProtocol(irc.IRCClient):
             if event["historic_event"].endswith("."):
                 event["historic_event"] = event["historic_event"][:-1]
             event["message"] = event["historic_event"]
-
+        if "lltype" in event:
+            for t in  LL_TURNCOUNTS:
+                if event["turns"] < LL_TURNCOUNTS[t]:
+                    event["lltype"] &= ~t
+                    if not event["lltype"]: return
         if "message" in event:
             yield ("[{displaystring}] {player} ({role} {race} {gender} {align}) "
                    "{message}, on T:{turns}").format(**event)

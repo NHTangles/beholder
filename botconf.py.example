@@ -33,6 +33,13 @@ DCBRIDGE = "rld"
 # This is not terribly secure, as it does not verify the nick is authenticated. 
 ADMIN = ["K2", "Tangles"]
 
+# OPTIONAL Minimum turncounts for livelogging different event types.
+# see global.h in NetHack 3.6+ and variants, with livelog patch.
+LL_TURNCOUNTS = {
+      2: 500,  # Achievements
+     32: 3000, # Conducts
+}
+
 # Remote servers section:
 # If this bot is the "master", we need to tell it where the remote servers are,
 # and the name of the "slave" bot that looks after each server.
