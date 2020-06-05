@@ -1899,7 +1899,7 @@ class DeathBotProtocol(irc.IRCClient):
             self.commands[msgwords[0].lower()](sender, replyto, msgwords)
             return
         if dest != CHANNEL and sender in self.slaves: # game announcement from slave
-            self.msg(CHANNEL, " ".join(msgwords))
+            self.msgLog(CHANNEL, " ".join(msgwords))
 
     #other events for logging
     def action(self, doer, dest, message):
