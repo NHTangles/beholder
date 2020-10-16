@@ -2124,3 +2124,5 @@ if __name__ == "__builtin__":
     deathservice = internet.SSLClient(HOST, PORT, f,
                                       ssl.ClientContextFactory())
     deathservice.setServiceParent(application)
+
+# -*- coding: UTF-8 -*-
