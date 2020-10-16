@@ -903,7 +903,7 @@ class DeathBotProtocol(irc.IRCClient):
 
     def irc_CAP(self, prefix, params):
         if params[1] != 'ACK' or params[2].split() != ['sasl']:
-            print 'sasl not available'
+            print('sasl not available')
             self.quit('')
         sasl = ('{0}\0{0}\0{1}'.format(self.nickname, self.password)).encode('base64').strip()
         self.sendLine('AUTHENTICATE PLAIN')
@@ -913,7 +913,7 @@ class DeathBotProtocol(irc.IRCClient):
         self.sendLine('CAP END')
 
     def irc_904(self, prefix, params):
-        print 'sasl auth failed', params
+        print('sasl auth failed', params)
         self.quit('')
     irc_905 = irc_904
 
@@ -1157,7 +1157,7 @@ class DeathBotProtocol(irc.IRCClient):
             # sender is passed to master; msgwords[2] is passed tp sender
             self.qCommands[msgwords[3]](sender,msgwords[2],msgwords[1],msgwords[3:])
         else:
-            print "Bogus slave query from " + sender + ": " + " ".join(msgwords);
+            print("Bogus slave query from " + sender + ": " + " ".join(msgwords));
 
     def doResponse(self, sender, replyto, msgwords):
         # called when slave returns query response to master
@@ -1168,7 +1168,7 @@ class DeathBotProtocol(irc.IRCClient):
                 #all slaves have responded
                 self.queries[msgwords[1]]["callback"](self.queries.pop(msgwords[1]))
         else:
-            print "Bogus slave response from " + sender + ": " + " ".join(msgwords);
+            print("Bogus slave response from " + sender + ": " + " ".join(msgwords));
 
     def timeoutQuery(self, query):
         if query not in self.queries: return # query was completed before timeout
@@ -1506,7 +1506,7 @@ class DeathBotProtocol(irc.IRCClient):
         message = "#Q# " + " ".join([q,sender] + msgwords)
 
         for sl in self.slaves.keys():
-            print "forwardQuery: " + sl
+            print("forwardQuery: " + sl)
             self.msg(sl,message)
         # set up the timeout in 5 seconds.
         reactor.callLater(5, self.timeoutQuery, q)
