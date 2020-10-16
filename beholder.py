@@ -1,3 +1,5 @@
+#!/usr/bin/python
+# -*- coding: UTF-8 -*-
 """
 beholder.py - a game-reporting and general services IRC bot for
               the hardfought.org NetHack server.
@@ -2183,5 +2185,3 @@ if __name__ == "__builtin__":
     deathservice = internet.SSLClient(HOST, PORT, f,
                                       ssl.ClientContextFactory())
     deathservice.setServiceParent(application)
-
-# -*- coding: UTF-8 -*-
