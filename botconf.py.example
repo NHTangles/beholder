@@ -7,31 +7,31 @@ SERVERTAG = "hdf-us"
 HOST, PORT = "chat.us.freenode.net", 6697
 
 # Nick, channel, etc
-CHANNEL = "#hardfought" #channel is ignored on slave bots.
-NICK = "Beholder"
-USERNAME = "Beholder"
-REALNAME = "Beholder"
+CHANNEL = "#Splicehack" #channel is ignored on slave bots.
+NICK = "SpliceGirl"
+USERNAME = "sheholder"
+REALNAME = "Splice of Life"
 # working directory (some files will be created here)
-BOTDIR = "/opt/beholder"
+BOTDIR = "/opt/sheholder"
 # file containing the nickserv password for NICK
 PWFILE = BOTDIR + "/pw"
 
 # file/web paths for dumplogs and ttyrecs.
 # subfolders are still hardcoded in the main bot.
 # trailing slash is required!
-FILEROOT="/opt/nethack/hardfought.org/"
+FILEROOT="/opt/sheholder/files/"
 WEBROOT="https://www.hardfought.org/"
 # directory to place channel logs.
-LOGROOT="/var/www/hardfought.org/irclog/"
+LOGROOT="/var/log/sheholder/irclog/"
 # Name of bot to forward "pinobot"-style queries
 PINOBOT = "Pinoclone"
 # Name of bot in our channel that bridges discord network
-DCBRIDGE = "rld"
+#DCBRIDGE = "rld"
 
 
 # people allowed to do certain admin things.
 # This is not terribly secure, as it does not verify the nick is authenticated. 
-ADMIN = ["K2", "Tangles"]
+ADMIN = ["AntiGulp", "aoei"]
 
 # OPTIONAL Minimum turncounts for livelogging different event types.
 # see global.h in NetHack 3.6+ and variants, with livelog patch.
