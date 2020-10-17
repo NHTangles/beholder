@@ -34,9 +34,12 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 """
 
 from twisted.internet import reactor, protocol, ssl, task
+from twisted.internet.protocol import Protocol, ReconnectingClientFactory
 from twisted.words.protocols import irc
-from twisted.python import filepath
+from twisted.python import filepath, log
 from twisted.application import internet, service
+import site     # to help find botconf
+import sys      # for logging something4
 import datetime # for timestamp stuff
 import time     # for !time
 import ast      # for conduct/achievement bitfields - not really used
@@ -48,9 +51,14 @@ import shelve   # for persistent !tell messages
 import random   # for !rng and friends
 import glob     # for matching in !whereis
 
+site.addsitedir('.')
 from botconf import HOST, PORT, CHANNEL, NICK, USERNAME, REALNAME, BOTDIR
 from botconf import PWFILE, FILEROOT, WEBROOT, LOGROOT, PINOBOT, ADMIN
 from botconf import SERVERTAG
+#from botconf import HOST, PORT, CHANNEL
+#from botconf import NICK, USERNAME, REALNAME
+#from botconf import PWFILE, LOGDIR, PINOBOT, ADMIN
+
 try: from botconf import LL_TURNCOUNTS
 except: LL_TURNCOUNTS = {}
 try: from botconf import DCBRIDGE
@@ -141,8 +149,40 @@ class DeathBotProtocol(irc.IRCClient):
         chanLog = open(chanLogName,'a')
         os.chmod(chanLogName,stat.S_IRUSR|stat.S_IWUSR|stat.S_IRGRP|stat.S_IROTH)
 
-    xlogfiles = {filepath.FilePath(FILEROOT+"splicehack-0.8.1/var/xlogfile"): ("spl", "\t", "splicehack/dumplog/{starttime}.splice.html")}
-    livelogs  = {filepath.FilePath(FILEROOT+"splicehack-0.8.1/var/livelog"): ("spl", "\t")}
+    xlogfiles = {filepath.FilePath(FILEROOT+"nh343-hdf/var/xlogfile"): ("nh343", ":", "nh343/dumplog/{starttime}.nh343.txt"),
+                 filepath.FilePath(FILEROOT+"nh363-hdf/var/xlogfile"): ("nh363", "\t", "nethack/dumplog/{starttime}.nh.html"),
+                 filepath.FilePath(FILEROOT+"nh370.23-hdf/var/xlogfile"): ("nh370", "\t", "nethack/dumplog/{starttime}.nh.html"),
+                 filepath.FilePath(FILEROOT+"grunthack-0.2.4/var/xlogfile"): ("gh", ":", "gh/dumplog/{starttime}.gh.txt"),
+                 filepath.FilePath(FILEROOT+"dnethack-3.19.1/xlogfile"): ("dnh", ":", "dnethack/dumplog/{starttime}.dnh.txt"),
+                 filepath.FilePath(FILEROOT+"fiqhackdir/data/xlogfile"): ("fh", ":", "fiqhack/dumplog/{dumplog}"),
+                 filepath.FilePath(FILEROOT+"dynahack/dynahack-data/var/xlogfile"): ("dyn", ":", "dynahack/dumplog/{dumplog}"),
+                 filepath.FilePath(FILEROOT+"nh4dir/save/xlogfile"): ("nh4", ":", "nethack4/dumplog/{dumplog}"),
+                 filepath.FilePath(FILEROOT+"fourkdir/save/xlogfile"): ("4k", "\t", "nhfourk/dumps/{dumplog}"),
+                 filepath.FilePath(FILEROOT+"sporkhack-0.6.5/var/xlogfile"): ("sp", "\t", "sporkhack/dumplog/{starttime}.sp.txt"),
+                 filepath.FilePath(FILEROOT+"slex-2.6.6/xlogfile"): ("slex", "\t", "slex/dumplog/{starttime}.slex.txt"),
+                 filepath.FilePath(FILEROOT+"xnethack-5.1.2/var/xlogfile"): ("xnh", "\t", "xnethack/dumplog/{starttime}.xnh.html"),
+                 filepath.FilePath(FILEROOT+"splicehack-0.8.1/var/xlogfile"): ("spl", "\t", "splicehack/dumplog/{starttime}.splice.html"),
+                 filepath.FilePath(FILEROOT+"nh13d/xlogfile"): ("nh13d", ":", "nh13d/dumplog/{starttime}.nh13d.txt"),
+                 filepath.FilePath(FILEROOT+"slashem-0.0.8E0F2/xlogfile"): ("slshm", ":", "slashem/dumplog/{starttime}.slashem.txt"),
+                 filepath.FilePath(FILEROOT+"notdnethack-2020.04.16/xlogfile"): ("ndnh", ":", "notdnethack/dumplog/{starttime}.ndnh.txt"),
+                 filepath.FilePath(FILEROOT+"evilhack-0.6.0/var/xlogfile"): ("evil", "\t", "evilhack/dumplog/{starttime}.evil.html"),
+                 filepath.FilePath(FILEROOT+"unnethack-6.0.1/var/unnethack/xlogfile"): ("un", "\t", "unnethack/dumplog/{starttime}.un.txt.html")}
+    livelogs  = {filepath.FilePath(FILEROOT+"nh343-hdf/var/livelog"): ("nh343", ":"),
+                 filepath.FilePath(FILEROOT+"nh363-hdf/var/livelog"): ("nh363", "\t"),
+                 filepath.FilePath(FILEROOT+"nh370.23-hdf/var/livelog"): ("nh370", "\t"),
+                 filepath.FilePath(FILEROOT+"grunthack-0.2.4/var/livelog"): ("gh", ":"),
+                 filepath.FilePath(FILEROOT+"dnethack-3.19.1/livelog"): ("dnh", ":"),
+                 filepath.FilePath(FILEROOT+"fourkdir/save/livelog"): ("4k", "\t"),
+                 filepath.FilePath(FILEROOT+"fiqhackdir/data/livelog"): ("fh", ":"),
+                 filepath.FilePath(FILEROOT+"sporkhack-0.6.5/var/livelog"): ("sp", ":"),
+                 filepath.FilePath(FILEROOT+"slex-2.6.6/livelog"): ("slex", ":"),
+                 filepath.FilePath(FILEROOT+"xnethack-5.1.2/var/livelog"): ("xnh", "\t"),
+                 filepath.FilePath(FILEROOT+"splicehack-0.8.1/var/livelog"): ("spl", "\t"),
+                 filepath.FilePath(FILEROOT+"nh13d/livelog"): ("nh13d", ":"),
+                 filepath.FilePath(FILEROOT+"slashem-0.0.8E0F2/livelog"): ("slshm", ":"),
+                 filepath.FilePath(FILEROOT+"notdnethack-2020.04.16/livelog"): ("ndnh", ":"),
+                 filepath.FilePath(FILEROOT+"evilhack-0.6.0/var/livelog"): ("evil", "\t"),
+                 filepath.FilePath(FILEROOT+"unnethack-6.0.1/var/unnethack/livelog"): ("un", ":")}
 
     # Forward events to other bots at the request of maintainers of other variant-specific channels
     forwards = {"nh343" : [],
@@ -151,12 +191,12 @@ class DeathBotProtocol(irc.IRCClient):
                  "zapm" : [],
                    "gh" : [],
                   "dnh" : [],
-                   "fh" : [],
+                   "fh" : ["Arsinoe"],
                   "dyn" : [],
-                  "nh4" : [],
-                   "4k" : [],
+                  "nh4" : ["Arsinoe"],
+                   "4k" : ["Arsinoe"],
                    "sp" : [],
-                 "slex" : [],
+                 "slex" : ["ro-bot"],
                   "xnh" : [],
                   "spl" : [],
                 "nh13d" : [],
@@ -2119,10 +2159,45 @@ class DeathBotProtocol(irc.IRCClient):
 
             self.logs_seek[filepath] = handle.tell()
 
-if __name__ == "__builtin__":
-    f = protocol.ReconnectingClientFactory()
-    f.protocol = DeathBotProtocol
-    application = service.Application("DeathBot")
-    deathservice = internet.SSLClient(HOST, PORT, f,
-                                      ssl.ClientContextFactory())
-    deathservice.setServiceParent(application)
+class DeathBotFactory(ReconnectingClientFactory):
+    def startedConnecting(self, connector):
+        print('Started to connect.')
+
+    def buildProtocol(self, addr):
+        print('Connected.')
+        print('Resetting reconnection delay')
+        self.resetDelay()
+        p = DeathBotProtocol()
+        p.factory = self
+        return p
+
+    def clientConnectionLost(self, connector, reason):
+        print('Lost connection.  Reason:', reason)
+        ReconnectingClientFactory.clientConnectionLost(self, connector, reason)
+
+    def clientConnectionFailed(self, connector, reason):
+        print('Connection failed. Reason:', reason)
+        ReconnectingClientFactory.clientConnectionFailed(self, connector,
+                                                         reason)
+
+#if __name__ == "__main__":
+#    f = protocol.ReconnectingClientFactory()
+#    f.protocol = DeathBotProtocol()
+#    application = service.Application("DeathBot")
+#    deathservice = internet.SSLClient(HOST, PORT, f,
+#                                      ssl.ClientContextFactory())
+#    deathservice.setServiceParent(application)
+
+
+if __name__ == '__main__':
+    # initialize logging
+    #log.startLogging(sys.stdout)
+    
+    # create factory protocol and application
+    f = DeathBotFactory()
+
+    # connect factory to this host and port
+    reactor.connectSSL(HOST, PORT, f, ssl.ClientContextFactory())
+
+    # run bot
+    reactor.run()

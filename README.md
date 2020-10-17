@@ -1,7 +1,7 @@
 # beholder
 IRC Announce Bot for hardfought.org, based on http://ascension.run/deathbot.py
-run with twistd, as follows:
- twistd -y beholder.py
+run bot by executing the python script (twistd seems no longer required with new API):
+ ./beholder.py
 Some enhancements to the original deathbot code include:
  - delimiter-agnostic xlogfile parsing (because some newer variants have moved
    from the traditional ':' delimiter to a <tab> character.
