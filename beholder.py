@@ -39,6 +39,7 @@ from twisted.words.protocols import irc
 from twisted.python import filepath, log
 from twisted.application import internet, service
 import site     # to help find botconf
+import base64   # for sasl login
 import sys      # for logging something4
 import datetime # for timestamp stuff
 import time     # for !time
@@ -891,9 +892,10 @@ class DeathBotProtocol(irc.IRCClient):
         if params[1] != 'ACK' or params[2].split() != ['sasl']:
             print('sasl not available')
             self.quit('')
-        sasl = ('{0}\0{0}\0{1}'.format(self.nickname, self.password)).encode('base64').strip()
+        sasl_string = '{0}\0{0}\0{1}'.format(self.nickname, self.password)
+        sasl_b64_bytes = base64.b64encode(sasl_string.encode(encoding='UTF-8',errors='strict'))
         self.sendLine('AUTHENTICATE PLAIN')
-        self.sendLine('AUTHENTICATE ' + sasl)
+        self.sendLine('AUTHENTICATE ' + sasl_b64_bytes.decode('UTF-8'))
 
     def irc_903(self, prefix, params):
         self.sendLine('CAP END')
