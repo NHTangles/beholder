@@ -934,9 +934,9 @@ class DeathBotProtocol(irc.IRCClient):
         random.seed()
 
         self.logs = {}
-        for xlogfile, (variant, delim, dumpfmt) in self.xlogfiles.iteritems():
+        for xlogfile, (variant, delim, dumpfmt) in self.xlogfiles.items():
             self.logs[xlogfile] = (self.xlogfileReport, variant, delim, dumpfmt)
-        for livelog, (variant, delim) in self.livelogs.iteritems():
+        for livelog, (variant, delim) in self.livelogs.items():
             self.logs[livelog] = (self.livelogReport, variant, delim, "")
 
         self.logs_seek = {}
@@ -2163,7 +2163,7 @@ class DeathBotProtocol(irc.IRCClient):
 
     def connectionLost(self, reason=None):
         if self.looping_calls is None: return
-        for call in self.looping_calls.itervalues():
+        for call in self.looping_calls.values():
             call.stop()
 
     def logReport(self, filepath):
