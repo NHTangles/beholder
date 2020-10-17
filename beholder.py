@@ -34,9 +34,12 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 """
 
 from twisted.internet import reactor, protocol, ssl, task
+from twisted.internet.protocol import Protocol, ReconnectingClientFactory
 from twisted.words.protocols import irc
-from twisted.python import filepath
+from twisted.python import filepath, log
 from twisted.application import internet, service
+import site     # to help find botconf
+import sys      # for logging something4
 import datetime # for timestamp stuff
 import time     # for !time
 import ast      # for conduct/achievement bitfields - not really used
@@ -48,9 +51,14 @@ import shelve   # for persistent !tell messages
 import random   # for !rng and friends
 import glob     # for matching in !whereis
 
+site.addsitedir('.')
 from botconf import HOST, PORT, CHANNEL, NICK, USERNAME, REALNAME, BOTDIR
 from botconf import PWFILE, FILEROOT, WEBROOT, LOGROOT, PINOBOT, ADMIN
 from botconf import SERVERTAG
+#from botconf import HOST, PORT, CHANNEL
+#from botconf import NICK, USERNAME, REALNAME
+#from botconf import PWFILE, LOGDIR, PINOBOT, ADMIN
+
 try: from botconf import LL_TURNCOUNTS
 except: LL_TURNCOUNTS = {}
 try: from botconf import DCBRIDGE
@@ -2178,10 +2186,45 @@ class DeathBotProtocol(irc.IRCClient):
 
             self.logs_seek[filepath] = handle.tell()
 
-if __name__ == "__builtin__":
-    f = protocol.ReconnectingClientFactory()
-    f.protocol = DeathBotProtocol
-    application = service.Application("DeathBot")
-    deathservice = internet.SSLClient(HOST, PORT, f,
-                                      ssl.ClientContextFactory())
-    deathservice.setServiceParent(application)
+class DeathBotFactory(ReconnectingClientFactory):
+    def startedConnecting(self, connector):
+        print('Started to connect.')
+
+    def buildProtocol(self, addr):
+        print('Connected.')
+        print('Resetting reconnection delay')
+        self.resetDelay()
+        p = DeathBotProtocol()
+        p.factory = self
+        return p
+
+    def clientConnectionLost(self, connector, reason):
+        print('Lost connection.  Reason:', reason)
+        ReconnectingClientFactory.clientConnectionLost(self, connector, reason)
+
+    def clientConnectionFailed(self, connector, reason):
+        print('Connection failed. Reason:', reason)
+        ReconnectingClientFactory.clientConnectionFailed(self, connector,
+                                                         reason)
+
+#if __name__ == "__main__":
+#    f = protocol.ReconnectingClientFactory()
+#    f.protocol = DeathBotProtocol()
+#    application = service.Application("DeathBot")
+#    deathservice = internet.SSLClient(HOST, PORT, f,
+#                                      ssl.ClientContextFactory())
+#    deathservice.setServiceParent(application)
+
+
+if __name__ == '__main__':
+    # initialize logging
+    #log.startLogging(sys.stdout)
+    
+    # create factory protocol and application
+    f = DeathBotFactory()
+
+    # connect factory to this host and port
+    reactor.connectSSL(HOST, PORT, f, ssl.ClientContextFactory())
+
+    # run bot
+    reactor.run()
