@@ -2219,7 +2219,7 @@ class DeathBotFactory(ReconnectingClientFactory):
 if __name__ == '__main__':
     # initialize logging
     #log.startLogging(sys.stdout)
-    
+
     # create factory protocol and application
     f = DeathBotFactory()
 
