@@ -13,3 +13,5 @@ Some enhancements to the original deathbot code include:
     !lastasc [variant] [player] - as above, but ascended games only.
     !tell <nick> <message> - repeat <message> next time <nick> is active.
     !beer, !goat - undocumented :P
+
+Dependencies (at least on arch linux) - python-twisted, python-pyopenssl, python-service-identity
