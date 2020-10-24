@@ -13,6 +13,8 @@ Utility commands:
 Game server commands:
 !lastgame [variant] [player] - display link to dumplog of last game ended.
 !lastasc  [variant] [player] - dumplog for last ascended game.
+!asc      [variant] [player] - ascension stats.
+!streak   [variant] [player] - ascension streak stats.
 !setmintc [turncount]        - prevent bot from reporting your deaths below
                                specified turncount. Cleared by not specifying
                                a turncount.
