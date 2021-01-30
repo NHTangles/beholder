@@ -103,7 +103,7 @@ xlogfile_parse.update(dict.fromkeys(
 
 def parse_xlogfile_line(line, delim):
     record = {}
-    for field in line.strip().split(delim):
+    for field in line.strip().decode().split(delim):
         key, _, value = field.partition("=")
         if key in xlogfile_parse:
             value = xlogfile_parse[key](value)
@@ -1079,6 +1079,7 @@ class DeathBotProtocol(irc.IRCClient):
                 for line in handle:
                     delim = self.logs[filepath][2]
                     game = parse_xlogfile_line(line, delim)
+                    game["endtime"] = int(game["endtime"])
                     game["variant"] = self.logs[filepath][1]
                     if game["variant"] == "fh":
                         game["dumplog"] = fixdump(game["dumplog"])
