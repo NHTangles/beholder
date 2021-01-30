@@ -982,9 +982,16 @@ class DeathBotProtocol(irc.IRCClient):
             self.allgames[v] = {};
 
         # for !tell
-        self.tellbuf = shelve.open(BOTDIR + "/tellmsg.db", writeback=True)
+        try:
+            self.tellbuf = shelve.open(BOTDIR + "/tellmsg.db", writeback=True)
+        except:
+            self.tellbuf = shelve.open(BOTDIR + "/tellmsg", writeback=True, protocol=2)
+
         # for !setmintc
-        self.plr_tc = shelve.open(BOTDIR + "/plrtc.db", writeback=True)
+        try:
+            self.plr_tc = shelve.open(BOTDIR + "/plrtc.db", writeback=True)
+        except:
+            self.plr_tc = shelve.open(BOTDIR + "/plrtc", writeback=True, protocol=2)
 
         # Commands must be lowercase here.
         self.commands = {"ping"     : self.doPing,
@@ -1905,7 +1912,7 @@ class DeathBotProtocol(irc.IRCClient):
         # Hello processing first.
         if re.match(r'^(hello|hi|hey|salut|hallo|guten tag|shalom|ciao|hola|aloha|bonjour|hei|gday|konnichiwa|nuqneh)[!?. ]*$', message.lower()):
             self.doHello(sender, replyto)
-        if re.match(r'^(rip|r\.i\.\p|rest in p).*$', message.lower()):
+        if re.match(r'^(rip|r\.i\.p|rest in p).*$', message.lower()):
             self.doRip(sender, replyto)
         # Message checks next.
         self.checkMessages(sender)
