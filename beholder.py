@@ -2016,7 +2016,7 @@ class DeathBotProtocol(irc.IRCClient):
             # quote only the game-specific part, not the prefix.
             # Otherwise it quotes the : in https://
             # assume the rest of the url prefix is safe.
-            dumpurl = urllib.quote(game["dumpfmt"].format(**game))
+            dumpurl = urllib.parse.quote(game["dumpfmt"].format(**game))
             dumpurl = self.dump_url_prefix.format(**game) + dumpurl
         self.lg["{variant}:{name}".format(**game).lower()] = dumpurl
         if (game["endtime"] > self.lge.get(lname, 0)):
