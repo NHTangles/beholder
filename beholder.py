@@ -1732,7 +1732,8 @@ class DeathBotProtocol(irc.IRCClient):
         return True
 
     def streakDate(self,stamp):
-        return datetime.datetime.fromtimestamp(float(stamp)).strftime("%Y-%m-%d")
+        #return datetime.datetime.fromtimestamp(float(stamp)).strftime("%Y-%m-%d")
+        return stamp.strftime("%Y-%m-%d")
 
     def getStreak(self, master, sender, query, msgwords):
         (PLR, var) = self.plrVar(sender, "", msgwords)
@@ -1740,8 +1741,8 @@ class DeathBotProtocol(irc.IRCClient):
         plr = PLR.lower()
         reply = "#R# " + query + " "
         if var:
-            (lstart,lend,llength) = self.longstreak[var].get(plr,(0,0,0))
-            (cstart,cend,clength) = self.curstreak[var].get(plr,(0,0,0))
+            (lstart,lend,llength) = self.longstreak[var].get(plr,(T0,T0,0))
+            (cstart,cend,clength) = self.curstreak[var].get(plr,(T0,T0,0))
             if llength == 0:
                 reply += "No streaks for " + PLR + self.displaytag(var) + "."
                 self.msg(master,reply)
@@ -1760,8 +1761,8 @@ class DeathBotProtocol(irc.IRCClient):
             return
         (lmax,cmax) = (0,0)
         for var in self.streakvars:
-            (lstart,lend,llength) = self.longstreak[var].get(plr,(0,0,0))
-            (cstart,cend,clength) = self.curstreak[var].get(plr,(0,0,0))
+            (lstart,lend,llength) = self.longstreak[var].get(plr,(T0,T0,0))
+            (cstart,cend,clength) = self.curstreak[var].get(plr,(T0,T0,0))
             if llength > lmax:
                 (lmax, lvar, lsmax, lemax)  = (llength, var, lstart, lend)
             if clength > cmax:
