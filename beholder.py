@@ -37,6 +37,7 @@ from twisted.internet import reactor, protocol, ssl, task
 from twisted.internet.protocol import Protocol, ReconnectingClientFactory
 from twisted.words.protocols import irc
 from twisted.python import filepath, log
+from twisted.python.logfile import DailyLogFile
 from twisted.application import internet, service
 import site     # to help find botconf
 import base64   # for sasl login
@@ -60,6 +61,8 @@ from botconf import SERVERTAG
 #from botconf import NICK, USERNAME, REALNAME
 #from botconf import PWFILE, LOGDIR, PINOBOT, ADMIN
 
+try: from botconf import LOGBASE
+except: LOGBASE = "/var/log/Beholder.log"
 try: from botconf import LL_TURNCOUNTS
 except: LL_TURNCOUNTS = {}
 try: from botconf import DCBRIDGE
@@ -2230,8 +2233,7 @@ class DeathBotFactory(ReconnectingClientFactory):
 
 if __name__ == '__main__':
     # initialize logging
-    if TEST:
-        log.startLogging(sys.stdout)
+    log.startLogging(DailyLogFile.fromFullPath(LOGBASE))
 
     # create factory protocol and application
     f = DeathBotFactory()
