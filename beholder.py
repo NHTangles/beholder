@@ -103,7 +103,7 @@ xlogfile_parse.update(dict.fromkeys(
 
 def parse_xlogfile_line(line, delim):
     record = {}
-    for field in line.strip().decode().split(delim):
+    for field in line.strip().decode(encoding='UTF-8', errors='ignore').split(delim):
         key, _, value = field.partition("=")
         if key in xlogfile_parse:
             value = xlogfile_parse[key](value)
