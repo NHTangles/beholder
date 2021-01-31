@@ -103,7 +103,7 @@ xlogfile_parse.update(dict.fromkeys(
 
 def parse_xlogfile_line(line, delim):
     record = {}
-    for field in line.strip().split(delim):
+    for field in line.strip().decode(encoding='UTF-8', errors='ignore').split(delim):
         key, _, value = field.partition("=")
         if key in xlogfile_parse:
             value = xlogfile_parse[key](value)
@@ -130,7 +130,7 @@ class DeathBotProtocol(irc.IRCClient):
         #...and the masters list
         MASTERS += [NICK]
     try:
-        password = open(PWFILE, "rb").read().strip()
+        password = open(PWFILE, "r").read().strip()
     except:
         password = "NotTHEPassword"
 
@@ -147,7 +147,7 @@ class DeathBotProtocol(irc.IRCClient):
         helpURL = WEBROOT + "nethack"
         logday = time.strftime("%d")
         chanLogName = LOGROOT + CHANNEL + time.strftime("-%Y-%m-%d.log")
-        chanLog = open(chanLogName,'ab')
+        chanLog = open(chanLogName,'a')
         os.chmod(chanLogName,stat.S_IRUSR|stat.S_IWUSR|stat.S_IRGRP|stat.S_IROTH)
 
     xlogfiles = {filepath.FilePath(FILEROOT+"nh343-hdf/var/xlogfile"): ("nh343", ":", "nh343/dumplog/{starttime}.nh343.txt"),
@@ -1069,13 +1069,13 @@ class DeathBotProtocol(irc.IRCClient):
 
         # seek to end of livelogs
         for filepath in self.livelogs:
-            with filepath.open("rb") as handle:
+            with filepath.open("r") as handle:
                 handle.seek(0, 2)
                 self.logs_seek[filepath] = handle.tell()
 
         # sequentially read xlogfiles from beginning to pre-populate lastgame data.
         for filepath in self.xlogfiles:
-            with filepath.open("rb") as handle:
+            with filepath.open("r") as handle:
                 for line in handle:
                     delim = self.logs[filepath][2]
                     game = parse_xlogfile_line(line, delim)
@@ -1126,7 +1126,7 @@ class DeathBotProtocol(irc.IRCClient):
         self.chanLog.close()
         self.logday = time.strftime("%d")
         self.chanLogName = LOGROOT + CHANNEL + time.strftime("-%Y-%m-%d.log")
-        self.chanLog = open(self.chanLogName,'ab') # 'w' is probably fine here
+        self.chanLog = open(self.chanLogName,'a') # 'w' is probably fine here
         os.chmod(self.chanLogName,stat.S_IRUSR|stat.S_IWUSR|stat.S_IRGRP|stat.S_IROTH)
 
     def stripText(self, msg):
@@ -1574,7 +1574,7 @@ class DeathBotProtocol(irc.IRCClient):
                             for wipath in glob.iglob(widir + "*.whereis"):
                                 if wipath.split("/")[-1].lower() == (msgwords[1] + ".whereis").lower():
                                     plr = wipath.split("/")[-1].split(".")[0] # Correct case
-                                    wirec = parse_xlogfile_line(open(wipath, "rb").read().strip(),":")
+                                    wirec = parse_xlogfile_line(open(wipath, "r").read().strip(),":")
 
                                     self.msg(master, "#R# " + query
                                              + " " + self.displaytag(SERVERTAG) + " " + plr
@@ -2175,7 +2175,7 @@ class DeathBotProtocol(irc.IRCClient):
             call.stop()
 
     def logReport(self, filepath):
-        with filepath.open("rb") as handle:
+        with filepath.open("r") as handle:
             handle.seek(self.logs_seek[filepath])
 
             for line in handle:
