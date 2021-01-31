@@ -77,6 +77,8 @@ except:
     SLAVE = False #if we have no master we (definitely) are the master
     MASTERS = []
 
+T0 = datetime.datetime.fromtimestamp(0)
+
 def fromtimestamp_int(s):
     return datetime.datetime.fromtimestamp(int(s))
 
@@ -94,10 +96,10 @@ xlogfile_parse = dict.fromkeys(
      "uid", "turns", "xplevel", "exp","depth","dnum","score","amulet", "lltype"), int)
 xlogfile_parse.update(dict.fromkeys(
     ("conduct", "event", "carried", "flags", "achieve"), ast.literal_eval))
-#xlogfile_parse["starttime"] = fromtimestamp_int
-#xlogfile_parse["curtime"] = fromtimestamp_int
-#xlogfile_parse["endtime"] = fromtimestamp_int
-#xlogfile_parse["realtime"] = timedelta_int
+xlogfile_parse["starttime"] = fromtimestamp_int
+xlogfile_parse["curtime"] = fromtimestamp_int
+xlogfile_parse["endtime"] = fromtimestamp_int
+xlogfile_parse["realtime"] = timedelta_int
 #xlogfile_parse["deathdate"] = xlogfile_parse["birthdate"] = isodate
 #xlogfile_parse["dumplog"] = fixdump
 
@@ -951,9 +953,9 @@ class DeathBotProtocol(irc.IRCClient):
         # variant and variant:player don't need this if we assume the xlogfiles are
         # ordered within variant.
         self.lge = {}
-        self.tlastgame = 0
+        self.tlastgame = T0
         self.lae = {}
-        self.tlastasc = 0
+        self.tlastasc = T0
 
         # streaks
         self.curstreak = {}
@@ -1076,10 +1078,9 @@ class DeathBotProtocol(irc.IRCClient):
         # sequentially read xlogfiles from beginning to pre-populate lastgame data.
         for filepath in self.xlogfiles:
             with filepath.open("r") as handle:
-                for line in handle:
+                for line in handle.readlines():
                     delim = self.logs[filepath][2]
                     game = parse_xlogfile_line(line, delim)
-                    game["endtime"] = int(game["endtime"])
                     game["variant"] = self.logs[filepath][1]
                     if game["variant"] == "fh":
                         game["dumplog"] = fixdump(game["dumplog"])
@@ -2019,7 +2020,7 @@ class DeathBotProtocol(irc.IRCClient):
             dumpurl = urllib.parse.quote(game["dumpfmt"].format(**game))
             dumpurl = self.dump_url_prefix.format(**game) + dumpurl
         self.lg["{variant}:{name}".format(**game).lower()] = dumpurl
-        if (game["endtime"] > self.lge.get(lname, 0)):
+        if (game["endtime"] > self.lge.get(lname, T0)):
             self.lge[lname] = game["endtime"]
             self.lg[lname] = dumpurl
         self.lg[var] = dumpurl
@@ -2037,7 +2038,7 @@ class DeathBotProtocol(irc.IRCClient):
             game["ascsuff"] = "\n" + dumpurl
             # !lastasc stats.
             self.la["{variant}:{name}".format(**game).lower()] = dumpurl
-            if (game["endtime"] > self.lae.get(lname, 0)):
+            if (game["endtime"] > self.lae.get(lname, T0)):
                 self.lae[lname] = game["endtime"]
                 self.la[lname] = dumpurl
             self.la[var] = dumpurl
@@ -2060,12 +2061,12 @@ class DeathBotProtocol(irc.IRCClient):
             if var in self.streakvars:
                 (cs_start, cs_end,
                  cs_length) = self.curstreak[var].get(lname,
-                                                      (game["starttime"],0,0))
+                                                      (game["starttime"],T0,0))
                 cs_end = game["endtime"]
                 cs_length += 1
                 self.curstreak[var][lname] = (cs_start, cs_end, cs_length)
                 (ls_start, ls_end,
-                 ls_length) = self.longstreak[var].get(lname, (0,0,0))
+                 ls_length) = self.longstreak[var].get(lname, (T0,T0,0))
                 if cs_length > ls_length:
                     self.longstreak[var][lname] = self.curstreak[var][lname]
 
@@ -2178,7 +2179,7 @@ class DeathBotProtocol(irc.IRCClient):
         with filepath.open("r") as handle:
             handle.seek(self.logs_seek[filepath])
 
-            for line in handle:
+            for line in handle.readlines():
                 delim = self.logs[filepath][2]
                 game = parse_xlogfile_line(line, delim)
                 game["variant"] = self.logs[filepath][1]
@@ -2228,7 +2229,8 @@ class DeathBotFactory(ReconnectingClientFactory):
 
 if __name__ == '__main__':
     # initialize logging
-    #log.startLogging(sys.stdout)
+    if TEST:
+        log.startLogging(sys.stdout)
 
     # create factory protocol and application
     f = DeathBotFactory()
