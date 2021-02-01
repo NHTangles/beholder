@@ -1578,7 +1578,7 @@ class DeathBotProtocol(irc.IRCClient):
                             for wipath in glob.iglob(widir + "*.whereis"):
                                 if wipath.split("/")[-1].lower() == (msgwords[1] + ".whereis").lower():
                                     plr = wipath.split("/")[-1].split(".")[0] # Correct case
-                                    wirec = parse_xlogfile_line(open(wipath, "r").read().strip(),":")
+                                    wirec = parse_xlogfile_line(open(wipath, "rb").read(),":")
 
                                     self.msg(master, "#R# " + query
                                              + " " + self.displaytag(SERVERTAG) + " " + plr
@@ -1715,6 +1715,7 @@ class DeathBotProtocol(irc.IRCClient):
 
     def outAscStreak(self,q):
         msgs = []
+        fallback_msg = ""
         for server in q["resp"]:
             if q["resp"][server].split(' ')[0] == 'No':
                 # If they all say "No streaks for bob", that becomes the eventual output
@@ -1815,9 +1816,9 @@ class DeathBotProtocol(irc.IRCClient):
         if (len(msgwords) >= 3): #var, plr, any order.
             vp = self.varalias(msgwords[1])
             pv = self.varalias(msgwords[2])
-            dl = self.la.get(":".join(pv,vp).lower(),False)
+            dl = self.la.get(":".join([pv,vp]).lower(),False)
             if not dl:
-                dl = self.la.get(":".join(vp,pv).lower(),False)
+                dl = self.la.get(":".join([vp,pv]).lower(),False)
             if not dl:
                 self.msg(master, "#R# " + query +
                                  " No last ascension for (" + ",".join(msgwords[1:3]) + ").")
