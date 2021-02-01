@@ -1353,7 +1353,7 @@ class DeathBotProtocol(irc.IRCClient):
            self.respond(replyto, sender, self.rolename[random.choice(self.variants[v][1])])
         else:
            #pick variant first
-           v = random.choice(self.variants.keys())
+           v = random.choice(list(self.variants.keys()))
            self.respond(replyto, sender, self.variants[v][0][0] + " " + self.rolename[random.choice(self.variants[v][1])])
 
     def doRace(self, sender, replyto, msgwords):
@@ -1364,11 +1364,11 @@ class DeathBotProtocol(irc.IRCClient):
                self.respond(replyto, sender, "No variant " + msgwords[1] + " on server.")
            self.respond(replyto, sender, self.racename[random.choice(self.variants[v][2])])
         else:
-           v = random.choice(self.variants.keys())
+           v = random.choice(list(self.variants.keys()))
            self.respond(replyto, sender, self.variants[v][0][0] + " " + self.racename[random.choice(self.variants[v][2])])
 
     def doVariant(self, sender, replyto, msgwords):
-        self.respond(replyto, sender, self.variants[random.choice(self.variants.keys())][0][0])
+        self.respond(replyto, sender, self.variants[random.choice(list(self.variants.keys()))][0][0])
 
     def doBeer(self, sender, replyto, msgwords):
         self.respond(replyto, sender, random.choice(["It's your shout!", "I thought you'd never ask!",
@@ -1425,7 +1425,7 @@ class DeathBotProtocol(irc.IRCClient):
             if vessel in self.bev["vessel"][drink]: break # match!
         fulldrink = random.choice(self.bev["drink"][drink])
         if drink not in self.bev["suppress"]: fulldrink += " " + drink
-        tempunit = random.choice(self.bev["degrees"].keys())
+        tempunit = random.choice(list(self.bev["degrees"].keys()))
         [tmin,tmax] = self.bev["degrees"][tempunit]
         temp = random.randrange(tmin,tmax)
         self.describeLog(replyto, random.choice(self.bev["serves"]) + " " + target
