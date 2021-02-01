@@ -1418,7 +1418,7 @@ class DeathBotProtocol(irc.IRCClient):
     def doTea(self, sender, replyto, msgwords):
         if len(msgwords) > 1: target = msgwords[1]
         else: target = sender
-        drink = random.choice([msgwords[0]] * 50 + self.bev["drink"].keys())
+        drink = random.choice([msgwords[0]] * 50 + list(self.bev["drink"].keys()))
         for vchoice in xrange(10):
             vessel = random.choice(self.bev["vessel"]["all"])
             if drink not in self.bev["vessel"].keys(): break # anything goes for these
