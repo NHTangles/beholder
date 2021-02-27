@@ -37,6 +37,7 @@ from twisted.internet import reactor, protocol, ssl, task
 from twisted.internet.protocol import Protocol, ReconnectingClientFactory
 from twisted.words.protocols import irc
 from twisted.python import filepath, log
+from twisted.python.logfile import DailyLogFile
 from twisted.application import internet, service
 import site     # to help find botconf
 import base64   # for sasl login
@@ -60,6 +61,8 @@ from botconf import SERVERTAG
 #from botconf import NICK, USERNAME, REALNAME
 #from botconf import PWFILE, LOGDIR, PINOBOT, ADMIN
 
+try: from botconf import LOGBASE
+except: LOGBASE = "/var/log/Beholder.log"
 try: from botconf import LL_TURNCOUNTS
 except: LL_TURNCOUNTS = {}
 try: from botconf import DCBRIDGE
@@ -91,19 +94,20 @@ def fixdump(s):
 
 xlogfile_parse = dict.fromkeys(
     ("points", "deathdnum", "deathlev", "maxlvl", "hp", "maxhp", "deaths",
+     "starttime", "curtime", "endtime",
      "uid", "turns", "xplevel", "exp","depth","dnum","score","amulet", "lltype"), int)
 xlogfile_parse.update(dict.fromkeys(
     ("conduct", "event", "carried", "flags", "achieve"), ast.literal_eval))
 #xlogfile_parse["starttime"] = fromtimestamp_int
 #xlogfile_parse["curtime"] = fromtimestamp_int
 #xlogfile_parse["endtime"] = fromtimestamp_int
-#xlogfile_parse["realtime"] = timedelta_int
+xlogfile_parse["realtime"] = timedelta_int
 #xlogfile_parse["deathdate"] = xlogfile_parse["birthdate"] = isodate
 #xlogfile_parse["dumplog"] = fixdump
 
 def parse_xlogfile_line(line, delim):
     record = {}
-    for field in line.strip().split(delim):
+    for field in line.strip().decode(encoding='UTF-8', errors='ignore').split(delim):
         key, _, value = field.partition("=")
         if key in xlogfile_parse:
             value = xlogfile_parse[key](value)
@@ -130,7 +134,7 @@ class DeathBotProtocol(irc.IRCClient):
         #...and the masters list
         MASTERS += [NICK]
     try:
-        password = open(PWFILE, "rb").read().strip()
+        password = open(PWFILE, "r").read().strip()
     except:
         password = "NotTHEPassword"
 
@@ -147,12 +151,12 @@ class DeathBotProtocol(irc.IRCClient):
         helpURL = WEBROOT + "nethack"
         logday = time.strftime("%d")
         chanLogName = LOGROOT + CHANNEL + time.strftime("-%Y-%m-%d.log")
-        chanLog = open(chanLogName,'ab')
+        chanLog = open(chanLogName,'a')
         os.chmod(chanLogName,stat.S_IRUSR|stat.S_IWUSR|stat.S_IRGRP|stat.S_IROTH)
 
     xlogfiles = {filepath.FilePath(FILEROOT+"nh343-hdf/var/xlogfile"): ("nh343", ":", "nh343/dumplog/{starttime}.nh343.txt"),
                  filepath.FilePath(FILEROOT+"nh363-hdf/var/xlogfile"): ("nh363", "\t", "nethack/dumplog/{starttime}.nh.html"),
-                 filepath.FilePath(FILEROOT+"nh370.30-hdf/var/xlogfile"): ("nh370", "\t", "nethack/dumplog/{starttime}.nh.html"),
+                 filepath.FilePath(FILEROOT+"nh370.31-hdf/var/xlogfile"): ("nh370", "\t", "nethack/dumplog/{starttime}.nh.html"),
                  filepath.FilePath(FILEROOT+"grunthack-0.2.4/var/xlogfile"): ("gh", ":", "gh/dumplog/{starttime}.gh.txt"),
                  filepath.FilePath(FILEROOT+"dnethack-3.20.0/xlogfile"): ("dnh", ":", "dnethack/dumplog/{starttime}.dnh.txt"),
                  filepath.FilePath(FILEROOT+"fiqhackdir/data/xlogfile"): ("fh", ":", "fiqhack/dumplog/{dumplog}"),
@@ -167,10 +171,12 @@ class DeathBotProtocol(irc.IRCClient):
                  filepath.FilePath(FILEROOT+"slashem-0.0.8E0F2/xlogfile"): ("slshm", ":", "slashem/dumplog/{starttime}.slashem.txt"),
                  filepath.FilePath(FILEROOT+"notdnethack-2020.04.16/xlogfile"): ("ndnh", ":", "notdnethack/dumplog/{starttime}.ndnh.txt"),
                  filepath.FilePath(FILEROOT+"evilhack-0.6.0/var/xlogfile"): ("evil", "\t", "evilhack/dumplog/{starttime}.evil.html"),
+                 filepath.FilePath(FILEROOT+"setseed/var/xlogfile"): ("seed", "\t", "setseed/dumplog/{starttime}.seed.html"),
+                 filepath.FilePath(FILEROOT+"slashthem-0.9.5/xlogfile"): ("slth", ":", "slashthem/dumplog/{starttime}.slth.txt"),
                  filepath.FilePath(FILEROOT+"unnethack-6.0.1/var/unnethack/xlogfile"): ("un", "\t", "unnethack/dumplog/{starttime}.un.txt.html")}
     livelogs  = {filepath.FilePath(FILEROOT+"nh343-hdf/var/livelog"): ("nh343", ":"),
                  filepath.FilePath(FILEROOT+"nh363-hdf/var/livelog"): ("nh363", "\t"),
-                 filepath.FilePath(FILEROOT+"nh370.30-hdf/var/livelog"): ("nh370", "\t"),
+                 filepath.FilePath(FILEROOT+"nh370.31-hdf/var/livelog"): ("nh370", "\t"),
                  filepath.FilePath(FILEROOT+"grunthack-0.2.4/var/livelog"): ("gh", ":"),
                  filepath.FilePath(FILEROOT+"dnethack-3.20.0/livelog"): ("dnh", ":"),
                  filepath.FilePath(FILEROOT+"fourkdir/save/livelog"): ("4k", "\t"),
@@ -183,6 +189,8 @@ class DeathBotProtocol(irc.IRCClient):
                  filepath.FilePath(FILEROOT+"slashem-0.0.8E0F2/livelog"): ("slshm", ":"),
                  filepath.FilePath(FILEROOT+"notdnethack-2020.04.16/livelog"): ("ndnh", ":"),
                  filepath.FilePath(FILEROOT+"evilhack-0.6.0/var/livelog"): ("evil", "\t"),
+                 filepath.FilePath(FILEROOT+"setseed/var/livelog"): ("seed", "\t"),
+                 filepath.FilePath(FILEROOT+"slashthem-0.9.5/livelog"): ("slth", ":"),
                  filepath.FilePath(FILEROOT+"unnethack-6.0.1/var/unnethack/livelog"): ("un", ":")}
 
     # Forward events to other bots at the request of maintainers of other variant-specific channels
@@ -205,7 +213,8 @@ class DeathBotProtocol(irc.IRCClient):
                  "tnnt" : [],
                  "ndnh" : [],
                  "evil" : [],
-                "gnoll" : [],
+                 "seed" : [],
+                 "slth" : [],
                    "un" : []}
 
     # for displaying variants and server tags in colour
@@ -229,7 +238,8 @@ class DeathBotProtocol(irc.IRCClient):
                       "evil" : "\x0304evil\x03",
                       "tnnt" : "\x0310tnnt\x03",
                         "un" : "\x0308un\x03",
-                     "gnoll" : "\x0315gnoll\x03",
+                      "seed" : "\x0315seed\x03",
+                      "slth" : "\x0305slth\x03",
                     "hdf-us" : "\x1D\x0304hdf-us\x03\x0F",
                     "hdf-au" : "\x1D\x0303hdf-au\x03\x0F",
                     "hdf-eu" : "\x1D\x0312hdf-eu\x03\x0F"}
@@ -248,7 +258,8 @@ class DeathBotProtocol(irc.IRCClient):
                           INPR+"nh370.18-hdf/", INPR+"nh370.20-hdf/",
                           INPR+"nh370.22-hdf/", INPR+"nh370.23-hdf/",
                           INPR+"nh370.27-hdf/", INPR+"nh370.28-hdf/",
-                          INPR+"nh370.29-hdf/", INPR+"nh370.30-hdf/"],
+                          INPR+"nh370.29-hdf/", INPR+"nh370.30-hdf/",
+                          INPR+"nh370.31-hdf/"],
                 "zapm" : [INPR+"zapm/"],
                   "gh" : [INPR+"gh024/"],
                   "un" : [INPR+"un531/", INPR+"un532/",
@@ -278,6 +289,8 @@ class DeathBotProtocol(irc.IRCClient):
                           INPR+"evil042/", INPR+"evil050/",
                           INPR+"evil060/"],
                 "tnnt" : [INPR+"tnnt/"],
+                "seed" : [INPR+"seed/"],
+                "slth" : [INPR+"slth095/"],
                  "dyn" : [INPR+"dyn/"]}
 
     # for !whereis
@@ -292,7 +305,8 @@ class DeathBotProtocol(irc.IRCClient):
                          FILEROOT+"nh370.27-hdf/var/whereis/",
                          FILEROOT+"nh370.28-hdf/var/whereis/",
                          FILEROOT+"nh370.29-hdf/var/whereis/",
-                         FILEROOT+"nh370.30-hdf/var/whereis/"],
+                         FILEROOT+"nh370.30-hdf/var/whereis/",
+                         FILEROOT+"nh370.31-hdf/var/whereis/"],
                   "gh": [FILEROOT+"grunthack-0.2.4/var/whereis/"],
                  "dnh": [FILEROOT+"dnethack-3.17.1/whereis/",
                          FILEROOT+"dnethack-3.18.0/whereis/",
@@ -334,6 +348,8 @@ class DeathBotProtocol(irc.IRCClient):
                          FILEROOT+"evilhack-0.5.0/var/whereis/",
                          FILEROOT+"evilhack-0.6.0/var/whereis/"],
                 "tnnt": [FILEROOT+"tnnt/var/whereis/"],
+                "seed": [FILEROOT+"setseed/var/whereis/"],
+                "slth": [FILEROOT+"slashthem-0.9.5/whereis/"],
                   "un": [FILEROOT+"un531/var/unnethack/",
                          FILEROOT+"un532/var/unnethack/",
                          FILEROOT+"unnethack-6.0.0/var/unnethack/",
@@ -391,12 +407,20 @@ class DeathBotProtocol(irc.IRCClient):
                           "The Quest","Sokoban","Town","Fort Ludios",
                           "One-eyed Sam's Market","Vlad's Tower","The Dragon Caves",
                           "The Elemental Planes"],
+                 "slth": ["The Dungeons of Doom","Gehennom","The Gnomish Mines",
+                          "The Quest","Lawful Quest","Neutral Quest","Chaotic Quest",
+                          "Sokoban","Town","Grund's Stronghold","Fort Ludios","The Wyrm Caves",
+                          "One-eyed Sam's Market","The Lost Tomb","The Spider Caves","The Sunless Sea",
+                          "The Temple of Moloch","The Giant Caverns","Vlad's Tower","Frankenstein's Lab",
+                          "The Elemental Planes"],
                  "tnnt": ["The Dungeons of Doom","Gehennom","The Gnomish Mines","The Quest",
                           "Sokoban","Fort Ludios","DevTeam's Office","Deathmatch Arena",
                           "Vlad's Tower","The Elemental Planes"],
                  "evil": ["The Dungeons of Doom","Gehennom","The Gnomish Mines","The Quest",
                           "Sokoban","Fort Ludios","The Ice Queen's Realm","Vlad's Tower",
                           "The Elemental Planes"],
+                 "seed": ["The Dungeons of Doom","Gehennom","The Gnomish Mines","The Quest",
+                          "Sokoban","Fort Ludios","Vlad's Tower","The Elemental Planes"],
                    "un": ["The Dungeons of Doom","Gehennom","Sheol","The Gnomish Mines",
                           "The Quest","Sokoban","Town","The Ruins of Moria","Fort Ludios",
                           "One-eyed Sam's Market","Vlad's Tower","The Dragon Caves",
@@ -815,12 +839,15 @@ class DeathBotProtocol(irc.IRCClient):
                 "slshm": (["slash", "slash'em", "slshm"],
                           vanilla_roles + ["fla", "ice", "nec", "uds", "yeo"],
                           vanilla_races + ["dop", "dro", "hob", "lyc", "vam"]),
+                 "slth": (["slashthem", "slth"],
+                          vanilla_roles + ["fla", "ice", "nec", "uds", "yeo"],
+                          vanilla_races + ["dop", "dro", "hob", "lyc", "vam"]),
                  "tnnt": (["tnnt"],
+                          vanilla_roles, vanilla_races),
+                 "seed": (["seed"],
                           vanilla_roles, vanilla_races),
                  "evil": (["evilhack", "evil", "evl"],
                           vanilla_roles + ["con"], vanilla_races + ["cen", "gia", "hob", "ill"]),
-                "gnoll": (["gnoll", "gnollhack"],
-                          vanilla_roles, vanilla_races),
                  "slex": (["slex", "sloth", "amy's-weird-thing"],
                           vanilla_roles +
                              ["ana", "bin", "nob", "pir",
@@ -893,7 +920,7 @@ class DeathBotProtocol(irc.IRCClient):
                               "wor", "wra", "xor", "yee"])}
 
     # variants which support streaks - now tracking slex streaks, because that's totally possible.
-    streakvars = ["nh343", "nh363", "nh370", "nh13d", "gh", "dnh", "un", "sp", "xnh", "slex", "spl", "slshm", "tnnt", "ndnh", "evil", "gnoll"]
+    streakvars = ["nh343", "nh363", "nh370", "nh13d", "gh", "dnh", "un", "sp", "xnh", "slex", "spl", "slshm", "tnnt", "ndnh", "evil", "seed", "slth"]
     # for !asc statistics - assume these are the same for all variants, or at least the sane ones.
     aligns = ["Law", "Neu", "Cha"]
     genders = ["Mal", "Fem"]
@@ -1069,17 +1096,16 @@ class DeathBotProtocol(irc.IRCClient):
 
         # seek to end of livelogs
         for filepath in self.livelogs:
-            with filepath.open("rb") as handle:
+            with filepath.open("r") as handle:
                 handle.seek(0, 2)
                 self.logs_seek[filepath] = handle.tell()
 
         # sequentially read xlogfiles from beginning to pre-populate lastgame data.
         for filepath in self.xlogfiles:
-            with filepath.open("rb") as handle:
-                for line in handle:
+            with filepath.open("r") as handle:
+                for line in handle.readlines():
                     delim = self.logs[filepath][2]
                     game = parse_xlogfile_line(line, delim)
-                    game["endtime"] = int(game["endtime"])
                     game["variant"] = self.logs[filepath][1]
                     if game["variant"] == "fh":
                         game["dumplog"] = fixdump(game["dumplog"])
@@ -1126,7 +1152,7 @@ class DeathBotProtocol(irc.IRCClient):
         self.chanLog.close()
         self.logday = time.strftime("%d")
         self.chanLogName = LOGROOT + CHANNEL + time.strftime("-%Y-%m-%d.log")
-        self.chanLog = open(self.chanLogName,'ab') # 'w' is probably fine here
+        self.chanLog = open(self.chanLogName,'a') # 'w' is probably fine here
         os.chmod(self.chanLogName,stat.S_IRUSR|stat.S_IWUSR|stat.S_IRGRP|stat.S_IROTH)
 
     def stripText(self, msg):
@@ -1349,7 +1375,7 @@ class DeathBotProtocol(irc.IRCClient):
            self.respond(replyto, sender, self.rolename[random.choice(self.variants[v][1])])
         else:
            #pick variant first
-           v = random.choice(self.variants.keys())
+           v = random.choice(list(self.variants.keys()))
            self.respond(replyto, sender, self.variants[v][0][0] + " " + self.rolename[random.choice(self.variants[v][1])])
 
     def doRace(self, sender, replyto, msgwords):
@@ -1360,11 +1386,11 @@ class DeathBotProtocol(irc.IRCClient):
                self.respond(replyto, sender, "No variant " + msgwords[1] + " on server.")
            self.respond(replyto, sender, self.racename[random.choice(self.variants[v][2])])
         else:
-           v = random.choice(self.variants.keys())
+           v = random.choice(list(self.variants.keys()))
            self.respond(replyto, sender, self.variants[v][0][0] + " " + self.racename[random.choice(self.variants[v][2])])
 
     def doVariant(self, sender, replyto, msgwords):
-        self.respond(replyto, sender, self.variants[random.choice(self.variants.keys())][0][0])
+        self.respond(replyto, sender, self.variants[random.choice(list(self.variants.keys()))][0][0])
 
     def doBeer(self, sender, replyto, msgwords):
         self.respond(replyto, sender, random.choice(["It's your shout!", "I thought you'd never ask!",
@@ -1414,14 +1440,14 @@ class DeathBotProtocol(irc.IRCClient):
     def doTea(self, sender, replyto, msgwords):
         if len(msgwords) > 1: target = msgwords[1]
         else: target = sender
-        drink = random.choice([msgwords[0]] * 50 + self.bev["drink"].keys())
-        for vchoice in xrange(10):
+        drink = random.choice([msgwords[0]] * 50 + list(self.bev["drink"].keys()))
+        for vchoice in range(10):
             vessel = random.choice(self.bev["vessel"]["all"])
             if drink not in self.bev["vessel"].keys(): break # anything goes for these
             if vessel in self.bev["vessel"][drink]: break # match!
         fulldrink = random.choice(self.bev["drink"][drink])
         if drink not in self.bev["suppress"]: fulldrink += " " + drink
-        tempunit = random.choice(self.bev["degrees"].keys())
+        tempunit = random.choice(list(self.bev["degrees"].keys()))
         [tmin,tmax] = self.bev["degrees"][tempunit]
         temp = random.randrange(tmin,tmax)
         self.describeLog(replyto, random.choice(self.bev["serves"]) + " " + target
@@ -1574,7 +1600,7 @@ class DeathBotProtocol(irc.IRCClient):
                             for wipath in glob.iglob(widir + "*.whereis"):
                                 if wipath.split("/")[-1].lower() == (msgwords[1] + ".whereis").lower():
                                     plr = wipath.split("/")[-1].split(".")[0] # Correct case
-                                    wirec = parse_xlogfile_line(open(wipath, "rb").read().strip(),":")
+                                    wirec = parse_xlogfile_line(open(wipath, "rb").read(),":")
 
                                     self.msg(master, "#R# " + query
                                              + " " + self.displaytag(SERVERTAG) + " " + plr
@@ -1711,6 +1737,7 @@ class DeathBotProtocol(irc.IRCClient):
 
     def outAscStreak(self,q):
         msgs = []
+        fallback_msg = ""
         for server in q["resp"]:
             if q["resp"][server].split(' ')[0] == 'No':
                 # If they all say "No streaks for bob", that becomes the eventual output
@@ -1732,6 +1759,7 @@ class DeathBotProtocol(irc.IRCClient):
 
     def streakDate(self,stamp):
         return datetime.datetime.fromtimestamp(float(stamp)).strftime("%Y-%m-%d")
+        #return stamp.strftime("%Y-%m-%d")
 
     def getStreak(self, master, sender, query, msgwords):
         (PLR, var) = self.plrVar(sender, "", msgwords)
@@ -1810,9 +1838,9 @@ class DeathBotProtocol(irc.IRCClient):
         if (len(msgwords) >= 3): #var, plr, any order.
             vp = self.varalias(msgwords[1])
             pv = self.varalias(msgwords[2])
-            dl = self.la.get(":".join(pv,vp).lower(),False)
+            dl = self.la.get(":".join([pv,vp]).lower(),False)
             if not dl:
-                dl = self.la.get(":".join(vp,pv).lower(),False)
+                dl = self.la.get(":".join([vp,pv]).lower(),False)
             if not dl:
                 self.msg(master, "#R# " + query +
                                  " No last ascension for (" + ",".join(msgwords[1:3]) + ").")
@@ -2175,10 +2203,10 @@ class DeathBotProtocol(irc.IRCClient):
             call.stop()
 
     def logReport(self, filepath):
-        with filepath.open("rb") as handle:
+        with filepath.open("r") as handle:
             handle.seek(self.logs_seek[filepath])
 
-            for line in handle:
+            for line in handle.readlines():
                 delim = self.logs[filepath][2]
                 game = parse_xlogfile_line(line, delim)
                 game["variant"] = self.logs[filepath][1]
@@ -2228,7 +2256,7 @@ class DeathBotFactory(ReconnectingClientFactory):
 
 if __name__ == '__main__':
     # initialize logging
-    #log.startLogging(sys.stdout)
+    log.startLogging(DailyLogFile.fromFullPath(LOGBASE))
 
     # create factory protocol and application
     f = DeathBotFactory()
