@@ -98,9 +98,9 @@ xlogfile_parse = dict.fromkeys(
      "uid", "turns", "xplevel", "exp","depth","dnum","score","amulet", "lltype"), int)
 xlogfile_parse.update(dict.fromkeys(
     ("conduct", "event", "carried", "flags", "achieve"), ast.literal_eval))
-#xlogfile_parse["starttime"] = fromtimestamp_int
+xlogfile_parse["starttime"] = fromtimestamp_int
 #xlogfile_parse["curtime"] = fromtimestamp_int
-#xlogfile_parse["endtime"] = fromtimestamp_int
+xlogfile_parse["endtime"] = fromtimestamp_int
 xlogfile_parse["realtime"] = timedelta_int
 #xlogfile_parse["deathdate"] = xlogfile_parse["birthdate"] = isodate
 #xlogfile_parse["dumplog"] = fixdump
@@ -2073,6 +2073,18 @@ class DeathBotProtocol(irc.IRCClient):
                 self.lastasc = dumpurl
                 self.tlastasc = game["endtime"]
 
+            # format duration string based on realtime and/or wallclock duration
+            if game["starttime"] and game["endtime"]:
+                game["wallclock"] = game["endtime"] - game["startime"]
+            if game["wallclock"] != game["realtime"]:
+                game["duration_str"] = "rt"
+            if game["realtime"]:
+                game["duration_str"] += "[" + str(game["realtime"]) + "]"
+                if game["wallclock"] > game["realtime"]:
+                    game["duration_str"] += ", "
+            if game["wallclock"] and game["wallclock"] > game["realtime"]:
+                game["duration_str"] += "wc[" + str(game["wallclock"]) + "]"
+
             # !asc stats
             if not lname in self.asc[var]: self.asc[var][lname] = {}
             if not game["role"]   in self.asc[var][lname]: self.asc[var][lname][game["role"]]   = 0
@@ -2123,9 +2135,9 @@ class DeathBotProtocol(irc.IRCClient):
             if game.get("version","unknown") == "NH-1.3d":
                 yield ("[{displaystring}] {name} ({role} {gender}), "
                        "{points} points, T:{turns}, {death}{ascsuff}").format(**game)
-            else:
+            elif var == "seed" and "duration_str" in game:
                 yield ("[{displaystring}] {name} ({role} {race} {gender} {align}), "
-                       "{points} points, T:{turns}, {death}{ascsuff}").format(**game)
+                       "{points} points, T:{turns}, {duration_str}, {death}{ascsuff}").format(**game)
         else:
             if "modes" in game:
                 if game["modes"].startswith("normal,"):
@@ -2164,10 +2176,10 @@ class DeathBotProtocol(irc.IRCClient):
             if event["message"] == "entered the Dungeons of Doom":
                 if "user_seed" in event and "seed" in event and event["user_seed"]:
                     yield("[{displaystring}] {player} ({role} {race} {gender} {align}) "
-                    "{message} [seed: {seed}]".format(**event))
+                    "{message} [chosen seed: {seed}]".format(**event))
                 else:
                     yield("[{displaystring}] {player} ({role} {race} {gender} {align}) "
-                    "{message}".format(**event))
+                    "{message} [random seed]".format(**event))
             elif "realtime" in event:
                 event["realtime_fmt"] = str(event["realtime"])
                 yield ("[{displaystring}] {player} ({role} {race} {gender} {align}) "
