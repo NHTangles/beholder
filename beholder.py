@@ -98,9 +98,9 @@ xlogfile_parse = dict.fromkeys(
      "uid", "turns", "xplevel", "exp","depth","dnum","score","amulet", "lltype"), int)
 xlogfile_parse.update(dict.fromkeys(
     ("conduct", "event", "carried", "flags", "achieve"), ast.literal_eval))
-xlogfile_parse["starttime"] = fromtimestamp_int
+#xlogfile_parse["starttime"] = fromtimestamp_int
 #xlogfile_parse["curtime"] = fromtimestamp_int
-xlogfile_parse["endtime"] = fromtimestamp_int
+#xlogfile_parse["endtime"] = fromtimestamp_int
 xlogfile_parse["realtime"] = timedelta_int
 #xlogfile_parse["deathdate"] = xlogfile_parse["birthdate"] = isodate
 #xlogfile_parse["dumplog"] = fixdump
@@ -2075,15 +2075,15 @@ class DeathBotProtocol(irc.IRCClient):
 
             # format duration string based on realtime and/or wallclock duration
             if game["starttime"] and game["endtime"]:
-                game["wallclock"] = game["endtime"] - game["startime"]
-            if game["wallclock"] != game["realtime"]:
-                game["duration_str"] = "rt"
-            if game["realtime"]:
-                game["duration_str"] += "[" + str(game["realtime"]) + "]"
-                if game["wallclock"] > game["realtime"]:
-                    game["duration_str"] += ", "
-            if game["wallclock"] and game["wallclock"] > game["realtime"]:
-                game["duration_str"] += "wc[" + str(game["wallclock"]) + "]"
+                game["wallclock"] = timedelta_int(game["endtime"] - game["startime"])
+            if game["realtime"] and game["wallclock"] == game["realtime"]:
+                game["duration_str"] = "[" + str(game["realtime"]) + "]"
+            elif game["realtime"] and not game["wallclock"]:
+                game["duration_str"] = "rt[" + str(game["realtime"]) + "]"
+            elif game["realtime"] and game["wallclock"]:
+                game["duration_str"] = "rt[" + str(game["realtime"]) + "]" + ", wc[" + str(game["wallclock"]) + "]"
+            elif game["wallclock"] and not game["realtime"]:
+                game["duration_str"] = "wc[" + str(game["wallclock"]) + "]"
 
             # !asc stats
             if not lname in self.asc[var]: self.asc[var][lname] = {}
