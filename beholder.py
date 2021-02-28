@@ -2161,8 +2161,16 @@ class DeathBotProtocol(irc.IRCClient):
                     event["lltype"] &= ~t
                     if not event["lltype"]: return
         if "message" in event:
-            yield ("[{displaystring}] {player} ({role} {race} {gender} {align}) "
-                   "{message}, on T:{turns}").format(**event)
+            if "realtime" in event:
+                event["seconds"] = event["realtime"] % 60
+                minutes_tmp = (event["realtime"] - event["seconds"]) / 60
+                event["minutes"] = minutes_tmp % 60
+                event["hours"] = (minutes_tmp - event["minutes"]) / 60
+                yield ("[{displaystring}] {player} ({role} {race} {gender} {align}) "
+                       "{message}, on T:{turns}, {hours}:{minutes}:{seconds}").format(**event)
+            else:
+                yield ("[{displaystring}] {player} ({role} {race} {gender} {align}) "
+                       "{message}, on T:{turns}").format(**event)
         elif "wish" in event:
             yield ("[{displaystring}] {player} ({role} {race} {gender} {align}) "
                    'wished for "{wish}", on T:{turns}').format(**event)
