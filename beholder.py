@@ -94,7 +94,7 @@ def fixdump(s):
 
 xlogfile_parse = dict.fromkeys(
     ("points", "deathdnum", "deathlev", "maxlvl", "hp", "maxhp", "deaths",
-     "starttime", "curtime", "endtime",
+     "starttime", "curtime", "endtime", "user_seed",
      "uid", "turns", "xplevel", "exp","depth","dnum","score","amulet", "lltype"), int)
 xlogfile_parse.update(dict.fromkeys(
     ("conduct", "event", "carried", "flags", "achieve"), ast.literal_eval))
@@ -2161,13 +2161,17 @@ class DeathBotProtocol(irc.IRCClient):
                     event["lltype"] &= ~t
                     if not event["lltype"]: return
         if "message" in event:
-            if "realtime" in event:
-                event["seconds"] = event["realtime"] % 60
-                minutes_tmp = (event["realtime"] - event["seconds"]) / 60
-                event["minutes"] = minutes_tmp % 60
-                event["hours"] = (minutes_tmp - event["minutes"]) / 60
+            if event["message"] == "entered the Dungeons of Doom":
+                if "user_seed" in event and "seed" in event and event["user_seed"]:
+                    yield("[{displaystring}] {player} ({role} {race} {gender} {align}) "
+                    "{message} [seed: {seed}]".format(**event))
+                else:
+                    yield("[{displaystring}] {player} ({role} {race} {gender} {align}) "
+                    "{message}".format(**event))
+            elif "realtime" in event:
+                event["realtime_fmt"] = str(event["realtime"])
                 yield ("[{displaystring}] {player} ({role} {race} {gender} {align}) "
-                       "{message}, on T:{turns}, {hours}:{minutes}:{seconds}").format(**event)
+                       "{message}, on T:{turns}, {realtime_fmt}").format(**event)
             else:
                 yield ("[{displaystring}] {player} ({role} {race} {gender} {align}) "
                        "{message}, on T:{turns}").format(**event)
