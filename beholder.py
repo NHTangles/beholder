@@ -2073,18 +2073,6 @@ class DeathBotProtocol(irc.IRCClient):
                 self.lastasc = dumpurl
                 self.tlastasc = game["endtime"]
 
-            # format duration string based on realtime and/or wallclock duration
-            if game["starttime"] and game["endtime"]:
-                game["wallclock"] = timedelta_int(game["endtime"] - game["startime"])
-            if game["realtime"] and game["wallclock"] == game["realtime"]:
-                game["duration_str"] = "[" + str(game["realtime"]) + "]"
-            elif game["realtime"] and not game["wallclock"]:
-                game["duration_str"] = "rt[" + str(game["realtime"]) + "]"
-            elif game["realtime"] and game["wallclock"]:
-                game["duration_str"] = "rt[" + str(game["realtime"]) + "]" + ", wc[" + str(game["wallclock"]) + "]"
-            elif game["wallclock"] and not game["realtime"]:
-                game["duration_str"] = "wc[" + str(game["wallclock"]) + "]"
-
             # !asc stats
             if not lname in self.asc[var]: self.asc[var][lname] = {}
             if not game["role"]   in self.asc[var][lname]: self.asc[var][lname][game["role"]]   = 0
@@ -2119,6 +2107,19 @@ class DeathBotProtocol(irc.IRCClient):
 
         if (not report): return # we're just reading through old entries at startup
 
+        # format duration string based on realtime and/or wallclock duration
+        if "starttime" in game and "endtime" in game:
+            game["wallclock"] = timedelta_int(game["endtime"] - game["starttime"])
+        if "realtime" in game and "wallclock" in game:
+            if game["realtime"] == game["wallclock"]:
+                game["duration_str"] = f"[{game['realtime']}]"
+            else:
+                game["duration_str"] = f"rt[{game['realtime']}], wc[{game['wallclock']}]"
+        elif "realtime" in game and "wallclock" not in game:
+                game["duration_str"] = f"rt[{game['realtime']}]"
+        elif "wallclock" in game and "realtime" not in game:
+                game["duration_str"] = f"wc[{game['realtime']}]"
+
         # start of actual reporting
         if game.get("charname", False):
             if game.get("name", False):
@@ -2138,6 +2139,9 @@ class DeathBotProtocol(irc.IRCClient):
             elif var == "seed" and "duration_str" in game:
                 yield ("[{displaystring}] {name} ({role} {race} {gender} {align}), "
                        "{points} points, T:{turns}, {duration_str}, {death}{ascsuff}").format(**game)
+            else:
+                yield ("[{displaystring}] {name} ({role} {race} {gender} {align}), "
+                       "{points} points, T:{turns}, {death}{ascsuff}").format(**game)
         else:
             if "modes" in game:
                 if game["modes"].startswith("normal,"):
@@ -2183,7 +2187,7 @@ class DeathBotProtocol(irc.IRCClient):
             elif "realtime" in event:
                 event["realtime_fmt"] = str(event["realtime"])
                 yield ("[{displaystring}] {player} ({role} {race} {gender} {align}) "
-                       "{message}, on T:{turns}, {realtime_fmt}").format(**event)
+                       "{message}, on T:{turns}, rt[{realtime_fmt}]").format(**event)
             else:
                 yield ("[{displaystring}] {player} ({role} {race} {gender} {align}) "
                        "{message}, on T:{turns}").format(**event)
