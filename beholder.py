@@ -37,6 +37,7 @@ from twisted.internet import reactor, protocol, ssl, task
 from twisted.internet.protocol import Protocol, ReconnectingClientFactory
 from twisted.words.protocols import irc
 from twisted.python import filepath, log
+from twisted.python.logfile import DailyLogFile
 from twisted.application import internet, service
 import site     # to help find botconf
 import base64   # for sasl login
@@ -60,6 +61,8 @@ from botconf import SERVERTAG
 #from botconf import NICK, USERNAME, REALNAME
 #from botconf import PWFILE, LOGDIR, PINOBOT, ADMIN
 
+try: from botconf import LOGBASE
+except: LOGBASE = "/var/log/Beholder.log"
 try: from botconf import LL_TURNCOUNTS
 except: LL_TURNCOUNTS = {}
 try: from botconf import DCBRIDGE
@@ -91,19 +94,20 @@ def fixdump(s):
 
 xlogfile_parse = dict.fromkeys(
     ("points", "deathdnum", "deathlev", "maxlvl", "hp", "maxhp", "deaths",
+     "starttime", "curtime", "endtime", "user_seed",
      "uid", "turns", "xplevel", "exp","depth","dnum","score","amulet", "lltype"), int)
 xlogfile_parse.update(dict.fromkeys(
     ("conduct", "event", "carried", "flags", "achieve"), ast.literal_eval))
 #xlogfile_parse["starttime"] = fromtimestamp_int
 #xlogfile_parse["curtime"] = fromtimestamp_int
 #xlogfile_parse["endtime"] = fromtimestamp_int
-#xlogfile_parse["realtime"] = timedelta_int
+xlogfile_parse["realtime"] = timedelta_int
 #xlogfile_parse["deathdate"] = xlogfile_parse["birthdate"] = isodate
 #xlogfile_parse["dumplog"] = fixdump
 
 def parse_xlogfile_line(line, delim):
     record = {}
-    for field in line.strip().split(delim):
+    for field in line.strip().decode(encoding='UTF-8', errors='ignore').split(delim):
         key, _, value = field.partition("=")
         if key in xlogfile_parse:
             value = xlogfile_parse[key](value)
@@ -142,7 +146,7 @@ class DeathBotProtocol(irc.IRCClient):
     dump_file_prefix = FILEROOT + "dgldir/userdata/{name[0]}/{name}/"
 
     if not SLAVE:
-        scoresURL = WEBROOT + "nethack/scoreboard (HDF) or https://scoreboard.xd.cm (ALL)"
+        scoresURL = WEBROOT + "nethack/scoreboard (HDF) or https://nethackscoreboard.org (ALL)"
         rceditURL = WEBROOT + "nethack/rcedit"
         helpURL = WEBROOT + "nethack"
         logday = time.strftime("%d")
@@ -152,37 +156,41 @@ class DeathBotProtocol(irc.IRCClient):
 
     xlogfiles = {filepath.FilePath(FILEROOT+"nh343-hdf/var/xlogfile"): ("nh343", ":", "nh343/dumplog/{starttime}.nh343.txt"),
                  filepath.FilePath(FILEROOT+"nh363-hdf/var/xlogfile"): ("nh363", "\t", "nethack/dumplog/{starttime}.nh.html"),
-                 filepath.FilePath(FILEROOT+"nh370.23-hdf/var/xlogfile"): ("nh370", "\t", "nethack/dumplog/{starttime}.nh.html"),
+                 filepath.FilePath(FILEROOT+"nh370.32-hdf/var/xlogfile"): ("nh370", "\t", "nethack/dumplog/{starttime}.nh.html"),
                  filepath.FilePath(FILEROOT+"grunthack-0.2.4/var/xlogfile"): ("gh", ":", "gh/dumplog/{starttime}.gh.txt"),
-                 filepath.FilePath(FILEROOT+"dnethack-3.19.1/xlogfile"): ("dnh", ":", "dnethack/dumplog/{starttime}.dnh.txt"),
+                 filepath.FilePath(FILEROOT+"dnethack-3.20.0/xlogfile"): ("dnh", ":", "dnethack/dumplog/{starttime}.dnh.txt"),
                  filepath.FilePath(FILEROOT+"fiqhackdir/data/xlogfile"): ("fh", ":", "fiqhack/dumplog/{dumplog}"),
                  filepath.FilePath(FILEROOT+"dynahack/dynahack-data/var/xlogfile"): ("dyn", ":", "dynahack/dumplog/{dumplog}"),
                  filepath.FilePath(FILEROOT+"nh4dir/save/xlogfile"): ("nh4", ":", "nethack4/dumplog/{dumplog}"),
                  filepath.FilePath(FILEROOT+"fourkdir/save/xlogfile"): ("4k", "\t", "nhfourk/dumps/{dumplog}"),
                  filepath.FilePath(FILEROOT+"sporkhack-0.6.5/var/xlogfile"): ("sp", "\t", "sporkhack/dumplog/{starttime}.sp.txt"),
-                 filepath.FilePath(FILEROOT+"slex-2.6.6/xlogfile"): ("slex", "\t", "slex/dumplog/{starttime}.slex.txt"),
-                 filepath.FilePath(FILEROOT+"xnethack-5.1.2/var/xlogfile"): ("xnh", "\t", "xnethack/dumplog/{starttime}.xnh.html"),
-                 filepath.FilePath(FILEROOT+"splicehack-0.8.1/var/xlogfile"): ("spl", "\t", "splicehack/dumplog/{starttime}.splice.html"),
+                 filepath.FilePath(FILEROOT+"slex-2.7.0/xlogfile"): ("slex", "\t", "slex/dumplog/{starttime}.slex.txt"),
+                 filepath.FilePath(FILEROOT+"xnethack-6.0.0/var/xlogfile"): ("xnh", "\t", "xnethack/dumplog/{starttime}.xnh.html"),
+                 filepath.FilePath(FILEROOT+"splicehack-0.8.2/var/xlogfile"): ("spl", "\t", "splicehack/dumplog/{starttime}.splice.html"),
                  filepath.FilePath(FILEROOT+"nh13d/xlogfile"): ("nh13d", ":", "nh13d/dumplog/{starttime}.nh13d.txt"),
                  filepath.FilePath(FILEROOT+"slashem-0.0.8E0F2/xlogfile"): ("slshm", ":", "slashem/dumplog/{starttime}.slashem.txt"),
                  filepath.FilePath(FILEROOT+"notdnethack-2020.04.16/xlogfile"): ("ndnh", ":", "notdnethack/dumplog/{starttime}.ndnh.txt"),
                  filepath.FilePath(FILEROOT+"evilhack-0.6.0/var/xlogfile"): ("evil", "\t", "evilhack/dumplog/{starttime}.evil.html"),
+                 filepath.FilePath(FILEROOT+"setseed/var/xlogfile"): ("seed", "\t", "setseed/dumplog/{starttime}.seed.html"),
+                 filepath.FilePath(FILEROOT+"slashthem-0.9.5/xlogfile"): ("slth", ":", "slashthem/dumplog/{starttime}.slth.txt"),
                  filepath.FilePath(FILEROOT+"unnethack-6.0.1/var/unnethack/xlogfile"): ("un", "\t", "unnethack/dumplog/{starttime}.un.txt.html")}
     livelogs  = {filepath.FilePath(FILEROOT+"nh343-hdf/var/livelog"): ("nh343", ":"),
                  filepath.FilePath(FILEROOT+"nh363-hdf/var/livelog"): ("nh363", "\t"),
-                 filepath.FilePath(FILEROOT+"nh370.23-hdf/var/livelog"): ("nh370", "\t"),
+                 filepath.FilePath(FILEROOT+"nh370.32-hdf/var/livelog"): ("nh370", "\t"),
                  filepath.FilePath(FILEROOT+"grunthack-0.2.4/var/livelog"): ("gh", ":"),
-                 filepath.FilePath(FILEROOT+"dnethack-3.19.1/livelog"): ("dnh", ":"),
+                 filepath.FilePath(FILEROOT+"dnethack-3.20.0/livelog"): ("dnh", ":"),
                  filepath.FilePath(FILEROOT+"fourkdir/save/livelog"): ("4k", "\t"),
                  filepath.FilePath(FILEROOT+"fiqhackdir/data/livelog"): ("fh", ":"),
                  filepath.FilePath(FILEROOT+"sporkhack-0.6.5/var/livelog"): ("sp", ":"),
-                 filepath.FilePath(FILEROOT+"slex-2.6.6/livelog"): ("slex", ":"),
-                 filepath.FilePath(FILEROOT+"xnethack-5.1.2/var/livelog"): ("xnh", "\t"),
-                 filepath.FilePath(FILEROOT+"splicehack-0.8.1/var/livelog"): ("spl", "\t"),
+                 filepath.FilePath(FILEROOT+"slex-2.7.0/livelog"): ("slex", ":"),
+                 filepath.FilePath(FILEROOT+"xnethack-6.0.0/var/livelog"): ("xnh", "\t"),
+                 filepath.FilePath(FILEROOT+"splicehack-0.8.2/var/livelog"): ("spl", "\t"),
                  filepath.FilePath(FILEROOT+"nh13d/livelog"): ("nh13d", ":"),
                  filepath.FilePath(FILEROOT+"slashem-0.0.8E0F2/livelog"): ("slshm", ":"),
                  filepath.FilePath(FILEROOT+"notdnethack-2020.04.16/livelog"): ("ndnh", ":"),
                  filepath.FilePath(FILEROOT+"evilhack-0.6.0/var/livelog"): ("evil", "\t"),
+                 filepath.FilePath(FILEROOT+"setseed/var/livelog"): ("seed", "\t"),
+                 filepath.FilePath(FILEROOT+"slashthem-0.9.5/livelog"): ("slth", ":"),
                  filepath.FilePath(FILEROOT+"unnethack-6.0.1/var/unnethack/livelog"): ("un", ":")}
 
     # Forward events to other bots at the request of maintainers of other variant-specific channels
@@ -205,7 +213,8 @@ class DeathBotProtocol(irc.IRCClient):
                  "tnnt" : [],
                  "ndnh" : [],
                  "evil" : [],
-                "gnoll" : [],
+                 "seed" : [],
+                 "slth" : [],
                    "un" : []}
 
     # for displaying variants and server tags in colour
@@ -224,31 +233,34 @@ class DeathBotProtocol(irc.IRCClient):
     INPR=DGLD+"inprogress-"
     inprog = { "nh343" : [INPR+"nh343-hdf/"],
                "nh363" : [INPR+"nh363-hdf/"],
-               "nh370" : [INPR+"nh370a-hdf/", INPR+"nh370b-hdf/",
-                          INPR+"nh370c-hdf/", INPR+"nh370d-hdf/",
-                          INPR+"nh370e-hdf/", INPR+"nh370f-hdf/",
-                          INPR+"nh370.15-hdf/", INPR+"nh370.16-hdf/",
-                          INPR+"nh370.17-hdf/", INPR+"nh370.18-hdf/",
-                          INPR+"nh370.20-hdf/", INPR+"nh370.22-hdf/",
-                          INPR+"nh370.23-hdf/"],
+               "nh370" : [INPR+"nh370.16-hdf/", INPR+"nh370.17-hdf/",
+                          INPR+"nh370.18-hdf/", INPR+"nh370.20-hdf/",
+                          INPR+"nh370.22-hdf/", INPR+"nh370.23-hdf/",
+                          INPR+"nh370.27-hdf/", INPR+"nh370.28-hdf/",
+                          INPR+"nh370.29-hdf/", INPR+"nh370.30-hdf/",
+                          INPR+"nh370.31-hdf/", INPR+"nh370.32-hdf/"],
                 "zapm" : [INPR+"zapm/"],
                   "gh" : [INPR+"gh024/"],
                   "un" : [INPR+"un531/", INPR+"un532/",
                           INPR+"un600/", INPR+"un601/"],
                  "dnh" : [INPR+"dnh3171/", INPR+"dnh318/",
-                          INPR+"dnh319/", INPR+"dnh3191/"],
+                          INPR+"dnh319/", INPR+"dnh3191/",
+                          INPR+"dnh320/"],
                   "fh" : [INPR+"fh/"],
                   "4k" : [INPR+"4k/"],
                  "nh4" : [INPR+"nh4/"],
                   "sp" : [INPR+"sp065/"],
-                "slex" : [INPR+"slex250/", INPR+"slex260/", INPR+"slex266/"],
+                "slex" : [INPR+"slex250/", INPR+"slex260/",
+                          INPR+"slex266/", INPR+"slex268/",
+                          INPR+"slex270/"],
                  "xnh" : [INPR+"xnh040/", INPR+"xnh041/",
                           INPR+"xnh50/", INPR+"xnh51/",
-                          INPR+"xnh51.1/", INPR+"xnh51.2/"],
+                          INPR+"xnh51.1/", INPR+"xnh51.2/",
+                          INPR+"xnh51.3/", INPR+"xnh600/"],
                  "spl" : [INPR+"spl063/", INPR+"spl064/",
                           INPR+"spl070/", INPR+"spl071/",
                           INPR+"spl071.21/", INPR+"spl080/",
-                          INPR+"spl081/"],
+                          INPR+"spl081/", INPR+"spl082/"],
                "nh13d" : [INPR+"nh13d/"],
                "slshm" : [INPR+"slashem/"],
                 "ndnh" : [INPR+"ndnh-524/", INPR+"ndnh-1224/",
@@ -257,29 +269,31 @@ class DeathBotProtocol(irc.IRCClient):
                           INPR+"evil042/", INPR+"evil050/",
                           INPR+"evil060/"],
                 "tnnt" : [INPR+"tnnt/"],
+                "seed" : [INPR+"seed/"],
+                "slth" : [INPR+"slth095/"],
                  "dyn" : [INPR+"dyn/"]}
 
     # for !whereis
     whereis = {"nh343": [FILEROOT+"nh343-hdf/var/whereis/"],
                "nh363": [FILEROOT+"nh363-hdf/var/whereis/"],
-               "nh370": [FILEROOT+"nh370a-hdf/var/whereis/",
-                         FILEROOT+"nh370b-hdf/var/whereis/",
-                         FILEROOT+"nh370c-hdf/var/whereis/",
-                         FILEROOT+"nh370d-hdf/var/whereis/",
-                         FILEROOT+"nh370e-hdf/var/whereis/",
-                         FILEROOT+"nh370f-hdf/var/whereis/",
-                         FILEROOT+"nh370.15-hdf/var/whereis/",
-                         FILEROOT+"nh370.16-hdf/var/whereis/",
+               "nh370": [FILEROOT+"nh370.16-hdf/var/whereis/",
                          FILEROOT+"nh370.17-hdf/var/whereis/",
                          FILEROOT+"nh370.18-hdf/var/whereis/",
                          FILEROOT+"nh370.20-hdf/var/whereis/",
                          FILEROOT+"nh370.22-hdf/var/whereis/",
-                         FILEROOT+"nh370.23-hdf/var/whereis/"],
+                         FILEROOT+"nh370.23-hdf/var/whereis/",
+                         FILEROOT+"nh370.27-hdf/var/whereis/",
+                         FILEROOT+"nh370.28-hdf/var/whereis/",
+                         FILEROOT+"nh370.29-hdf/var/whereis/",
+                         FILEROOT+"nh370.30-hdf/var/whereis/",
+                         FILEROOT+"nh370.31-hdf/var/whereis/",
+                         FILEROOT+"nh370.32-hdf/var/whereis/"],
                   "gh": [FILEROOT+"grunthack-0.2.4/var/whereis/"],
                  "dnh": [FILEROOT+"dnethack-3.17.1/whereis/",
                          FILEROOT+"dnethack-3.18.0/whereis/",
                          FILEROOT+"dnethack-3.19.0/whereis/",
-                         FILEROOT+"dnethack-3.19.1/whereis/"],
+                         FILEROOT+"dnethack-3.19.1/whereis/",
+                         FILEROOT+"dnethack-3.20.0/whereis/"],
                   "fh": [FILEROOT+"fiqhackdir/data/"],
                  "dyn": [FILEROOT+"dynahack/dynahack-data/var/whereis/"],
                  "nh4": [FILEROOT+"nh4dir/save/whereis/"],
@@ -287,20 +301,25 @@ class DeathBotProtocol(irc.IRCClient):
                   "sp": [FILEROOT+"sporkhack-0.6.5/var/"],
                 "slex": [FILEROOT+"slex-2.5.0/whereis/",
                          FILEROOT+"slex-2.6.0/whereis/",
-                         FILEROOT+"slex-2.6.6/whereis/"],
+                         FILEROOT+"slex-2.6.6/whereis/",
+                         FILEROOT+"slex-2.6.8/whereis/",
+                         FILEROOT+"slex-2.7.0/whereis/"],
                  "xnh": [FILEROOT+"xnethack-0.4.0/var/whereis/",
                          FILEROOT+"xnethack-0.4.1/var/whereis/",
                          FILEROOT+"xnethack-5.0/var/whereis/",
                          FILEROOT+"xnethack-5.1/var/whereis/",
                          FILEROOT+"xnethack-5.1.1/var/whereis/",
-                         FILEROOT+"xnethack-5.1.2/var/whereis/"],
+                         FILEROOT+"xnethack-5.1.2/var/whereis/",
+                         FILEROOT+"xnethack-5.1.3/var/whereis/",
+                         FILEROOT+"xnethack-6.0.0/var/whereis/"],
                  "spl": [FILEROOT+"splicehack-0.6.3/var/whereis/",
                          FILEROOT+"splicehack-0.6.4/var/whereis/",
                          FILEROOT+"splicehack-0.7.0/var/whereis/",
                          FILEROOT+"splicehack-0.7.1/var/whereis/",
                          FILEROOT+"splicehack-0.7.1-21/var/whereis/",
                          FILEROOT+"splicehack-0.8.0/var/whereis/",
-                         FILEROOT+"splicehack-0.8.1/var/whereis/"],
+                         FILEROOT+"splicehack-0.8.1/var/whereis/",
+                         FILEROOT+"splicehack-0.8.2/var/whereis/"],
                "nh13d": [FILEROOT+"nh13d/whereis/"],
                "slshm": [FILEROOT+"slashem-0.0.8E0F2/whereis/"],
                 "ndnh": [FILEROOT+"notdnethack-2019.05.24/whereis/",
@@ -312,6 +331,8 @@ class DeathBotProtocol(irc.IRCClient):
                          FILEROOT+"evilhack-0.5.0/var/whereis/",
                          FILEROOT+"evilhack-0.6.0/var/whereis/"],
                 "tnnt": [FILEROOT+"tnnt/var/whereis/"],
+                "seed": [FILEROOT+"setseed/var/whereis/"],
+                "slth": [FILEROOT+"slashthem-0.9.5/whereis/"],
                   "un": [FILEROOT+"un531/var/unnethack/",
                          FILEROOT+"un532/var/unnethack/",
                          FILEROOT+"unnethack-6.0.0/var/unnethack/",
@@ -349,15 +370,26 @@ class DeathBotProtocol(irc.IRCClient):
                    "sp": ["The Dungeons of Doom","Gehennom","The Gnomish Mines","The Quest",
                           "Sokoban","Fort Ludios","Vlad's Tower","The Elemental Planes"],
                  "slex": ["The Dungeons of Doom","Gehennom","The Gnomish Mines","The Quest",
-                          "The Subquest","Bell Caves","Lawful Quest","Neutral Quest","Chaotic Quest",
+                          "The Subquest","Bell Caves","Rival Quest",
+                          "Lawful Quest","Neutral Quest","Chaotic Quest",
                           "Sokoban","Town","Grund's Stronghold","Fort Ludios","The Wyrm Caves",
+                          "The Ice Queen's Realm",
                           "One-eyed Sam's Market","The Lost Tomb","The Spider Caves","The Sunless Sea",
-                          "The Temple of Moloch","Illusory Castle","Deep Mines","Space Base",
+                          "The Temple of Moloch","Grue Challenge","Joust Challenge","Pacman Challenge",
+                          "Pool Challenge","Digdug Challenge",
+                          "Illusory Castle","Deep Mines","Space Base",
                           "Sewer Plant","Gamma Caves","Mainframe","Void","Nether Realm","Angmar",
-                          "Swimming Pool","Hell's Bathroom",
+                          "Emyn Luin","Minotaur Maze","Swimming Pool","Hell's Bathroom",
+                          "Minus World","Green Cross",
                           "The Giant Caverns","Frankenstein's Lab",
                           "Sheol","Vlad's Tower","Yendorian Tower","Forging Chamber",
-                          "Dead Grounds","Ordered Chaos","The Elemental Planes"],
+                          "Dead Grounds","Ordered Chaos",
+                          "Resting Zone GA","Resting Zone GB","Resting Zone GC","Resting Zone GD",
+                          "Resting Zone GE","Resting Zone TA","Resting Zone TB","Resting Zone TC",
+                          "Resting Zone TD","Resting Zone TE","Resting Zone TF","Resting Zone TG",
+                          "Resting Zone TH","Resting Zone TI","Resting Zone TJ","Resting Zone A",
+                          "Resting Zone S",
+                          "The Elemental Planes"],
                   "xnh": ["The Dungeons of Doom","Gehennom","The Gnomish Mines","The Quest",
                           "Sokoban","Fort Ludios","Vlad's Tower","The Elemental Planes"],
                   "spl": ["The Dungeons of Doom","The Void","The Icy Wastes","The Dark Forest",
@@ -369,12 +401,20 @@ class DeathBotProtocol(irc.IRCClient):
                           "The Quest","Sokoban","Town","Fort Ludios",
                           "One-eyed Sam's Market","Vlad's Tower","The Dragon Caves",
                           "The Elemental Planes"],
+                 "slth": ["The Dungeons of Doom","Gehennom","The Gnomish Mines",
+                          "The Quest","Lawful Quest","Neutral Quest","Chaotic Quest",
+                          "Sokoban","Town","Grund's Stronghold","Fort Ludios","The Wyrm Caves",
+                          "One-eyed Sam's Market","The Lost Tomb","The Spider Caves","The Sunless Sea",
+                          "The Temple of Moloch","The Giant Caverns","Vlad's Tower","Frankenstein's Lab",
+                          "The Elemental Planes"],
                  "tnnt": ["The Dungeons of Doom","Gehennom","The Gnomish Mines","The Quest",
                           "Sokoban","Fort Ludios","DevTeam's Office","Deathmatch Arena",
                           "Vlad's Tower","The Elemental Planes"],
                  "evil": ["The Dungeons of Doom","Gehennom","The Gnomish Mines","The Quest",
                           "Sokoban","Fort Ludios","The Ice Queen's Realm","Vlad's Tower",
                           "The Elemental Planes"],
+                 "seed": ["The Dungeons of Doom","Gehennom","The Gnomish Mines","The Quest",
+                          "Sokoban","Fort Ludios","Vlad's Tower","The Elemental Planes"],
                    "un": ["The Dungeons of Doom","Gehennom","Sheol","The Gnomish Mines",
                           "The Quest","Sokoban","Town","The Ruins of Moria","Fort Ludios",
                           "One-eyed Sam's Market","Vlad's Tower","The Dragon Caves",
@@ -793,12 +833,15 @@ class DeathBotProtocol(irc.IRCClient):
                 "slshm": (["slash", "slash'em", "slshm"],
                           vanilla_roles + ["fla", "ice", "nec", "uds", "yeo"],
                           vanilla_races + ["dop", "dro", "hob", "lyc", "vam"]),
+                 "slth": (["slashthem", "slth"],
+                          vanilla_roles + ["fla", "ice", "nec", "uds", "yeo"],
+                          vanilla_races + ["dop", "dro", "hob", "lyc", "vam"]),
                  "tnnt": (["tnnt"],
+                          vanilla_roles, vanilla_races),
+                 "seed": (["seed"],
                           vanilla_roles, vanilla_races),
                  "evil": (["evilhack", "evil", "evl"],
                           vanilla_roles + ["con"], vanilla_races + ["cen", "gia", "hob", "ill"]),
-                "gnoll": (["gnoll", "gnollhack"],
-                          vanilla_roles, vanilla_races),
                  "slex": (["slex", "sloth", "amy's-weird-thing"],
                           vanilla_roles +
                              ["ana", "bin", "nob", "pir",
@@ -871,7 +914,7 @@ class DeathBotProtocol(irc.IRCClient):
                               "wor", "wra", "xor", "yee"])}
 
     # variants which support streaks - now tracking slex streaks, because that's totally possible.
-    streakvars = ["nh343", "nh363", "nh370", "nh13d", "gh", "dnh", "un", "sp", "xnh", "slex", "spl", "slshm", "tnnt", "ndnh", "evil", "gnoll"]
+    streakvars = ["nh343", "nh363", "nh370", "nh13d", "gh", "dnh", "un", "sp", "xnh", "slex", "spl", "slshm", "tnnt", "ndnh", "evil", "seed", "slth"]
     # for !asc statistics - assume these are the same for all variants, or at least the sane ones.
     aligns = ["Law", "Neu", "Cha"]
     genders = ["Mal", "Fem"]
@@ -960,9 +1003,16 @@ class DeathBotProtocol(irc.IRCClient):
             self.allgames[v] = {};
 
         # for !tell
-        self.tellbuf = shelve.open(BOTDIR + "/tellmsg.db", writeback=True)
+        try:
+            self.tellbuf = shelve.open(BOTDIR + "/tellmsg.db", writeback=True)
+        except:
+            self.tellbuf = shelve.open(BOTDIR + "/tellmsg", writeback=True, protocol=2)
+
         # for !setmintc
-        self.plr_tc = shelve.open(BOTDIR + "/plrtc.db", writeback=True)
+        try:
+            self.plr_tc = shelve.open(BOTDIR + "/plrtc.db", writeback=True)
+        except:
+            self.plr_tc = shelve.open(BOTDIR + "/plrtc", writeback=True, protocol=2)
 
         # Commands must be lowercase here.
         self.commands = {"ping"     : self.doPing,
@@ -1047,7 +1097,7 @@ class DeathBotProtocol(irc.IRCClient):
         # sequentially read xlogfiles from beginning to pre-populate lastgame data.
         for filepath in self.xlogfiles:
             with filepath.open("r") as handle:
-                for line in handle:
+                for line in handle.readlines():
                     delim = self.logs[filepath][2]
                     game = parse_xlogfile_line(line, delim)
                     game["variant"] = self.logs[filepath][1]
@@ -1236,6 +1286,9 @@ class DeathBotProtocol(irc.IRCClient):
     def doHello(self, sender, replyto, msgwords = 0):
         self.msgLog(replyto, "Hello " + sender + ", Welcome to " + CHANNEL)
 
+    def doRip(self, sender, replyto, msgwords = 0):
+        self.msg(replyto, "rip")
+
     def doLotg(self, sender, replyto, msgwords):
         if len(msgwords) > 1: target = " ".join(msgwords[1:])
         else: target = sender
@@ -1316,7 +1369,7 @@ class DeathBotProtocol(irc.IRCClient):
            self.respond(replyto, sender, self.rolename[random.choice(self.variants[v][1])])
         else:
            #pick variant first
-           v = random.choice(self.variants.keys())
+           v = random.choice(list(self.variants.keys()))
            self.respond(replyto, sender, self.variants[v][0][0] + " " + self.rolename[random.choice(self.variants[v][1])])
 
     def doRace(self, sender, replyto, msgwords):
@@ -1327,11 +1380,11 @@ class DeathBotProtocol(irc.IRCClient):
                self.respond(replyto, sender, "No variant " + msgwords[1] + " on server.")
            self.respond(replyto, sender, self.racename[random.choice(self.variants[v][2])])
         else:
-           v = random.choice(self.variants.keys())
+           v = random.choice(list(self.variants.keys()))
            self.respond(replyto, sender, self.variants[v][0][0] + " " + self.racename[random.choice(self.variants[v][2])])
 
     def doVariant(self, sender, replyto, msgwords):
-        self.respond(replyto, sender, self.variants[random.choice(self.variants.keys())][0][0])
+        self.respond(replyto, sender, self.variants[random.choice(list(self.variants.keys()))][0][0])
 
     def doBeer(self, sender, replyto, msgwords):
         self.respond(replyto, sender, random.choice(["It's your shout!", "I thought you'd never ask!",
@@ -1350,15 +1403,15 @@ class DeathBotProtocol(irc.IRCClient):
             # Attempt to make a sensible choice of vessel.
             # pick from "all", and check against specific drink. Loop a few times for a match, then give up.
             "vessel": {"all"   : ["cup", "mug", "shot", "tall glass", "tumbler", "glass", "schooner", "pint", "fifth", "vial", "potion", "barrel", "droplet", "bucket", "esky"],
-                       "tea"   : ["cup", "mug"],
+                       "tea"   : ["cup", "mug", "saucer"],
                        "potion": ["potion", "vial", "droplet"],
-                       "booze" : ["shot", "tall glass", "tumbler", "glass", "schooner", "pint", "fifth", "barrel"],
+                       "booze" : ["shot", "tall glass", "tumbler", "glass", "schooner", "pint", "fifth", "barrel", "flask"],
                        "coffee": ["cup", "mug"],
                        "vodka" : ["shot", "tall glass", "tumbler", "glass"],
-                       "whiskey":["shot", "tall glass", "tumbler", "glass"],
+                       "whiskey":["shot", "tall glass", "tumbler", "glass", "flask"],
                        "rum"   : ["shot", "tall glass", "tumbler", "glass"],
                        "tequila":["shot", "tall glass", "tumbler", "glass"],
-                       "scotch": ["shot", "tall glass", "tumbler", "glass"]
+                       "scotch": ["shot", "tall glass", "tumbler", "glass", "flask"]
                        # others omitted - anything goes for them
                       },
 
@@ -1368,12 +1421,12 @@ class DeathBotProtocol(irc.IRCClient):
                        "coffee": ["coffee", "espresso", "cafe latte", "Blend 43"],
                        "vodka" : ["Stolichnaya", "Absolut", "Grey Goose", "Ketel One", "Belvedere", "Luksusowa", "SKYY", "Finlandia", "Smirnoff"],
                        "whiskey":["Irish", "Jack Daniels", "Evan Williams", "Crown Royal", "Crown Royal Reserve", "Johnnie Walker Black", "Johnnie Walker Red", "Johnnie Walker Blue"],
-                       "rum"   : ["Bundy", "Jamaican", "white", "dark", "spiced"],
+                       "rum"   : ["Bundy", "Jamaican", "white", "dark", "spiced", "pirate"],
                        "fictional": ["Romulan ale", "Blood wine", "Kanar", "Pan Galactic Gargle Blaster", "jynnan tonyx", "gee-N'N-T'N-ix", "jinond-o-nicks", "chinanto/mnigs", "tzjin-anthony-ks", "Moloko Plus", "Duff beer", "Panther Pilsner beer", "Screaming Viking", "Blue milk", "Fizzy Bubblech", "Butterbeer", "Ent-draught", "Nectar of the Gods", "Frobscottle"],
                        "tequila":["blanco", "oro", "reposado", "añejo", "extra añejo", "Patron Silver", "Jose Cuervo 1800"],
                        "scotch": ["single malt", "single grain", "blended malt", "blended grain", "blended", "Glenfiddich", "Glenlivet", "Dalwhinnie"],
                        "junk"  : ["blended kale", "pickle juice", "poorly-distilled rocket fuel", "caustic gas", "liquid smoke", "protein shake", "wheatgrass nonsense", "olive oil", "saline solution", "napalm", "synovial fluid", "drool"]},
-            "prepared":["brewed", "distilled", "fermented", "decanted", "prayed over", "replicated", "conjured"],
+            "prepared":["brewed", "distilled", "fermented", "decanted", "prayed over", "replicated", "conjured", "acquired", "brewed", "excreted"],
             "degrees" :{"Kelvin": [0, 500], "degrees Celsius": [-20,95], "degrees Fahrenheit": [-20,200]}, #sane-ish ranges
             "suppress": ["coffee", "junk", "booze", "potion", "fictional"] } # do not append these to the random description
 
@@ -1381,14 +1434,14 @@ class DeathBotProtocol(irc.IRCClient):
     def doTea(self, sender, replyto, msgwords):
         if len(msgwords) > 1: target = msgwords[1]
         else: target = sender
-        drink = random.choice([msgwords[0]] * 50 + self.bev["drink"].keys())
-        for vchoice in xrange(10):
+        drink = random.choice([msgwords[0]] * 50 + list(self.bev["drink"].keys()))
+        for vchoice in range(10):
             vessel = random.choice(self.bev["vessel"]["all"])
             if drink not in self.bev["vessel"].keys(): break # anything goes for these
             if vessel in self.bev["vessel"][drink]: break # match!
         fulldrink = random.choice(self.bev["drink"][drink])
         if drink not in self.bev["suppress"]: fulldrink += " " + drink
-        tempunit = random.choice(self.bev["degrees"].keys())
+        tempunit = random.choice(list(self.bev["degrees"].keys()))
         [tmin,tmax] = self.bev["degrees"][tempunit]
         temp = random.randrange(tmin,tmax)
         self.describeLog(replyto, random.choice(self.bev["serves"]) + " " + target
@@ -1541,7 +1594,7 @@ class DeathBotProtocol(irc.IRCClient):
                             for wipath in glob.iglob(widir + "*.whereis"):
                                 if wipath.split("/")[-1].lower() == (msgwords[1] + ".whereis").lower():
                                     plr = wipath.split("/")[-1].split(".")[0] # Correct case
-                                    wirec = parse_xlogfile_line(open(wipath, "r").read().strip(),":")
+                                    wirec = parse_xlogfile_line(open(wipath, "rb").read(),":")
 
                                     self.msg(master, "#R# " + query
                                              + " " + self.displaytag(SERVERTAG) + " " + plr
@@ -1678,6 +1731,7 @@ class DeathBotProtocol(irc.IRCClient):
 
     def outAscStreak(self,q):
         msgs = []
+        fallback_msg = ""
         for server in q["resp"]:
             if q["resp"][server].split(' ')[0] == 'No':
                 # If they all say "No streaks for bob", that becomes the eventual output
@@ -1699,6 +1753,7 @@ class DeathBotProtocol(irc.IRCClient):
 
     def streakDate(self,stamp):
         return datetime.datetime.fromtimestamp(float(stamp)).strftime("%Y-%m-%d")
+        #return stamp.strftime("%Y-%m-%d")
 
     def getStreak(self, master, sender, query, msgwords):
         (PLR, var) = self.plrVar(sender, "", msgwords)
@@ -1777,9 +1832,9 @@ class DeathBotProtocol(irc.IRCClient):
         if (len(msgwords) >= 3): #var, plr, any order.
             vp = self.varalias(msgwords[1])
             pv = self.varalias(msgwords[2])
-            dl = self.la.get(":".join(pv,vp).lower(),False)
+            dl = self.la.get(":".join([pv,vp]).lower(),False)
             if not dl:
-                dl = self.la.get(":".join(vp,pv).lower(),False)
+                dl = self.la.get(":".join([vp,pv]).lower(),False)
             if not dl:
                 self.msg(master, "#R# " + query +
                                  " No last ascension for (" + ",".join(msgwords[1:3]) + ").")
@@ -1880,6 +1935,8 @@ class DeathBotProtocol(irc.IRCClient):
         # Hello processing first.
         if re.match(r'^(hello|hi|hey|salut|hallo|guten tag|shalom|ciao|hola|aloha|bonjour|hei|gday|konnichiwa|nuqneh)[!?. ]*$', message.lower()):
             self.doHello(sender, replyto)
+        if re.match(r'^(rip|r\.i\.p|rest in p).*$', message.lower()):
+            self.doRip(sender, replyto)
         # Message checks next.
         self.checkMessages(sender)
         # Proxy pino queries
@@ -1981,7 +2038,7 @@ class DeathBotProtocol(irc.IRCClient):
             # quote only the game-specific part, not the prefix.
             # Otherwise it quotes the : in https://
             # assume the rest of the url prefix is safe.
-            dumpurl = urllib.quote(game["dumpfmt"].format(**game))
+            dumpurl = urllib.parse.quote(game["dumpfmt"].format(**game))
             dumpurl = self.dump_url_prefix.format(**game) + dumpurl
         self.lg["{variant}:{name}".format(**game).lower()] = dumpurl
         if (game["endtime"] > self.lge.get(lname, 0)):
@@ -2044,6 +2101,19 @@ class DeathBotProtocol(irc.IRCClient):
 
         if (not report): return # we're just reading through old entries at startup
 
+        # format duration string based on realtime and/or wallclock duration
+        if "starttime" in game and "endtime" in game:
+            game["wallclock"] = timedelta_int(game["endtime"] - game["starttime"])
+        if "realtime" in game and "wallclock" in game:
+            if game["realtime"] == game["wallclock"]:
+                game["duration_str"] = f"[{game['realtime']}]"
+            else:
+                game["duration_str"] = f"rt[{game['realtime']}], wc[{game['wallclock']}]"
+        elif "realtime" in game and "wallclock" not in game:
+                game["duration_str"] = f"rt[{game['realtime']}]"
+        elif "wallclock" in game and "realtime" not in game:
+                game["duration_str"] = f"wc[{game['realtime']}]"
+
         # start of actual reporting
         if game.get("charname", False):
             if game.get("name", False):
@@ -2060,6 +2130,9 @@ class DeathBotProtocol(irc.IRCClient):
             if game.get("version","unknown") == "NH-1.3d":
                 yield ("[{displaystring}] {name} ({role} {gender}), "
                        "{points} points, T:{turns}, {death}{ascsuff}").format(**game)
+            elif var == "seed" and "duration_str" in game:
+                yield ("[{displaystring}] {name} ({role} {race} {gender} {align}), "
+                       "{points} points, T:{turns}, {duration_str}, {death}{ascsuff}").format(**game)
             else:
                 yield ("[{displaystring}] {name} ({role} {race} {gender} {align}), "
                        "{points} points, T:{turns}, {death}{ascsuff}").format(**game)
@@ -2098,8 +2171,20 @@ class DeathBotProtocol(irc.IRCClient):
                     event["lltype"] &= ~t
                     if not event["lltype"]: return
         if "message" in event:
-            yield ("[{displaystring}] {player} ({role} {race} {gender} {align}) "
-                   "{message}, on T:{turns}").format(**event)
+            if event["message"] == "entered the Dungeons of Doom":
+                if "user_seed" in event and "seed" in event and event["user_seed"]:
+                    yield("[{displaystring}] {player} ({role} {race} {gender} {align}) "
+                    "{message} [chosen seed: {seed}]".format(**event))
+                else:
+                    yield("[{displaystring}] {player} ({role} {race} {gender} {align}) "
+                    "{message} [random seed]".format(**event))
+            elif "realtime" in event:
+                event["realtime_fmt"] = str(event["realtime"])
+                yield ("[{displaystring}] {player} ({role} {race} {gender} {align}) "
+                       "{message}, on T:{turns}, rt[{realtime_fmt}]").format(**event)
+            else:
+                yield ("[{displaystring}] {player} ({role} {race} {gender} {align}) "
+                       "{message}, on T:{turns}").format(**event)
         elif "wish" in event:
             yield ("[{displaystring}] {player} ({role} {race} {gender} {align}) "
                    'wished for "{wish}", on T:{turns}').format(**event)
@@ -2143,7 +2228,7 @@ class DeathBotProtocol(irc.IRCClient):
         with filepath.open("r") as handle:
             handle.seek(self.logs_seek[filepath])
 
-            for line in handle:
+            for line in handle.readlines():
                 delim = self.logs[filepath][2]
                 game = parse_xlogfile_line(line, delim)
                 game["variant"] = self.logs[filepath][1]
@@ -2193,7 +2278,7 @@ class DeathBotFactory(ReconnectingClientFactory):
 
 if __name__ == '__main__':
     # initialize logging
-    #log.startLogging(sys.stdout)
+    log.startLogging(DailyLogFile.fromFullPath(LOGBASE))
 
     # create factory protocol and application
     f = DeathBotFactory()
