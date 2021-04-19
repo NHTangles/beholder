@@ -291,7 +291,8 @@ class DeathBotProtocol(irc.IRCClient):
                           INPR+"evil042/", INPR+"evil050/",
                           INPR+"evil060/"],
                 "tnnt" : [INPR+"tnnt/"],
-                "seed" : [INPR+"seed/"],
+                "seed" : [INPR+"seed/",
+                          INPR+"seed.32/"],
                 "slth" : [INPR+"slth095/"],
                  "dyn" : [INPR+"dyn/"]}
 
