@@ -171,7 +171,7 @@ class DeathBotProtocol(irc.IRCClient):
                  filepath.FilePath(FILEROOT+"slashem-0.0.8E0F2/xlogfile"): ("slshm", ":", "slashem/dumplog/{starttime}.slashem.txt"),
                  filepath.FilePath(FILEROOT+"notdnethack-2020.04.16/xlogfile"): ("ndnh", ":", "notdnethack/dumplog/{starttime}.ndnh.txt"),
                  filepath.FilePath(FILEROOT+"evilhack-0.6.0/var/xlogfile"): ("evil", "\t", "evilhack/dumplog/{starttime}.evil.html"),
-                 filepath.FilePath(FILEROOT+"setseed/var/xlogfile"): ("seed", "\t", "setseed/dumplog/{starttime}.seed.html"),
+                 filepath.FilePath(FILEROOT+"setseed.32/var/xlogfile"): ("seed", "\t", "setseed/dumplog/{starttime}.seed.html"),
                  filepath.FilePath(FILEROOT+"slashthem-0.9.5/xlogfile"): ("slth", ":", "slashthem/dumplog/{starttime}.slth.txt"),
                  filepath.FilePath(FILEROOT+"unnethack-6.0.2/var/unnethack/xlogfile"): ("un", "\t", "unnethack/dumplog/{starttime}.un.txt.html")}
     livelogs  = {filepath.FilePath(FILEROOT+"nh343-hdf/var/livelog"): ("nh343", ":"),
@@ -189,7 +189,7 @@ class DeathBotProtocol(irc.IRCClient):
                  filepath.FilePath(FILEROOT+"slashem-0.0.8E0F2/livelog"): ("slshm", ":"),
                  filepath.FilePath(FILEROOT+"notdnethack-2020.04.16/livelog"): ("ndnh", ":"),
                  filepath.FilePath(FILEROOT+"evilhack-0.6.0/var/livelog"): ("evil", "\t"),
-                 filepath.FilePath(FILEROOT+"setseed/var/livelog"): ("seed", "\t"),
+                 filepath.FilePath(FILEROOT+"setseed.32/var/livelog"): ("seed", "\t"),
                  filepath.FilePath(FILEROOT+"slashthem-0.9.5/livelog"): ("slth", ":"),
                  filepath.FilePath(FILEROOT+"unnethack-6.0.2/var/unnethack/livelog"): ("un", ":")}
 
@@ -353,7 +353,8 @@ class DeathBotProtocol(irc.IRCClient):
                          FILEROOT+"evilhack-0.5.0/var/whereis/",
                          FILEROOT+"evilhack-0.6.0/var/whereis/"],
                 "tnnt": [FILEROOT+"tnnt/var/whereis/"],
-                "seed": [FILEROOT+"setseed/var/whereis/"],
+                "seed": [FILEROOT+"setseed/var/whereis/",
+                         FILEROOT+"setseed.32/var/whereis/"],
                 "slth": [FILEROOT+"slashthem-0.9.5/whereis/"],
                   "un": [FILEROOT+"un531/var/unnethack/",
                          FILEROOT+"un532/var/unnethack/",
