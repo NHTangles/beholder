@@ -191,7 +191,7 @@ class DeathBotProtocol(irc.IRCClient):
                  filepath.FilePath(FILEROOT+"evilhack-0.6.0/var/livelog"): ("evil", "\t"),
                  filepath.FilePath(FILEROOT+"setseed.32/var/livelog"): ("seed", "\t"),
                  filepath.FilePath(FILEROOT+"slashthem-0.9.5/livelog"): ("slth", ":"),
-                 filepath.FilePath(FILEROOT+"unnethack-6.0.3/var/unnethack/livelog"): ("un", ":")}
+                 filepath.FilePath(FILEROOT+"unnethack-6.0.3/var/unnethack/livelog"): ("un", "\t")}
 
     # Forward events to other bots at the request of maintainers of other variant-specific channels
     forwards = {"nh343" : [],
