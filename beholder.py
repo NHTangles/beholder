@@ -2138,7 +2138,7 @@ class DeathBotProtocol(irc.IRCClient):
         elif "realtime" in game and "wallclock" not in game:
                 game["duration_str"] = f"rt[{game['realtime']}]"
         elif "wallclock" in game and "realtime" not in game:
-                game["duration_str"] = f"wc[{game['realtime']}]"
+                game["duration_str"] = f"wc[{game['wallclock']}]"
 
         # start of actual reporting
         if game.get("charname", False):
