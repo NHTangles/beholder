@@ -1312,8 +1312,8 @@ class DeathBotProtocol(irc.IRCClient):
     def doHello(self, sender, replyto, msgwords = 0):
         self.msgLog(replyto, "Hello " + sender + ", Welcome to " + CHANNEL)
 
-    def doRip(self, sender, replyto, msgwords = 0):
-        self.msg(replyto, "rip")
+#    def doRip(self, sender, replyto, msgwords = 0):
+#        self.msg(replyto, "rip")
 
     def doLotg(self, sender, replyto, msgwords):
         if len(msgwords) > 1: target = " ".join(msgwords[1:])
@@ -1961,8 +1961,8 @@ class DeathBotProtocol(irc.IRCClient):
         # Hello processing first.
         if re.match(r'^(hello|hi|hey|salut|hallo|guten tag|shalom|ciao|hola|aloha|bonjour|hei|gday|konnichiwa|nuqneh)[!?. ]*$', message.lower()):
             self.doHello(sender, replyto)
-        if re.match(r'^(rip|r\.i\.p|rest in p).*$', message.lower()):
-            self.doRip(sender, replyto)
+#        if re.match(r'^(rip|r\.i\.p|rest in p).*$', message.lower()):
+#            self.doRip(sender, replyto)
         # Message checks next.
         self.checkMessages(sender)
         # Proxy pino queries
