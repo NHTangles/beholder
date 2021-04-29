@@ -1309,6 +1309,11 @@ class DeathBotProtocol(irc.IRCClient):
 
         self.respond(replyto, sender, resp)
 
+# spicyCebolla had the idea of randomised greetings so im saving some of her suggestions here in a comment
+# <spicyCebolla> "oh no, someone said hi again!"
+# <spicyCebolla> "are you saying hi to me? or to a human?"
+# <spicyCebolla> "i hope this isn't too forward but i'm glad you said a trigger phrase that i can respond to. welcome i guess!"
+# <spicyCebolla> like "you hear someone cursing about refunds" or whatever the usual ones are
     def doHello(self, sender, replyto, msgwords = 0):
         self.msgLog(replyto, "Hello " + sender + ", Welcome to " + CHANNEL)
 
