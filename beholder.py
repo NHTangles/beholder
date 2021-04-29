@@ -1310,11 +1310,16 @@ class DeathBotProtocol(irc.IRCClient):
 
         self.respond(replyto, sender, resp)
 
+# spicyCebolla had the idea of randomised greetings so im saving some of her suggestions here in a comment
+# <spicyCebolla> "oh no, someone said hi again!"
+# <spicyCebolla> "are you saying hi to me? or to a human?"
+# <spicyCebolla> "i hope this isn't too forward but i'm glad you said a trigger phrase that i can respond to. welcome i guess!"
+# <spicyCebolla> like "you hear someone cursing about refunds" or whatever the usual ones are
     def doHello(self, sender, replyto, msgwords = 0):
         self.msgLog(replyto, "Hello " + sender + ", Welcome to " + CHANNEL)
 
-    def doRip(self, sender, replyto, msgwords = 0):
-        self.msg(replyto, "rip")
+#    def doRip(self, sender, replyto, msgwords = 0):
+#        self.msg(replyto, "rip")
 
     def doLotg(self, sender, replyto, msgwords):
         if len(msgwords) > 1: target = " ".join(msgwords[1:])
@@ -1962,8 +1967,8 @@ class DeathBotProtocol(irc.IRCClient):
         # Hello processing first.
         if re.match(r'^(hello|hi|hey|salut|hallo|guten tag|shalom|ciao|hola|aloha|bonjour|hei|gday|konnichiwa|nuqneh)[!?. ]*$', message.lower()):
             self.doHello(sender, replyto)
-        if re.match(r'^(rip|r\.i\.p|rest in p).*$', message.lower()):
-            self.doRip(sender, replyto)
+#        if re.match(r'^(rip|r\.i\.p|rest in p).*$', message.lower()):
+#            self.doRip(sender, replyto)
         # Message checks next.
         self.checkMessages(sender)
         # Proxy pino queries
