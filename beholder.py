@@ -951,7 +951,7 @@ class DeathBotProtocol(irc.IRCClient):
     genders = ["Mal", "Fem"]
 
     #who is making tea? - bots of the nethack community who have influenced this project.
-    brethren = ["Rodney", "Athame", "Arsinoe", "Izchak", "TheresaMayBot", "FCCBot", "the late Pinobot", "Announcy", "demogorgon", "the /dev/null/oracle", "NotTheOracle\\dnt"]
+    brethren = ["Rodney", "Athame", "Arsinoe", "Izchak", "TheresaMayBot", "FCCBot", "the late Pinobot", "Announcy", "demogorgon", "the /dev/null/oracle", "NotTheOracle\\dnt", "Croesus"]
     looping_calls = None
 
     # SASL auth nonsense required if we run on AWS
