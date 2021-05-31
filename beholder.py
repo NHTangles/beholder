@@ -52,6 +52,7 @@ import urllib   # for dealing with NH4 variants' #&$#@ spaces in filenames.
 import shelve   # for persistent !tell messages
 import random   # for !rng and friends
 import glob     # for matching in !whereis
+import requests # for !rumor
 
 site.addsitedir('.')
 from botconf import HOST, PORT, CHANNEL, NICK, USERNAME, REALNAME, BOTDIR
@@ -829,58 +830,81 @@ class DeathBotProtocol(irc.IRCClient):
                      "ran","rog","sam","tou","val","wiz"]
     vanilla_races = ["dwa","elf","gno","hum","orc"]
 
-    # varname: ([aliases],[roles],[races])
+    # varname: ([aliases],[roles],[races],"github org/role/mainbranch[/subdirs]")
     # first alias will be used for !variant
     # note this breaks if a player has the same name as an alias
     # so don't do that (I'm looking at you, FIQ)
+    # the github string is used for rumors:
+    # https://raw.githubusercontent.com/[YOUR STRING HERE]/dat/rumors.fal
+    # should be a valid url
     variants = {"nh343": (["nh343", "nethack", "343"],
-                          vanilla_roles, vanilla_races),
+                          vanilla_roles, vanilla_races,
+                          "NHTangles/NetHack/hardfought"),
                 "nh363": (["nh363", "363", "363-hdf"],
-                          vanilla_roles, vanilla_races),
+                          vanilla_roles, vanilla_races,
+                          None),
                 "nh370": (["nh370", "370", "370-hdf"],
-                          vanilla_roles, vanilla_races),
+                          vanilla_roles, vanilla_races,
+                          "NetHack/NetHack/NetHack-3.7"),
                 "nh13d": (["nh13d", "13d"],
-                          vanilla_roles + ["elf", "fig", "nin"]),
+                          vanilla_roles + ["elf", "fig", "nin"], None,
+                          None), # special hardcoded case because it doesn't behave like the rest
                   "nh4": (["nethack4", "n4"],
-                          vanilla_roles, vanilla_races),
+                          vanilla_roles, vanilla_races,
+                          "NHTangles/nethack4/master/libnethack"),
                    "gh": (["grunthack", "grunt"],
-                          vanilla_roles, vanilla_races + ["gia", "kob", "ogr"]),
+                          vanilla_roles, vanilla_races + ["gia", "kob", "ogr"],
+                          "NHTangles/GruntHack/master"),
                   "dnh": (["dnethack", "dn"],
                           vanilla_roles
                             + ["ana", "bin", "nob", "pir", "trb", "con"],
                           vanilla_races
-                            + ["clk", "con", "bat", "dro", "hlf", "inc", "vam", "swn"]),
+                            + ["clk", "con", "bat", "dro", "hlf", "inc", "vam", "swn"],
+                          "Chris-plus-alphanumericgibberish/dNAO/compat-3.20.0"), # not ideal...
                  "ndnh": (["notdnethack", "ndn"],
                           vanilla_roles
                             + ["ana", "bin", "nob", "pir", "trb", "con", "acu"],
                           vanilla_races
-                            + ["clk", "con", "bat", "dro", "hlf", "inc", "vam", "swn", "sal"]),
+                            + ["clk", "con", "bat", "dro", "hlf", "inc", "vam", "swn", "sal"],
+                          "demogorgon22/notdnethack/master"),
                    "un": (["unnethack", "unh"],
-                          vanilla_roles + ["con"], vanilla_races),
+                          vanilla_roles + ["con"], vanilla_races,
+                          "unnethack/unnethack/master"),
                   "xnh": (["xnethack", "xnh"],
-                          vanilla_roles, vanilla_races),
+                          vanilla_roles, vanilla_races,
+                          "copperwater/xNetHack/master"),
                   "spl": (["splicehack", "splice", "spl"],
-                          vanilla_roles + ["car", "dgn", "dan"], vanilla_races + ["ang", "chg", "inf", "mer", "wlf"]),
+                          vanilla_roles + ["car", "dgn", "dan"], vanilla_races + ["ang", "chg", "inf", "mer", "wlf"],
+                          "NullCGT/SpliceHack/Master"),
                   "dyn": (["dynahack", "dyna"],
-                          vanilla_roles + ["con"], vanilla_races + ["vam"]),
+                          vanilla_roles + ["con"], vanilla_races + ["vam"],
+                          "tung/DynaHack/unnethack/libnitrohack"), # ???
                    "fh": (["fiqhack"], # not "fiq" see comment above
-                          vanilla_roles, vanilla_races),
+                          vanilla_roles, vanilla_races,
+                          "FredrIQ/fiqhack/development/libnethack"),
                    "sp": (["sporkhack", "spork"],
-                          vanilla_roles, vanilla_races),
+                          vanilla_roles, vanilla_races,
+                          "NHTangles/sporkhack/master"),
                    "4k": (["nhfourk", "nhf", "fourk"],
-                          vanilla_roles, vanilla_races + ["gia", "scu", "syl"]),
+                          vanilla_roles, vanilla_races + ["gia", "scu", "syl"],
+                          "tsadok/nhfourk/master/libnethack"),
                 "slshm": (["slash", "slash'em", "slshm"],
                           vanilla_roles + ["fla", "ice", "nec", "uds", "yeo"],
-                          vanilla_races + ["dop", "dro", "hob", "lyc", "vam"]),
+                          vanilla_races + ["dop", "dro", "hob", "lyc", "vam"],
+                          "k21971/SlashEM/master"),
                  "slth": (["slashthem", "slth"],
                           vanilla_roles + ["fla", "ice", "nec", "uds", "yeo"],
-                          vanilla_races + ["dop", "dro", "hob", "lyc", "vam"]),
+                          vanilla_races + ["dop", "dro", "hob", "lyc", "vam"],
+                          "k21971/SlashTHEM/master"),
                  "tnnt": (["tnnt"],
-                          vanilla_roles, vanilla_races),
+                          vanilla_roles, vanilla_races,
+                          None), # no different from vanilla
                  "seed": (["seed"],
-                          vanilla_roles, vanilla_races),
+                          vanilla_roles, vanilla_races,
+                          None), # no different from vanilla
                  "evil": (["evilhack", "evil", "evl"],
-                          vanilla_roles + ["con"], vanilla_races + ["cen", "gia", "hob", "ill"]),
+                          vanilla_roles + ["con"], vanilla_races + ["cen", "gia", "hob", "ill"],
+                          "k21971/EvilHack/master"),
                  "slex": (["slex", "sloth", "amy's-weird-thing"],
                           vanilla_roles +
                              ["ana", "bin", "nob", "pir",
@@ -950,7 +974,8 @@ class DeathBotProtocol(irc.IRCClient):
                               "una", "und", "ung", "uni",
                               "unm", "vmg", "vee", "ven",
                               "vor", "war", "win", "wis",
-                              "wor", "wra", "xor", "yee"])}
+                              "wor", "wra", "xor", "yee"],
+                          "slashem-extended/slashem-extended/master")}
 
     # variants which support streaks - now tracking slex streaks, because that's totally possible.
     streakvars = ["nh343", "nh363", "nh370", "nh13d", "gh", "dnh", "un", "sp", "xnh", "slex", "spl", "slshm", "tnnt", "ndnh", "evil", "seed", "slth"]
@@ -1094,6 +1119,8 @@ class DeathBotProtocol(irc.IRCClient):
                          "whereis"  : self.multiServerCmd,
                          "8ball"    : self.do8ball,
                          "setmintc" : self.multiServerCmd,
+                         "rumor"    : self.doRumor,
+                         "rumour"   : self.doRumor,
                          # these ones are for control messages between master and slaves
                          # sender is checked, so these can't be used by the public
                          "#q#"      : self.doQuery,
@@ -1496,6 +1523,108 @@ class DeathBotProtocol(irc.IRCClient):
                 + " by " + random.choice(self.brethren)
                 + " at " + str(temp)
                 + " " + tempunit + ".")
+
+    # Cache for saving rumors files so it doesn't need to redownload them all the time.
+    # Data structure is { url: (timestamp, ["rumor1", "rumor2", ...]) }
+    rumorCache = {}
+
+    # Helper for accessing the cache.
+    # Entries are considered out of date if more than an hour old and will be redownloaded.
+    # Return rumors list if successful, False if some error.
+    def rumorCacheGet(self, url):
+        now = time.time()
+        if not url in self.rumorCache or now > self.rumorCache[url][0] + 3600:
+            print("url", url, "not found or expired in rumor cache, downloading...")
+            r = requests.get(url)
+            if r.status_code != requests.codes.ok:
+                return False
+
+            # filter out comments (# at start of line) and blanks, no point saving them
+            rumors = [r for r in filter(lambda r : len(r) > 0 and r[0] != '#', r.text.splitlines())]
+            self.rumorCache[url] = (now, rumors)
+
+        return self.rumorCache[url][1]
+
+    def doRumor(self, sender, replyto, msgwords):
+        '''
+        !rumor                                         => random rumor from vanilla
+        !rumor variant                                 => random rumor from that variant
+        !rumor [variant] true|false                    => random rumor that will come only from rumors.tru/.fal
+        !rumor [variant] [true|false] arbitrary-string => random rumor matching arbitrary-string
+        ... though the order of arguments is more flexible than this.
+        '''
+        suffix = None
+        variant = None
+        match = None
+        getBoth = False
+        for w in msgwords[1:]: # msgwords[0] is "rumor" from the command
+            if suffix is None and w == 'true':
+                suffix = 'tru'
+            elif suffix is None and w == 'false':
+                suffix = 'fal'
+            else:
+                var = self.varalias(w)
+                if variant is None and var in self.variants.keys():
+                    variant = var
+                else:
+                    # not some other argument, assume string match; combine
+                    # strings for multiple words
+                    if match is not None:
+                        match += ' ' + w
+                    else:
+                        match = w
+
+        # defaults if unspecified
+        if variant is None:
+            variant = 'nh370'
+        if suffix is None:
+            if match is None:
+                suffix = random.choice(['tru','fal'])
+            else:
+                # if no t/f is specified but a string match is, then we need to
+                # get both rumor files. force to true here so we can do a
+                # s/tru/fal/ later
+                suffix = 'tru'
+                getBoth = True
+
+        if variant == 'nh13d':
+            # 1.3d is a special snowflake that doesn't have separate files for
+            # true and false and also doesn't have a dat/ dir.
+            suffix = 'base'
+            url = "https://raw.githubusercontent.com/bhaak/nethack-save-xml/067c3ccc/rumors.base"
+            getBoth = False
+        elif len(self.variants[variant]) < 4 or self.variants[variant][3] is None:
+            self.msgLog(replyto, "I don't have any rumors for " + variant + ".")
+            return
+        else:
+            url = 'https://raw.githubusercontent.com/' + self.variants[variant][3] + '/dat/rumors.' + suffix
+
+        rumors = self.rumorCacheGet(url)
+        if rumors == False:
+            self.msgLog(replyto, "Sorry, I couldn't get the rumors file.")
+            return
+        if getBoth:
+            url = url[:-3] + 'fal' # url was forced to 'tru' earlier...
+            moreRumors = self.rumorCacheGet(url)
+            if moreRumors == False:
+                self.msgLog(replyto, "Sorry, I couldn't get the rumors file.")
+                return
+            rumors += moreRumors
+
+        # Simple (case insensitive) string match; this could be a regex match
+        # but that's probably overkill
+        if match is not None:
+            rumors = [r for r in filter(lambda r : match.lower() in r.lower(), rumors)]
+
+        # potential future improvement: grab and cache a copy of the vanilla
+        # rumors, and bias against picking one of those if a variant is specified
+
+        if len(rumors) == 0:
+            self.msgLog(replyto, 'No rumors matching "' + match + '".')
+            return
+
+        self.msgLog(replyto, random.choice(rumors))
+
 
     def takeMessage(self, sender, replyto, msgwords):
         if len(msgwords) < 3:
