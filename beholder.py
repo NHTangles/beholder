@@ -174,6 +174,7 @@ class DeathBotProtocol(irc.IRCClient):
                  filepath.FilePath(FILEROOT+"evilhack-0.7.0/var/xlogfile"): ("evil", "\t", "evilhack/dumplog/{starttime}.evil.html"),
                  filepath.FilePath(FILEROOT+"setseed.35/var/xlogfile"): ("seed", "\t", "setseed/dumplog/{starttime}.seed.html"),
                  filepath.FilePath(FILEROOT+"slashthem-0.9.5/xlogfile"): ("slth", ":", "slashthem/dumplog/{starttime}.slth.txt"),
+                 filepath.FilePath(FILEROOT+"gnollhack-4.1.0.4/var/xlogfile"): ("gnoll", "\t", "gnollhack/dumplog/{starttime}.gnoll.txt"),
                  filepath.FilePath(FILEROOT+"unnethack-6.0.3/var/unnethack/xlogfile"): ("un", "\t", "unnethack/dumplog/{starttime}.un.txt.html")}
     livelogs  = {filepath.FilePath(FILEROOT+"nh343-hdf/var/livelog"): ("nh343", ":"),
                  filepath.FilePath(FILEROOT+"nh363-hdf/var/livelog"): ("nh363", "\t"),
@@ -216,6 +217,7 @@ class DeathBotProtocol(irc.IRCClient):
                  "evil" : [],
                  "seed" : [],
                  "slth" : [],
+                "gnoll" : [],
                    "un" : []}
 
     # for displaying variants and server tags in colour
@@ -241,6 +243,7 @@ class DeathBotProtocol(irc.IRCClient):
                         "un" : "\x0308un\x03",
                       "seed" : "\x0315seed\x03",
                       "slth" : "\x0305slth\x03",
+                     "gnoll" : "\x0309gnoll\x03",
                     "hdf-us" : "\x1D\x0304hdf-us\x03\x0F",
                     "hdf-au" : "\x1D\x0303hdf-au\x03\x0F",
                     "hdf-eu" : "\x1D\x0312hdf-eu\x03\x0F"}
@@ -299,6 +302,7 @@ class DeathBotProtocol(irc.IRCClient):
                           INPR+"seed.32-1/",
                           INPR+"seed.35/"],
                 "slth" : [INPR+"slth095/"],
+               "gnoll" : [INPR+"gnoll4104/"],
                  "dyn" : [INPR+"dyn/"]}
 
     # for !whereis
@@ -371,6 +375,7 @@ class DeathBotProtocol(irc.IRCClient):
                          FILEROOT+"setseed.32-1/var/whereis/",
                          FILEROOT+"setseed.35/var/whereis/"],
                 "slth": [FILEROOT+"slashthem-0.9.5/whereis/"],
+               "gnoll": [FILEROOT+"gnollhack-4.1.0.4/var/whereis/"],
                   "un": [FILEROOT+"un531/var/unnethack/",
                          FILEROOT+"un532/var/unnethack/",
                          FILEROOT+"unnethack-6.0.0/var/unnethack/",
@@ -454,6 +459,8 @@ class DeathBotProtocol(irc.IRCClient):
                           "Sokoban","Fort Ludios","The Ice Queen's Realm","Vecna's Domain",
                           "Vlad's Tower","The Elemental Planes"],
                  "seed": ["The Dungeons of Doom","Gehennom","The Gnomish Mines","The Quest",
+                          "Sokoban","Fort Ludios","Vlad's Tower","The Elemental Planes"],
+                "gnoll": ["The Dungeons of Doom","Gehennom","The Gnomish Mines","The Quest",
                           "Sokoban","Fort Ludios","Vlad's Tower","The Elemental Planes"],
                    "un": ["The Dungeons of Doom","Gehennom","Sheol","The Gnomish Mines",
                           "The Quest","Sokoban","Town","The Ruins of Moria","Fort Ludios",
@@ -905,6 +912,9 @@ class DeathBotProtocol(irc.IRCClient):
                  "evil": (["evilhack", "evil", "evl"],
                           vanilla_roles + ["con"], vanilla_races + ["cen", "gia", "hob", "ill"],
                           "k21971/EvilHack/master"),
+                "gnoll": (["gnoll", "gnollhack"],
+                          vanilla_roles, vanilla_races,
+                          "hyvanmielenpelit/GnollHack/master"),
                  "slex": (["slex", "sloth", "amy's-weird-thing"],
                           vanilla_roles +
                              ["ana", "bin", "nob", "pir",
@@ -978,7 +988,7 @@ class DeathBotProtocol(irc.IRCClient):
                           "slashem-extended/slashem-extended/master")}
 
     # variants which support streaks - now tracking slex streaks, because that's totally possible.
-    streakvars = ["nh343", "nh363", "nh370", "nh13d", "gh", "dnh", "un", "sp", "xnh", "slex", "spl", "slshm", "tnnt", "ndnh", "evil", "seed", "slth"]
+    streakvars = ["nh343", "nh363", "nh370", "nh13d", "gh", "dnh", "un", "sp", "xnh", "slex", "spl", "slshm", "tnnt", "ndnh", "evil", "seed", "slth", "gnoll"]
     # for !asc statistics - assume these are the same for all variants, or at least the sane ones.
     aligns = ["Law", "Neu", "Cha"]
     genders = ["Mal", "Fem"]
