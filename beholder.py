@@ -171,7 +171,7 @@ class DeathBotProtocol(irc.IRCClient):
                  filepath.FilePath(FILEROOT+"slashem-0.0.8E0F2/xlogfile"): ("slshm", ":", "slashem/dumplog/{starttime}.slashem.txt"),
                  filepath.FilePath(FILEROOT+"notdnethack-2021.05.21/xlogfile"): ("ndnh", ":", "notdnethack/dumplog/{starttime}.ndnh.txt"),
                  filepath.FilePath(FILEROOT+"evilhack-0.7.0/var/xlogfile"): ("evil", "\t", "evilhack/dumplog/{starttime}.evil.html"),
-                 filepath.FilePath(FILEROOT+"setseed.36/var/xlogfile"): ("seed", "\t", "setseed/dumplog/{starttime}.seed.html"),
+                 filepath.FilePath(FILEROOT+"setseed.38/var/xlogfile"): ("seed", "\t", "setseed/dumplog/{starttime}.seed.html"),
                  filepath.FilePath(FILEROOT+"slashthem-0.9.5/xlogfile"): ("slth", ":", "slashthem/dumplog/{starttime}.slth.txt"),
                  filepath.FilePath(FILEROOT+"gnollhack-4.1.0.4/var/xlogfile"): ("gnoll", "\t", "gnollhack/dumplog/{starttime}.gnoll.txt"),
                  filepath.FilePath(FILEROOT+"unnethack-6.0.3/var/unnethack/xlogfile"): ("un", "\t", "unnethack/dumplog/{starttime}.un.txt.html")}
@@ -189,7 +189,7 @@ class DeathBotProtocol(irc.IRCClient):
                  filepath.FilePath(FILEROOT+"slashem-0.0.8E0F2/livelog"): ("slshm", ":"),
                  filepath.FilePath(FILEROOT+"notdnethack-2021.05.21/livelog"): ("ndnh", ":"),
                  filepath.FilePath(FILEROOT+"evilhack-0.7.0/var/livelog"): ("evil", "\t"),
-                 filepath.FilePath(FILEROOT+"setseed.36/var/livelog"): ("seed", "\t"),
+                 filepath.FilePath(FILEROOT+"setseed.38/var/livelog"): ("seed", "\t"),
                  filepath.FilePath(FILEROOT+"slashthem-0.9.5/livelog"): ("slth", ":"),
                  filepath.FilePath(FILEROOT+"unnethack-6.0.3/var/unnethack/livelog"): ("un", "\t")}
 
@@ -291,11 +291,9 @@ class DeathBotProtocol(irc.IRCClient):
                           INPR+"evil042/", INPR+"evil050/",
                           INPR+"evil060/", INPR+"evil070/"],
                 "tnnt" : [INPR+"tnnt/"],
-                "seed" : [INPR+"seed/",
-                          INPR+"seed.32/",
-                          INPR+"seed.32-1/",
-                          INPR+"seed.35/",
-                          INPR+"seed.36/"],
+                "seed" : [INPR+"seed/", INPR+"seed.32/",
+                          INPR+"seed.32-1/", INPR+"seed.35/",
+                          INPR+"seed.36/", INPR+"seed.38/"],
                 "slth" : [INPR+"slth095/"],
                "gnoll" : [INPR+"gnoll4104/"],
                  "dyn" : [INPR+"dyn/"]}
@@ -365,7 +363,8 @@ class DeathBotProtocol(irc.IRCClient):
                          FILEROOT+"setseed.32/var/whereis/",
                          FILEROOT+"setseed.32-1/var/whereis/",
                          FILEROOT+"setseed.35/var/whereis/",
-                         FILEROOT+"setseed.36/var/whereis/"],
+                         FILEROOT+"setseed.36/var/whereis/",
+                         FILEROOT+"setseed.38/var/whereis/"],
                 "slth": [FILEROOT+"slashthem-0.9.5/whereis/"],
                "gnoll": [FILEROOT+"gnollhack-4.1.0.4/var/whereis/"],
                   "un": [FILEROOT+"un531/var/unnethack/",
