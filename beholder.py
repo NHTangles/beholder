@@ -1374,7 +1374,7 @@ class DeathBotProtocol(irc.IRCClient):
 
     def usageWhereIs(self, sender, replyto, msgwords):
         if (len(msgwords) != 2):
-            self.respond(replyto, sender, "!" + msgwords[0] + " <player> - finds a player in the dungeon." + replytag)
+            self.respond(replyto, sender, "!" + msgwords[0] + " <player> - finds a player in the dungeon.")
             return False
         return True
 
