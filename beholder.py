@@ -1093,7 +1093,7 @@ class DeathBotProtocol(irc.IRCClient):
 
     # The following started as !tea resulting in the bot making a cup of tea.
     # Now it does other stuff.
-    bev = { "serves": ["delivers", "tosses", "passes", "pours", "hands", "throws"],
+    bev = { "serves": ["delivers", "tosses", "passes", "pours", "hands", "throws", "zaps", "flings", "hurls", "lobs", "beams up", "gifts", "slides"],
             # Attempt to make a sensible choice of vessel.
             # pick from "all", and check against specific drink. Loop a few times for a match, then give up.
             "vessel": {"all"   : ["cup", "mug", "shot", "tall glass", "tumbler", "glass", "schooner", "pint", "fifth", "vial", "potion", "barrel", "droplet", "bucket", "esky"],
