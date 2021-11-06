@@ -1096,26 +1096,28 @@ class DeathBotProtocol(irc.IRCClient):
 
     # The following started as !tea resulting in the bot making a cup of tea.
     # Now it does other stuff.
-    bev = { "serves": ["delivers", "tosses", "passes", "pours", "hands", "throws", "zaps", "flings", "hurls", "lobs", "beams up", "gifts", "slides"],
+    bev = { "serves": ["delivers", "tosses", "passes", "pours", "hands", "throws", "zaps", "flings", "hurls", "lobs", "beams up", "gifts", "slides", "grants",
+                       "gives", "bequeaths", "sneaks", "brings", "reaches deep into the codebase, oily fingers walking past forgotten portals, to give"],
             # Attempt to make a sensible choice of vessel.
             # pick from "all", and check against specific drink. Loop a few times for a match, then give up.
-            "vessel": {"all"   : ["cup", "mug", "shot", "tall glass", "tumbler", "glass", "schooner", "pint", "fifth", "vial", "potion", "barrel", "droplet", "bucket", "esky"],
-                       "tea"   : ["cup", "mug", "saucer"],
+            "vessel": {"all"   : ["cup", "mug", "shot", "tall glass", "tumbler", "glass", "schooner", "pint", "fifth", "vial", "potion", "barrel", "droplet",
+                                  "bucket", "esky", "grenade", "molecule", "pot", "sip"],
+                       "tea"   : ["cup", "mug", "saucer", "pot", "sip"],
                        "potion": ["potion", "vial", "droplet"],
-                       "booze" : ["shot", "tall glass", "tumbler", "glass", "schooner", "pint", "fifth", "barrel", "flask"],
-                       "coffee": ["cup", "mug"],
+                       "booze" : ["shot", "tall glass", "tumbler", "glass", "schooner", "pint", "fifth", "barrel", "flask", "esky", "grenade", "molecule"],
+                       "coffee": ["cup", "mug", "pot", "bucket"],
                        "vodka" : ["shot", "tall glass", "tumbler", "glass"],
                        "whiskey":["shot", "tall glass", "tumbler", "glass", "flask"],
                        "rum"   : ["shot", "tall glass", "tumbler", "glass"],
                        "tequila":["shot", "tall glass", "tumbler", "glass"],
-                       "scotch": ["shot", "tall glass", "tumbler", "glass", "flask"]
+                       "scotch": ["shot", "tall glass", "tumbler", "glass", "flask", "sip", "molecule"] # molecule for the real expensive ones
                        # others omitted - anything goes for them
                       },
 
-            "drink" : {"tea"   : ["black", "white", "green", "polka-dot", "Earl Grey", "oolong", "darjeeling"],
+            "drink" : {"tea"   : ["black", "white", "green", "polka-dot", "Earl Grey", "oolong", "darjeeling", "very strong"],
                        "potion": ["water", "fruit juice", "see invisible", "sickness", "confusion", "extra healing", "hallucination", "healing", "holy water", "unholy water", "restore ability", "sleeping", "blindness", "gain energy", "invisibility", "monster detection", "object detection", "booze", "enlightenment", "full healing", "levitation", "polymorph", "speed", "acid", "oil", "gain ability", "gain level", "paralysis"],
                        "booze" : ["booze", "the hooch", "moonshine", "the sauce", "grog", "suds", "the hard stuff", "liquid courage", "grappa"],
-                       "coffee": ["coffee", "espresso", "cafe latte", "Blend 43"],
+                       "coffee": ["coffee", "espresso", "cafe latte", "Blend 43", "jet black", "dangerous", "undead turning"],
                        "vodka" : ["Stolichnaya", "Absolut", "Grey Goose", "Ketel One", "Belvedere", "Luksusowa", "SKYY", "Finlandia", "Smirnoff"],
                        "whiskey":["Irish", "Jack Daniels", "Evan Williams", "Crown Royal", "Crown Royal Reserve", "Johnnie Walker Black", "Johnnie Walker Red", "Johnnie Walker Blue"],
                        "rum"   : ["Bundy", "Jamaican", "white", "dark", "spiced", "pirate"],
