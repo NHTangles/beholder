@@ -2,6 +2,9 @@
 *.pid
 *.db
 *.pyc
+*.swp
+*.old
+irclog/
 botconf.py
 pw
 ircLogBot.py
