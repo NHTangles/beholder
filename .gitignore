@@ -5,6 +5,8 @@
 *.swp
 *.old
 irclog/
+log/
+test/
 botconf.py
 pw
 ircLogBot.py
