@@ -1955,6 +1955,9 @@ class DeathBotProtocol(irc.IRCClient):
                    "in {mode} mode{ascsuff}").format(**game)
 
     def livelogReport(self, event):
+        # nh370 livelog uses name instead of player
+        if "name" in event and "player" not in event:
+            event["player"] = event["name"]
         if event.get("charname", False):
             if event.get("player", False):
                 if event["player"] != event["charname"]:
