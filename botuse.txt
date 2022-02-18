@@ -32,6 +32,7 @@ Random Number Generator (RNG) commands:
                 - Pick random phrase from | separated list.
 !rng m-n        - pick random number between m and n
 !rng            - Provide information on nethack RNG workings.
+!rumor [variant] [true|false] [matchstring] - Provide a random rumor.
 
 Other:
 !tea,!coffee,etc [rcpt] - Prepare a special unique beverage for you, or rcpt.

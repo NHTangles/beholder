@@ -52,6 +52,7 @@ import urllib   # for dealing with NH4 variants' #&$#@ spaces in filenames.
 import shelve   # for persistent !tell messages
 import random   # for !rng and friends
 import glob     # for matching in !whereis
+import requests # for !rumor
 
 site.addsitedir('.')
 from botconf import HOST, PORT, CHANNEL, NICK, USERNAME, REALNAME, BOTDIR
@@ -94,7 +95,7 @@ def fixdump(s):
 
 xlogfile_parse = dict.fromkeys(
     ("points", "deathdnum", "deathlev", "maxlvl", "hp", "maxhp", "deaths",
-     "starttime", "curtime", "endtime",
+     "starttime", "curtime", "endtime", "user_seed",
      "uid", "turns", "xplevel", "exp","depth","dnum","score","amulet", "lltype"), int)
 xlogfile_parse.update(dict.fromkeys(
     ("conduct", "event", "carried", "flags", "achieve"), ast.literal_eval))
@@ -156,38 +157,41 @@ class DeathBotProtocol(irc.IRCClient):
 
     xlogfiles = {filepath.FilePath(FILEROOT+"nh343-hdf/var/xlogfile"): ("nh343", ":", "nh343/dumplog/{starttime}.nh343.txt"),
                  filepath.FilePath(FILEROOT+"nh363-hdf/var/xlogfile"): ("nh363", "\t", "nethack/dumplog/{starttime}.nh.html"),
-                 filepath.FilePath(FILEROOT+"nh370.30-hdf/var/xlogfile"): ("nh370", "\t", "nethack/dumplog/{starttime}.nh.html"),
+                 filepath.FilePath(FILEROOT+"nh370.50-hdf/var/xlogfile"): ("nh370", "\t", "nethack/dumplog/{starttime}.nh.html"),
                  filepath.FilePath(FILEROOT+"grunthack-0.2.4/var/xlogfile"): ("gh", ":", "gh/dumplog/{starttime}.gh.txt"),
-                 filepath.FilePath(FILEROOT+"dnethack-3.20.0/xlogfile"): ("dnh", ":", "dnethack/dumplog/{starttime}.dnh.txt"),
+                 filepath.FilePath(FILEROOT+"dnethack-3.21.2/xlogfile"): ("dnh", ":", "dnethack/dumplog/{starttime}.dnh.txt"),
                  filepath.FilePath(FILEROOT+"fiqhackdir/data/xlogfile"): ("fh", ":", "fiqhack/dumplog/{dumplog}"),
                  filepath.FilePath(FILEROOT+"dynahack/dynahack-data/var/xlogfile"): ("dyn", ":", "dynahack/dumplog/{dumplog}"),
                  filepath.FilePath(FILEROOT+"nh4dir/save/xlogfile"): ("nh4", ":", "nethack4/dumplog/{dumplog}"),
-                 filepath.FilePath(FILEROOT+"fourkdir/save/xlogfile"): ("4k", "\t", "nhfourk/dumps/{dumplog}"),
+                 filepath.FilePath(FILEROOT+"fourkdir-4.3.0.5/save/xlogfile"): ("4k", "\t", "nhfourk/dumps/{dumplog}"),
                  filepath.FilePath(FILEROOT+"sporkhack-0.6.5/var/xlogfile"): ("sp", "\t", "sporkhack/dumplog/{starttime}.sp.txt"),
-                 filepath.FilePath(FILEROOT+"slex-2.6.8/xlogfile"): ("slex", "\t", "slex/dumplog/{starttime}.slex.txt"),
-                 filepath.FilePath(FILEROOT+"xnethack-5.1.3/var/xlogfile"): ("xnh", "\t", "xnethack/dumplog/{starttime}.xnh.html"),
-                 filepath.FilePath(FILEROOT+"splicehack-0.8.2/var/xlogfile"): ("spl", "\t", "splicehack/dumplog/{starttime}.splice.html"),
+                 filepath.FilePath(FILEROOT+"xnethack-6.3.0/var/xlogfile"): ("xnh", "\t", "xnethack/dumplog/{starttime}.xnh.html"),
+                 filepath.FilePath(FILEROOT+"splicehack-1.1.0/var/xlogfile"): ("spl", "\t", "splicehack/dumplog/{starttime}.splice.html"),
                  filepath.FilePath(FILEROOT+"nh13d/xlogfile"): ("nh13d", ":", "nh13d/dumplog/{starttime}.nh13d.txt"),
                  filepath.FilePath(FILEROOT+"slashem-0.0.8E0F2/xlogfile"): ("slshm", ":", "slashem/dumplog/{starttime}.slashem.txt"),
-                 filepath.FilePath(FILEROOT+"notdnethack-2020.04.16/xlogfile"): ("ndnh", ":", "notdnethack/dumplog/{starttime}.ndnh.txt"),
-                 filepath.FilePath(FILEROOT+"evilhack-0.6.0/var/xlogfile"): ("evil", "\t", "evilhack/dumplog/{starttime}.evil.html"),
-                 filepath.FilePath(FILEROOT+"unnethack-6.0.1/var/unnethack/xlogfile"): ("un", "\t", "unnethack/dumplog/{starttime}.un.txt.html")}
+                 filepath.FilePath(FILEROOT+"notdnethack-2021.05.21/xlogfile"): ("ndnh", ":", "notdnethack/dumplog/{starttime}.ndnh.txt"),
+                 filepath.FilePath(FILEROOT+"evilhack-0.7.1/var/xlogfile"): ("evil", "\t", "evilhack/dumplog/{starttime}.evil.html"),
+                 filepath.FilePath(FILEROOT+"setseed.40/var/xlogfile"): ("seed", "\t", "setseed/dumplog/{starttime}.seed.html"),
+                 filepath.FilePath(FILEROOT+"slashthem-0.9.6/xlogfile"): ("slth", ":", "slashthem/dumplog/{starttime}.slth.txt"),
+                 filepath.FilePath(FILEROOT+"gnollhack-4.1.0.4/var/xlogfile"): ("gnoll", "\t", "gnollhack/dumplog/{starttime}.gnoll.txt"),
+                 filepath.FilePath(FILEROOT+"unnethack-6.0.4/var/unnethack/xlogfile"): ("un", "\t", "unnethack/dumplog/{starttime}.un.txt.html")}
     livelogs  = {filepath.FilePath(FILEROOT+"nh343-hdf/var/livelog"): ("nh343", ":"),
                  filepath.FilePath(FILEROOT+"nh363-hdf/var/livelog"): ("nh363", "\t"),
-                 filepath.FilePath(FILEROOT+"nh370.30-hdf/var/livelog"): ("nh370", "\t"),
+                 filepath.FilePath(FILEROOT+"nh370.50-hdf/var/livelog"): ("nh370", "\t"),
                  filepath.FilePath(FILEROOT+"grunthack-0.2.4/var/livelog"): ("gh", ":"),
-                 filepath.FilePath(FILEROOT+"dnethack-3.20.0/livelog"): ("dnh", ":"),
-                 filepath.FilePath(FILEROOT+"fourkdir/save/livelog"): ("4k", "\t"),
+                 filepath.FilePath(FILEROOT+"dnethack-3.21.2/livelog"): ("dnh", ":"),
+                 filepath.FilePath(FILEROOT+"fourkdir-4.3.0.5/save/livelog"): ("4k", "\t"),
                  filepath.FilePath(FILEROOT+"fiqhackdir/data/livelog"): ("fh", ":"),
                  filepath.FilePath(FILEROOT+"sporkhack-0.6.5/var/livelog"): ("sp", ":"),
-                 filepath.FilePath(FILEROOT+"slex-2.6.8/livelog"): ("slex", ":"),
-                 filepath.FilePath(FILEROOT+"xnethack-5.1.3/var/livelog"): ("xnh", "\t"),
-                 filepath.FilePath(FILEROOT+"splicehack-0.8.2/var/livelog"): ("spl", "\t"),
+                 filepath.FilePath(FILEROOT+"xnethack-6.3.0/var/livelog"): ("xnh", "\t"),
+                 filepath.FilePath(FILEROOT+"splicehack-1.1.0/var/livelog"): ("spl", "\t"),
                  filepath.FilePath(FILEROOT+"nh13d/livelog"): ("nh13d", ":"),
                  filepath.FilePath(FILEROOT+"slashem-0.0.8E0F2/livelog"): ("slshm", ":"),
-                 filepath.FilePath(FILEROOT+"notdnethack-2020.04.16/livelog"): ("ndnh", ":"),
-                 filepath.FilePath(FILEROOT+"evilhack-0.6.0/var/livelog"): ("evil", "\t"),
-                 filepath.FilePath(FILEROOT+"unnethack-6.0.1/var/unnethack/livelog"): ("un", ":")}
+                 filepath.FilePath(FILEROOT+"notdnethack-2021.05.21/livelog"): ("ndnh", ":"),
+                 filepath.FilePath(FILEROOT+"evilhack-0.7.1/var/livelog"): ("evil", "\t"),
+                 filepath.FilePath(FILEROOT+"setseed.40/var/livelog"): ("seed", "\t"),
+                 filepath.FilePath(FILEROOT+"slashthem-0.9.6/livelog"): ("slth", ":"),
+                 filepath.FilePath(FILEROOT+"unnethack-6.0.4/var/unnethack/livelog"): ("un", "\t")}
 
     # Forward events to other bots at the request of maintainers of other variant-specific channels
     forwards = {"nh343" : [],
@@ -201,7 +205,6 @@ class DeathBotProtocol(irc.IRCClient):
                   "nh4" : ["Arsinoe"],
                    "4k" : ["Arsinoe"],
                    "sp" : [],
-                 "slex" : ["ro-bot"],
                   "xnh" : [],
                   "spl" : [],
                 "nh13d" : [],
@@ -209,6 +212,8 @@ class DeathBotProtocol(irc.IRCClient):
                  "tnnt" : [],
                  "ndnh" : [],
                  "evil" : [],
+                 "seed" : [],
+                 "slth" : [],
                 "gnoll" : [],
                    "un" : []}
 
@@ -224,7 +229,6 @@ class DeathBotProtocol(irc.IRCClient):
                        "nh4" : "\x0306nh4\x03",
                         "4k" : "\x03114k\x03",
                         "sp" : "\x0314sp\x03",
-                      "slex" : "\x0312slex\x03",
                        "xnh" : "\x0309xnh\x03",
                        "spl" : "\x0303spl\x03",
                      "nh13d" : "\x0311nh13d\x03",
@@ -233,7 +237,9 @@ class DeathBotProtocol(irc.IRCClient):
                       "evil" : "\x0304evil\x03",
                       "tnnt" : "\x0310tnnt\x03",
                         "un" : "\x0308un\x03",
-                     "gnoll" : "\x0315gnoll\x03",
+                      "seed" : "\x0315seed\x03",
+                      "slth" : "\x0305slth\x03",
+                     "gnoll" : "\x0309gnoll\x03",
                     "hdf-us" : "\x1D\x0304hdf-us\x03\x0F",
                     "hdf-au" : "\x1D\x0303hdf-au\x03\x0F",
                     "hdf-eu" : "\x1D\x0312hdf-eu\x03\x0F"}
@@ -252,36 +258,53 @@ class DeathBotProtocol(irc.IRCClient):
                           INPR+"nh370.18-hdf/", INPR+"nh370.20-hdf/",
                           INPR+"nh370.22-hdf/", INPR+"nh370.23-hdf/",
                           INPR+"nh370.27-hdf/", INPR+"nh370.28-hdf/",
-                          INPR+"nh370.29-hdf/", INPR+"nh370.30-hdf/"],
+                          INPR+"nh370.29-hdf/", INPR+"nh370.30-hdf/",
+                          INPR+"nh370.31-hdf/", INPR+"nh370.32-hdf/",
+                          INPR+"nh370.35-hdf/", INPR+"nh370.36-hdf/",
+                          INPR+"nh370.38-hdf/", INPR+"nh370.39-hdf/",
+                          INPR+"nh370.40-hdf/", INPR+"nh370.42-hdf/",
+                          INPR+"nh370.43-hdf/", INPR+"nh370.46-hdf/",
+                          INPR+"nh370.47-hdf/", INPR+"nh370.50-hdf/"],
                 "zapm" : [INPR+"zapm/"],
                   "gh" : [INPR+"gh024/"],
                   "un" : [INPR+"un531/", INPR+"un532/",
-                          INPR+"un600/", INPR+"un601/"],
+                          INPR+"un600/", INPR+"un601/",
+                          INPR+"un602/", INPR+"un603/",
+                          INPR+"un604/"],
                  "dnh" : [INPR+"dnh3171/", INPR+"dnh318/",
                           INPR+"dnh319/", INPR+"dnh3191/",
-                          INPR+"dnh320/"],
+                          INPR+"dnh320/", INPR+"dnh321/",
+                          INPR+"dnh3211/", INPR+"dnh3212/"],
                   "fh" : [INPR+"fh/"],
-                  "4k" : [INPR+"4k/"],
+                  "4k" : [INPR+"4k/", INPR+"4k4305/"],
                  "nh4" : [INPR+"nh4/"],
                   "sp" : [INPR+"sp065/"],
-                "slex" : [INPR+"slex250/", INPR+"slex260/",
-                          INPR+"slex266/", INPR+"slex268/"],
                  "xnh" : [INPR+"xnh040/", INPR+"xnh041/",
                           INPR+"xnh50/", INPR+"xnh51/",
                           INPR+"xnh51.1/", INPR+"xnh51.2/",
-                          INPR+"xnh51.3/"],
+                          INPR+"xnh51.3/", INPR+"xnh600/",
+                          INPR+"xnh610/", INPR+"xnh620/",
+                          INPR+"xnh630/"],
                  "spl" : [INPR+"spl063/", INPR+"spl064/",
                           INPR+"spl070/", INPR+"spl071/",
                           INPR+"spl071.21/", INPR+"spl080/",
-                          INPR+"spl081/", INPR+"spl082/"],
+                          INPR+"spl081/", INPR+"spl082/",
+                          INPR+"spl100/", INPR+"spl110/"],
                "nh13d" : [INPR+"nh13d/"],
                "slshm" : [INPR+"slashem/"],
                 "ndnh" : [INPR+"ndnh-524/", INPR+"ndnh-1224/",
-                          INPR+"ndnh-0416/"],
+                          INPR+"ndnh-0416/", INPR+"ndnh-0521/"],
                 "evil" : [INPR+"evil040/", INPR+"evil041/",
                           INPR+"evil042/", INPR+"evil050/",
-                          INPR+"evil060/"],
+                          INPR+"evil060/", INPR+"evil070/",
+                          INPR+"evil071/"],
                 "tnnt" : [INPR+"tnnt/"],
+                "seed" : [INPR+"seed/", INPR+"seed.32/",
+                          INPR+"seed.32-1/", INPR+"seed.35/",
+                          INPR+"seed.36/", INPR+"seed.38/",
+                          INPR+"seed.40/"],
+                "slth" : [INPR+"slth095/", INPR+"slth096/"],
+               "gnoll" : [INPR+"gnoll4104/"],
                  "dyn" : [INPR+"dyn/"]}
 
     # for !whereis
@@ -296,29 +319,45 @@ class DeathBotProtocol(irc.IRCClient):
                          FILEROOT+"nh370.27-hdf/var/whereis/",
                          FILEROOT+"nh370.28-hdf/var/whereis/",
                          FILEROOT+"nh370.29-hdf/var/whereis/",
-                         FILEROOT+"nh370.30-hdf/var/whereis/"],
+                         FILEROOT+"nh370.30-hdf/var/whereis/",
+                         FILEROOT+"nh370.31-hdf/var/whereis/",
+                         FILEROOT+"nh370.32-hdf/var/whereis/",
+                         FILEROOT+"nh370.35-hdf/var/whereis/",
+                         FILEROOT+"nh370.36-hdf/var/whereis/",
+                         FILEROOT+"nh370.38-hdf/var/whereis/",
+                         FILEROOT+"nh370.39-hdf/var/whereis/",
+                         FILEROOT+"nh370.40-hdf/var/whereis/",
+                         FILEROOT+"nh370.42-hdf/var/whereis/",
+                         FILEROOT+"nh370.43-hdf/var/whereis/",
+                         FILEROOT+"nh370.46-hdf/var/whereis/",
+                         FILEROOT+"nh370.47-hdf/var/whereis/",
+                         FILEROOT+"nh370.50-hdf/var/whereis/"],
                   "gh": [FILEROOT+"grunthack-0.2.4/var/whereis/"],
                  "dnh": [FILEROOT+"dnethack-3.17.1/whereis/",
                          FILEROOT+"dnethack-3.18.0/whereis/",
                          FILEROOT+"dnethack-3.19.0/whereis/",
                          FILEROOT+"dnethack-3.19.1/whereis/",
-                         FILEROOT+"dnethack-3.20.0/whereis/"],
+                         FILEROOT+"dnethack-3.20.0/whereis/",
+                         FILEROOT+"dnethack-3.21.0/whereis/",
+                         FILEROOT+"dnethack-3.21.1/whereis/",
+                         FILEROOT+"dnethack-3.21.2/whereis/"],
                   "fh": [FILEROOT+"fiqhackdir/data/"],
                  "dyn": [FILEROOT+"dynahack/dynahack-data/var/whereis/"],
                  "nh4": [FILEROOT+"nh4dir/save/whereis/"],
-                  "4k": [FILEROOT+"fourkdir/save/"],
+                  "4k": [FILEROOT+"fourkdir/save/",
+                         FILEROOT+"fourkdir-4.3.0.5/save/"],
                   "sp": [FILEROOT+"sporkhack-0.6.5/var/"],
-                "slex": [FILEROOT+"slex-2.5.0/whereis/",
-                         FILEROOT+"slex-2.6.0/whereis/",
-                         FILEROOT+"slex-2.6.6/whereis/",
-                         FILEROOT+"slex-2.6.8/whereis/"],
                  "xnh": [FILEROOT+"xnethack-0.4.0/var/whereis/",
                          FILEROOT+"xnethack-0.4.1/var/whereis/",
                          FILEROOT+"xnethack-5.0/var/whereis/",
                          FILEROOT+"xnethack-5.1/var/whereis/",
                          FILEROOT+"xnethack-5.1.1/var/whereis/",
                          FILEROOT+"xnethack-5.1.2/var/whereis/",
-                         FILEROOT+"xnethack-5.1.3/var/whereis/"],
+                         FILEROOT+"xnethack-5.1.3/var/whereis/",
+                         FILEROOT+"xnethack-6.0.0/var/whereis/",
+                         FILEROOT+"xnethack-6.1.0/var/whereis/",
+                         FILEROOT+"xnethack-6.2.0/var/whereis/",
+                         FILEROOT+"xnethack-6.3.0/var/whereis/"],
                  "spl": [FILEROOT+"splicehack-0.6.3/var/whereis/",
                          FILEROOT+"splicehack-0.6.4/var/whereis/",
                          FILEROOT+"splicehack-0.7.0/var/whereis/",
@@ -326,22 +365,40 @@ class DeathBotProtocol(irc.IRCClient):
                          FILEROOT+"splicehack-0.7.1-21/var/whereis/",
                          FILEROOT+"splicehack-0.8.0/var/whereis/",
                          FILEROOT+"splicehack-0.8.1/var/whereis/",
-                         FILEROOT+"splicehack-0.8.2/var/whereis/"],
+                         FILEROOT+"splicehack-0.8.2/var/whereis/",
+                         FILEROOT+"splicehack-1.0.0/var/whereis/",
+                         FILEROOT+"splicehack-1.1.0/var/whereis/"],
                "nh13d": [FILEROOT+"nh13d/whereis/"],
                "slshm": [FILEROOT+"slashem-0.0.8E0F2/whereis/"],
                 "ndnh": [FILEROOT+"notdnethack-2019.05.24/whereis/",
                          FILEROOT+"notdnethack-2019.12.24/whereis/",
-                         FILEROOT+"notdnethack-2020.04.16/whereis/"],
+                         FILEROOT+"notdnethack-2020.04.16/whereis/",
+                         FILEROOT+"notdnethack-2021.05.21/whereis/"],
                 "evil": [FILEROOT+"evilhack-0.4.0/var/whereis/",
                          FILEROOT+"evilhack-0.4.1/var/whereis/",
                          FILEROOT+"evilhack-0.4.2/var/whereis/",
                          FILEROOT+"evilhack-0.5.0/var/whereis/",
-                         FILEROOT+"evilhack-0.6.0/var/whereis/"],
+                         FILEROOT+"evilhack-0.6.0/var/whereis/",
+                         FILEROOT+"evilhack-0.7.0/var/whereis/",
+                         FILEROOT+"evilhack-0.7.1/var/whereis/"],
                 "tnnt": [FILEROOT+"tnnt/var/whereis/"],
+                "seed": [FILEROOT+"setseed/var/whereis/",
+                         FILEROOT+"setseed.32/var/whereis/",
+                         FILEROOT+"setseed.32-1/var/whereis/",
+                         FILEROOT+"setseed.35/var/whereis/",
+                         FILEROOT+"setseed.36/var/whereis/",
+                         FILEROOT+"setseed.38/var/whereis/",
+                         FILEROOT+"setseed.40/var/whereis/"],
+                "slth": [FILEROOT+"slashthem-0.9.5/whereis/",
+                         FILEROOT+"slashthem-0.9.6/whereis/"],
+               "gnoll": [FILEROOT+"gnollhack-4.1.0.4/var/whereis/"],
                   "un": [FILEROOT+"un531/var/unnethack/",
                          FILEROOT+"un532/var/unnethack/",
                          FILEROOT+"unnethack-6.0.0/var/unnethack/",
-                         FILEROOT+"unnethack-6.0.1/var/unnethack/"]}
+                         FILEROOT+"unnethack-6.0.1/var/unnethack/",
+                         FILEROOT+"unnethack-6.0.2/var/unnethack/",
+                         FILEROOT+"unnethack-6.0.3/var/unnethack/",
+                         FILEROOT+"unnethack-6.0.4/var/unnethack/"]}
 
     dungeons = {"nh343": ["The Dungeons of Doom","Gehennom","The Gnomish Mines","The Quest",
                           "Sokoban","Fort Ludios","Vlad's Tower","The Elemental Planes"],
@@ -374,16 +431,6 @@ class DeathBotProtocol(irc.IRCClient):
                           "The Elemental Planes"],
                    "sp": ["The Dungeons of Doom","Gehennom","The Gnomish Mines","The Quest",
                           "Sokoban","Fort Ludios","Vlad's Tower","The Elemental Planes"],
-                 "slex": ["The Dungeons of Doom","Gehennom","The Gnomish Mines","The Quest",
-                          "The Subquest","Bell Caves","Lawful Quest","Neutral Quest","Chaotic Quest",
-                          "Sokoban","Town","Grund's Stronghold","Fort Ludios","The Wyrm Caves",
-                          "One-eyed Sam's Market","The Lost Tomb","The Spider Caves","The Sunless Sea",
-                          "The Temple of Moloch","Illusory Castle","Deep Mines","Space Base",
-                          "Sewer Plant","Gamma Caves","Mainframe","Void","Nether Realm","Angmar",
-                          "Swimming Pool","Hell's Bathroom",
-                          "The Giant Caverns","Frankenstein's Lab",
-                          "Sheol","Vlad's Tower","Yendorian Tower","Forging Chamber",
-                          "Dead Grounds","Ordered Chaos","The Elemental Planes"],
                   "xnh": ["The Dungeons of Doom","Gehennom","The Gnomish Mines","The Quest",
                           "Sokoban","Fort Ludios","Vlad's Tower","The Elemental Planes"],
                   "spl": ["The Dungeons of Doom","The Void","The Icy Wastes","The Dark Forest",
@@ -395,12 +442,22 @@ class DeathBotProtocol(irc.IRCClient):
                           "The Quest","Sokoban","Town","Fort Ludios",
                           "One-eyed Sam's Market","Vlad's Tower","The Dragon Caves",
                           "The Elemental Planes"],
+                 "slth": ["The Dungeons of Doom","Gehennom","The Gnomish Mines",
+                          "The Quest","Lawful Quest","Neutral Quest","Chaotic Quest",
+                          "Sokoban","Town","Grund's Stronghold","Fort Ludios","The Wyrm Caves",
+                          "One-eyed Sam's Market","The Lost Tomb","The Spider Caves","The Sunless Sea",
+                          "The Temple of Moloch","The Giant Caverns","Vlad's Tower","Frankenstein's Lab",
+                          "The Elemental Planes"],
                  "tnnt": ["The Dungeons of Doom","Gehennom","The Gnomish Mines","The Quest",
                           "Sokoban","Fort Ludios","DevTeam's Office","Deathmatch Arena",
                           "Vlad's Tower","The Elemental Planes"],
                  "evil": ["The Dungeons of Doom","Gehennom","The Gnomish Mines","The Quest",
-                          "Sokoban","Fort Ludios","The Ice Queen's Realm","Vlad's Tower",
-                          "The Elemental Planes"],
+                          "Sokoban","Fort Ludios","The Ice Queen's Realm","Vecna's Domain",
+                          "Vlad's Tower","The Elemental Planes"],
+                 "seed": ["The Dungeons of Doom","Gehennom","The Gnomish Mines","The Quest",
+                          "Sokoban","Fort Ludios","Vlad's Tower","The Elemental Planes"],
+                "gnoll": ["The Dungeons of Doom","Gehennom","The Gnomish Mines","The Quest",
+                          "Sokoban","Fort Ludios","Vlad's Tower","The Elemental Planes"],
                    "un": ["The Dungeons of Doom","Gehennom","Sheol","The Gnomish Mines",
                           "The Quest","Sokoban","Town","The Ruins of Moria","Fort Ludios",
                           "One-eyed Sam's Market","Vlad's Tower","The Dragon Caves",
@@ -439,126 +496,6 @@ class DeathBotProtocol(irc.IRCClient):
         "dan": "dancer",
         # Evilhack, includes all of vanilla
         "inf": "infidel",
-        # SLEX, includes all of dnh and slash
-        "act": "activistor",
-        "alt": "altmer",
-        "ama": "amazon",
-        "art": "artist",
-        "ass": "assassin",
-        "ast": "astronaut",
-        "aug": "augurer",
-        "brd": "bard",
-        "blo": "bloodseeker",
-        "bos": "bosmer",
-        "bul": "bully",
-        "cam": "camperstriker",
-        "cel": "cellar child",
-        "cha": "chaos sorceror",
-        "che": "chevalier",
-        "coo": "cook",
-        "cou": "courier",
-        "cra": "cracker",
-        "cru": "cruel abuser",
-        "cyb": "cyber ninja",
-        "dea": "death eater",
-        "dem": "demagogue",
-        "dis": "dissident",
-        "div": "diver",
-        "dol": "doll mistress",
-        "doo": "doom marine",
-        "dqs": "dq slime",
-        "dri": "druid",
-        "dru": "drunk",
-        "dun": "dunmer",
-        "elm": "electric mage",
-        "ele": "elementalist",
-        "elp": "elph",
-        "emp": "empath",
-        "erd": "erdrick",
-        "fai": "failed existence",
-        "fea": "feat master",
-        "fem": "feminist",
-        "fen": "fencer",
-        "fig": "fighter",
-        "fla": "flame mage",
-        "for": "form changer",
-        "fox": "foxhound agent",
-        "gam": "gamer",
-        "gan": "gang scholar",
-        "gns": "gangster",
-        "gee": "geek",
-        "gla": "gladiator",
-        "gof": "goff",
-        "gol": "goldminer",
-        "gra": "graduate",
-        "gre": "grenadonin",
-        "gun": "gunner",
-        "ice": "ice mage",
-        "int": "intel scribe",
-        "jan": "janitor",
-        "jed": "jedi",
-        "jes": "jester",
-        "jus": "justice keeper",
-        "kor": "korsair",
-        "kur": "kurwa",
-        "lad": "ladiesman",
-        "lib": "librarian",
-        "loc": "locksmith",
-        "lun": "lunatic",
-        "mah": "mahou shoujo",
-        "mam": "mastermind",
-        "med": "medium",
-        "mid": "midget",
-        "mur": "murderer",
-        "mus": "musician",
-        "nec": "necromancer",
-        "nin": "ninja",
-        "nuc": "nuclear physicist",
-        "occ": "occult master",
-        "off": "officer",
-        "ord": "ordinator",
-        "pal": "paladin",
-        "pic": "pickpocket",
-        "poi": "poison mage",
-        "pok": "pokemon",
-        "pol": "politician",
-        "pro": "prostitute",
-        "psi": "psion",
-        "psy": "psyker",
-        "qua": "quarterback",
-        "rin": "ringseeker",
-        "roc": "rocker",
-        "sag": "sage",
-        "sai": "saiyan",
-        "sci": "scientist",
-        "sha": "shapeshifter",
-        "sla": "slave master",
-        "sma": "space marine",
-        "soc": "social justice warrior",
-        "sof": "software engineer",
-        "spa": "spacewars fighter",
-        "sto": "stormboy",
-        "sup": "supermarket cashier",
-        "tha": "thalmor",
-        "top": "topmodel",
-        "trc": "tracer",
-        "trl": "transsylvanian",
-        "trv": "transvestite",
-        "twe": "twelph",
-        "unb": "unbeliever",
-        "uds": "undead slayer",
-        "und": "undertaker",
-        "use": "user of stand",
-        "wal": "walscholar",
-        "wan": "wandkeeper",
-        "war": "warrior",
-        "wei": "weirdboy",
-        "xel": "xelnaga",
-        "yau": "yautja",
-        "yeo": "yeoman",
-        "yse": "ysexymate",
-        "zoo": "zookeeper",
-        "zyb": "zyborg"
     }
 
     racename = {
@@ -583,327 +520,105 @@ class DeathBotProtocol(irc.IRCClient):
         # 4k, includes vanilla
         "scu": "scurrier",
         "syl": "sylph",
-        #SpliceHack, includes vanilla and one race from SLEX (Angel)
+        #SpliceHack, includes vanilla
+        "ang": "angel",
         "chg": "changeling",
         "inf": "infernal",
         "mer": "merfolk",
         "wlf": "werewolf",
-        # SLEX, includes vanilla, grunt, 4k, slash and dnh -- not all of dnh but close
-        "add": "addict",
-        "agg": "aggravator",
-        "akt": "ak thief is dead!",
-        "alb": "albae",
-        "alc": "alchemist",
-        "ali": "alien",
-        "ame": "american",
-        "amn": "amnesiac",
-        "anc": "ancient",
-        "anp": "ancipital",
-        "agb": "angbander",
-        "ang": "angel",
-        "aqu": "aquarian",
-        "arg": "argonian",
-        "asg": "asgardian",
-        "asu": "asura",
-        "atl": "atlantean",
-        "aur": "golden saint",
-        "azt": "aztpok",
-        "bas": "bastard",
-        "btm": "batman",
-        "bor": "borg",
-        "bre": "breton",
-        "bur": "burninator",
-        "cen": "centaur",
-        "chi": "chiropteran",
-        "chu": "chiquai",
-        "coc": "cockatrice",
-        "col": "colorator",
-        "cor": "cortex",
-        "cur": "curser",
-        "dar": "dark seducer",
-        "dea": "deathmold",
-        "dee": "deep elf",
-        "des": "destabilizer",
-        "dev": "developer",
-        "dvl": "devil",
-        "din": "dinosaur",
-        "dol": "dolgsman",
-        "dop": "doppelganger",
-        "dra": "dragon",
-        "dry": "dryad",
-        "duf": "dufflepud",
-        "dun": "dunadan",
-        "egy": "egymid",
-        "ele": "elemental",
-        "eng": "engchip",
-        "ent": "ent",
-        "evi": "evilvariant",
-        "exp": "expert",
-        "faw": "fawn",
-        "fel": "felid",
-        "fen": "fenek",
-        "fie": "fiend",
-        "fre": "frendian",
-        "fro": "fro",
-        "gas": "gastly",
-        "gel": "gelatinous cube",
-        "gol": "golem",
-        "gre": "green slime",
-        "grm": "gremlin",
-        "gri": "grid bug",
-        "gru": "greuro",
-        "hax": "haxor",
-        "hca": "hc alien",
-        "hmd": "hemi-doppelganger",
-        "hem": "hemophage",
-        "hrb": "herbalist",
-        "het": "heretic",
-        "hob": "hobbit",
-        "hom": "homicider",
-        "hid": "hidden elf",
-        "ill": "illithid",
-        "imm": "immunizer",
-        "imp": "imp",
-        "ind": "indraenian",
-        "ipl": "imperial",
-        "ink": "inka",
-        "ins": "insectoid",
-        "iro": "ironman",
-        "ita": "itaque",
-        "jab": "jabberwock",
-        "jap": "japura",
-        "jav": "java",
-        "jel": "jelly",
-        "kha": "khajiit",
-        "kop": "kop",
-        "lep": "leprechaun",
-        "lvs": "levelscaler",
-        "lev": "levitator",
-        "lic": "lich",
-        "lis": "listener",
-        "liz": "lizardman",
-        "lol": "loli",
-        "lyc": "lycanthrope",
-        "mag": "magyar",
-        "mai": "maia",
-        "may": "maymes",
-        "maz": "mazewalker",
-        "met": "metal",
-        "mim": "mimic",
-        "min": "minimalist",
-        "mis": "missingno",
-        "mon": "monkey",
-        "mnt": "monster",
-        "moo": "moon elf",
-        "mou": "mould",
-        "mum": "mummy",
-        "mus": "mushroom",
-        "nag": "naga",
-        "nas": "nastinator",
-        "nav": "navi",
-        "nor": "nord",
-        "nul": "null",
-        "nym": "nymph",
-        "oct": "octopode",
-        "pea": "peacemaker",
-        "pha": "phantom",
-        "pie": "piercer",
-        "poi": "poisoner",
-        "pol": "polyinitor",
-        "pro": "problematic",
-        "qua": "quantum mechanic",
-        "rac": "race x",
-        "ran": "randomizer",
-        "red": "redditor",
-        "rdg": "redguard",
-        "rod": "rodneyan",
-        "roh": "rohirrim",
-        "rou": "rougelike",
-        "sal": "salamander",
-        "sat": "satre",
-        "sea": "sea elf",
-        "seg": "segfaulter",
-        "sen": "senser",
-        "she": "shell",
-        "sho": "shoe",
-        "sin": "sinner",
-        "ske": "skeleton",
-        "ski": "skillor",
-        "sna": "snail",
-        "sna": "snakeman",
-        "sok": "sokosolver",
-        "sov": "soviet",
-        "spa": "spard",
-        "spe": "specialist",
-        "spd": "spiderman",
-        "spi": "spirit",
-        "spr": "spriggan",
-        "sti": "sticker",
-        "sus": "sustainer",
-        "sux": "suxxor",
-        "ter": "gerteut",
-        "thu": "thunderlord",
-        "tme": "turmene",
-        "tri": "trainer",
-        "trs": "transformer",
-        "trp": "trapper",
-        "tro": "troll",
-        "tum": "tumblrer",
-        "tur": "turtle",
-        "umb": "umber hulk",
-        "una": "unalignment thing",
-        "und": "undefined",
-        "ung": "ungenomold",
-        "uni": "unicorn",
-        "unm": "unmagic",
-        "uri": "urian",
-        "vmg": "vamgoyle",
-        "vee": "veela",
-        "ven": "venture capitalist",
-        "vik": "viking",
-        "vor": "vortex",
-        "war": "warper",
-        "win": "wind inhabitant",
-        "wis": "wisp",
-        "wor": "worm that walks",
-        "wra": "wraith",
-        "xor": "xorn",
-        "yee": "yeek",
-        "yok": "yokuda"
     }
     # save typing these out in multiple places
     vanilla_roles = ["arc","bar","cav","hea","kni","mon","pri",
                      "ran","rog","sam","tou","val","wiz"]
     vanilla_races = ["dwa","elf","gno","hum","orc"]
 
-    # varname: ([aliases],[roles],[races])
+    # varname: ([aliases],[roles],[races],"github org/role/mainbranch[/subdirs]")
     # first alias will be used for !variant
     # note this breaks if a player has the same name as an alias
     # so don't do that (I'm looking at you, FIQ)
+    # the github string is used for rumors:
+    # https://raw.githubusercontent.com/[YOUR STRING HERE]/dat/rumors.fal
+    # should be a valid url
     variants = {"nh343": (["nh343", "nethack", "343"],
-                          vanilla_roles, vanilla_races),
+                          vanilla_roles, vanilla_races,
+                          "NHTangles/NetHack/hardfought"),
                 "nh363": (["nh363", "363", "363-hdf"],
-                          vanilla_roles, vanilla_races),
+                          vanilla_roles, vanilla_races,
+                          None),
                 "nh370": (["nh370", "370", "370-hdf"],
-                          vanilla_roles, vanilla_races),
+                          vanilla_roles, vanilla_races,
+                          "NetHack/NetHack/NetHack-3.7"),
                 "nh13d": (["nh13d", "13d"],
-                          vanilla_roles + ["elf", "fig", "nin"]),
+                          vanilla_roles + ["elf", "fig", "nin"], None,
+                          None), # special hardcoded case because it doesn't behave like the rest
                   "nh4": (["nethack4", "n4"],
-                          vanilla_roles, vanilla_races),
+                          vanilla_roles, vanilla_races,
+                          "NHTangles/nethack4/master/libnethack"),
                    "gh": (["grunthack", "grunt"],
-                          vanilla_roles, vanilla_races + ["gia", "kob", "ogr"]),
+                          vanilla_roles, vanilla_races + ["gia", "kob", "ogr"],
+                          "NHTangles/GruntHack/master"),
                   "dnh": (["dnethack", "dn"],
                           vanilla_roles
                             + ["ana", "bin", "nob", "pir", "trb", "con"],
                           vanilla_races
-                            + ["clk", "con", "bat", "dro", "hlf", "inc", "vam", "swn"]),
+                            + ["clk", "con", "bat", "dro", "hlf", "inc", "vam", "swn"],
+                          "Chris-plus-alphanumericgibberish/dNAO/compat-3.20.0"), # not ideal...
                  "ndnh": (["notdnethack", "ndn"],
                           vanilla_roles
                             + ["ana", "bin", "nob", "pir", "trb", "con", "acu"],
                           vanilla_races
-                            + ["clk", "con", "bat", "dro", "hlf", "inc", "vam", "swn", "sal"]),
+                            + ["clk", "con", "bat", "dro", "hlf", "inc", "vam", "swn", "sal"],
+                          "demogorgon22/notdnethack/master"),
                    "un": (["unnethack", "unh"],
-                          vanilla_roles + ["con"], vanilla_races),
+                          vanilla_roles + ["con"], vanilla_races,
+                          "unnethack/unnethack/master"),
                   "xnh": (["xnethack", "xnh"],
-                          vanilla_roles, vanilla_races),
+                          vanilla_roles, vanilla_races,
+                          "copperwater/xNetHack/master"),
                   "spl": (["splicehack", "splice", "spl"],
-                          vanilla_roles + ["car", "dgn", "dan"], vanilla_races + ["ang", "chg", "inf", "mer", "wlf"]),
+                          vanilla_roles + ["car", "dgn", "dan"], vanilla_races + ["ang", "chg", "inf", "mer", "wlf"],
+                          "NullCGT/SpliceHack/Master"),
                   "dyn": (["dynahack", "dyna"],
-                          vanilla_roles + ["con"], vanilla_races + ["vam"]),
+                          vanilla_roles + ["con"], vanilla_races + ["vam"],
+                          "tung/DynaHack/unnethack/libnitrohack"), # ???
                    "fh": (["fiqhack"], # not "fiq" see comment above
-                          vanilla_roles, vanilla_races),
+                          vanilla_roles, vanilla_races,
+                          "FredrIQ/fiqhack/development/libnethack"),
                    "sp": (["sporkhack", "spork"],
-                          vanilla_roles, vanilla_races),
+                          vanilla_roles, vanilla_races,
+                          "NHTangles/sporkhack/master"),
                    "4k": (["nhfourk", "nhf", "fourk"],
-                          vanilla_roles, vanilla_races + ["gia", "scu", "syl"]),
+                          vanilla_roles, vanilla_races + ["gia", "scu", "syl"],
+                          "tsadok/nhfourk/master/libnethack"),
                 "slshm": (["slash", "slash'em", "slshm"],
                           vanilla_roles + ["fla", "ice", "nec", "uds", "yeo"],
-                          vanilla_races + ["dop", "dro", "hob", "lyc", "vam"]),
+                          vanilla_races + ["dop", "dro", "hob", "lyc", "vam"],
+                          "k21971/SlashEM/master"),
+                 "slth": (["slashthem", "slth"],
+                          vanilla_roles + ["fla", "ice", "nec", "uds", "yeo"],
+                          vanilla_races + ["dop", "dro", "hob", "lyc", "vam"],
+                          "k21971/SlashTHEM/master"),
                  "tnnt": (["tnnt"],
-                          vanilla_roles, vanilla_races),
+                          vanilla_roles, vanilla_races,
+                          None), # no different from vanilla
+                 "seed": (["seed"],
+                          vanilla_roles, vanilla_races,
+                          None), # no different from vanilla
                  "evil": (["evilhack", "evil", "evl"],
-                          vanilla_roles + ["con"], vanilla_races + ["cen", "gia", "hob", "ill"]),
+                          vanilla_roles + ["con"], vanilla_races + ["cen", "gia", "hob", "ill"],
+                          "k21971/EvilHack/master"),
                 "gnoll": (["gnoll", "gnollhack"],
-                          vanilla_roles, vanilla_races),
-                 "slex": (["slex", "sloth", "amy's-weird-thing"],
-                          vanilla_roles +
-                             ["ana", "bin", "nob", "pir",
-                              "trb", "con", "act", "alt",
-                              "ama", "art", "ass", "aug",
-                              "brd", "blo", "bos", "bul",
-                              "cam", "cha", "che", "coo",
-                              "cou", "cru", "dea", "div",
-                              "dol", "doo", "dqs", "dri",
-                              "dru", "dun", "elm", "ele",
-                              "elp", "erd", "fai", "fea",
-                              "fem", "fen", "fig", "fla",
-                              "for", "fox", "gam", "gan",
-                              "gns", "gee", "gla", "gof",
-                              "gol", "gra", "gun", "ice",
-                              "int", "jed", "jes", "jus",
-                              "kor", "kur", "lad", "lib",
-                              "loc", "lun", "mah", "med",
-                              "mid", "mur", "mus", "nec",
-                              "nin", "nuc", "occ", "off",
-                              "ord", "pal", "pic", "poi",
-                              "pok", "pol", "pro", "psi",
-                              "rin", "roc", "sag", "sai",
-                              "sci", "sha", "sla", "spa",
-                              "sup", "tha", "top", "trc",
-                              "trl", "trv", "twe", "unb",
-                              "uds", "und", "use", "wan",
-                              "war", "yeo", "yse", "zoo",
-                              "zyb"],
-                          vanilla_races +
-                             ["gia", "kob", "ogr", "clk",
-                              "inc", "vam", "yuk", "yok",
-                              "scu", "syl", "add", "agg",
-                              "ak ", "alb", "alc", "ali",
-                              "ame", "amn", "anc", "anp",
-                              "agb", "ang", "aqu", "arg",
-                              "asg", "bas", "btm", "bor",
-                              "bre", "bur", "cen", "chi",
-                              "coc", "cor", "cur", "dar",
-                              "dea", "dee", "des", "dev",
-                              "dvl", "din", "dol", "dop",
-                              "dra", "dry", "duf", "dun",
-                              "ele", "ent", "evi", "exp",
-                              "faw", "fel", "fen", "fie",
-                              "gas", "gel", "gol", "gre",
-                              "grm", "gri", "hax", "hmd",
-                              "hem", "hrb", "het", "hob",
-                              "hom", "hid", "ill", "imm",
-                              "imp", "ipl", "ink", "ins",
-                              "iro", "jel", "kha", "kop",
-                              "lep", "lvs", "lev", "lic",
-                              "lis", "liz", "lol", "lyc",
-                              "mai", "maz", "mim", "min",
-                              "mis", "mnt", "mon", "moo",
-                              "mou", "mum", "nag", "nas",
-                              "nav", "nor", "nul", "nym",
-                              "oct", "pea", "pha", "poi",
-                              "pol", "pro", "rac", "ran",
-                              "red", "rdg", "rod", "roh",
-                              "rou", "sal", "sat", "sea",
-                              "seg", "sen", "sho", "sin",
-                              "ske", "ski", "sna", "sna",
-                              "sok", "sov", "spe", "spd",
-                              "spi", "spr", "sti", "sus",
-                              "sux", "thu", "tri", "trs",
-                              "trp", "tro", "tum", "tur",
-                              "una", "und", "ung", "uni",
-                              "unm", "vmg", "vee", "ven",
-                              "vor", "war", "win", "wis",
-                              "wor", "wra", "xor", "yee"])}
+                          vanilla_roles, vanilla_races,
+                          "hyvanmielenpelit/GnollHack/master")}
 
-    # variants which support streaks - now tracking slex streaks, because that's totally possible.
-    streakvars = ["nh343", "nh363", "nh370", "nh13d", "gh", "dnh", "un", "sp", "xnh", "slex", "spl", "slshm", "tnnt", "ndnh", "evil", "gnoll"]
+    # variants which support streaks.
+    streakvars = ["nh343", "nh363", "nh370", "nh13d", "gh", "dnh", "un", "sp", "xnh", "spl", "slshm", "tnnt", "ndnh", "evil", "seed", "slth", "gnoll"]
     # for !asc statistics - assume these are the same for all variants, or at least the sane ones.
     aligns = ["Law", "Neu", "Cha"]
     genders = ["Mal", "Fem"]
 
     #who is making tea? - bots of the nethack community who have influenced this project.
-    brethren = ["Rodney", "Athame", "Arsinoe", "Izchak", "TheresaMayBot", "FCCBot", "the late Pinobot", "Announcy", "demogorgon", "the /dev/null/oracle", "NotTheOracle\\dnt"]
+    brethren = ["Rodney", "Athame", "Arsinoe", "Izchak", "TheresaMayBot", "FCCBot", "the late Pinobot", "Announcy", "demogorgon", "the /dev/null/oracle", "NotTheOracle\\dnt", "Croesus"]
     looping_calls = None
 
     # SASL auth nonsense required if we run on AWS
@@ -934,6 +649,7 @@ class DeathBotProtocol(irc.IRCClient):
     def signedOn(self):
         self.factory.resetDelay()
         self.startHeartbeat()
+        self.sendLine('MODE {} -R'.format(self.nickname))
         if not SLAVE: self.join(CHANNEL)
         random.seed()
 
@@ -1037,6 +753,8 @@ class DeathBotProtocol(irc.IRCClient):
                          "whereis"  : self.multiServerCmd,
                          "8ball"    : self.do8ball,
                          "setmintc" : self.multiServerCmd,
+                         "rumor"    : self.doRumor,
+                         "rumour"   : self.doRumor,
                          # these ones are for control messages between master and slaves
                          # sender is checked, so these can't be used by the public
                          "#q#"      : self.doQuery,
@@ -1266,11 +984,16 @@ class DeathBotProtocol(irc.IRCClient):
 
         self.respond(replyto, sender, resp)
 
+# spicyCebolla had the idea of randomised greetings so im saving some of her suggestions here in a comment
+# <spicyCebolla> "oh no, someone said hi again!"
+# <spicyCebolla> "are you saying hi to me? or to a human?"
+# <spicyCebolla> "i hope this isn't too forward but i'm glad you said a trigger phrase that i can respond to. welcome i guess!"
+# <spicyCebolla> like "you hear someone cursing about refunds" or whatever the usual ones are
     def doHello(self, sender, replyto, msgwords = 0):
         self.msgLog(replyto, "Hello " + sender + ", Welcome to " + CHANNEL)
 
-    def doRip(self, sender, replyto, msgwords = 0):
-        self.msg(replyto, "rip")
+#    def doRip(self, sender, replyto, msgwords = 0):
+#        self.msg(replyto, "rip")
 
     def doLotg(self, sender, replyto, msgwords):
         if len(msgwords) > 1: target = " ".join(msgwords[1:])
@@ -1382,7 +1105,7 @@ class DeathBotProtocol(irc.IRCClient):
 
     # The following started as !tea resulting in the bot making a cup of tea.
     # Now it does other stuff.
-    bev = { "serves": ["delivers", "tosses", "passes", "pours", "hands", "throws"],
+    bev = { "serves": ["delivers", "tosses", "passes", "pours", "hands", "throws", "zaps", "flings", "hurls", "lobs", "beams up", "gifts", "slides"],
             # Attempt to make a sensible choice of vessel.
             # pick from "all", and check against specific drink. Loop a few times for a match, then give up.
             "vessel": {"all"   : ["cup", "mug", "shot", "tall glass", "tumbler", "glass", "schooner", "pint", "fifth", "vial", "potion", "barrel", "droplet", "bucket", "esky"],
@@ -1434,6 +1157,108 @@ class DeathBotProtocol(irc.IRCClient):
                 + " by " + random.choice(self.brethren)
                 + " at " + str(temp)
                 + " " + tempunit + ".")
+
+    # Cache for saving rumors files so it doesn't need to redownload them all the time.
+    # Data structure is { url: (timestamp, ["rumor1", "rumor2", ...]) }
+    rumorCache = {}
+
+    # Helper for accessing the cache.
+    # Entries are considered out of date if more than an hour old and will be redownloaded.
+    # Return rumors list if successful, False if some error.
+    def rumorCacheGet(self, url):
+        now = time.time()
+        if not url in self.rumorCache or now > self.rumorCache[url][0] + 3600:
+            print("url", url, "not found or expired in rumor cache, downloading...")
+            r = requests.get(url)
+            if r.status_code != requests.codes.ok:
+                return False
+
+            # filter out comments (# at start of line) and blanks, no point saving them
+            rumors = [r for r in filter(lambda r : len(r) > 0 and r[0] != '#', r.text.splitlines())]
+            self.rumorCache[url] = (now, rumors)
+
+        return self.rumorCache[url][1]
+
+    def doRumor(self, sender, replyto, msgwords):
+        '''
+        !rumor                                         => random rumor from vanilla
+        !rumor variant                                 => random rumor from that variant
+        !rumor [variant] true|false                    => random rumor that will come only from rumors.tru/.fal
+        !rumor [variant] [true|false] arbitrary-string => random rumor matching arbitrary-string
+        ... though the order of arguments is more flexible than this.
+        '''
+        suffix = None
+        variant = None
+        match = None
+        getBoth = False
+        for w in msgwords[1:]: # msgwords[0] is "rumor" from the command
+            if suffix is None and w == 'true':
+                suffix = 'tru'
+            elif suffix is None and w == 'false':
+                suffix = 'fal'
+            else:
+                var = self.varalias(w)
+                if variant is None and var in self.variants.keys():
+                    variant = var
+                else:
+                    # not some other argument, assume string match; combine
+                    # strings for multiple words
+                    if match is not None:
+                        match += ' ' + w
+                    else:
+                        match = w
+
+        # defaults if unspecified
+        if variant is None:
+            variant = 'nh370'
+        if suffix is None:
+            if match is None:
+                suffix = random.choice(['tru','fal'])
+            else:
+                # if no t/f is specified but a string match is, then we need to
+                # get both rumor files. force to true here so we can do a
+                # s/tru/fal/ later
+                suffix = 'tru'
+                getBoth = True
+
+        if variant == 'nh13d':
+            # 1.3d is a special snowflake that doesn't have separate files for
+            # true and false and also doesn't have a dat/ dir.
+            suffix = 'base'
+            url = "https://raw.githubusercontent.com/bhaak/nethack-save-xml/067c3ccc/rumors.base"
+            getBoth = False
+        elif len(self.variants[variant]) < 4 or self.variants[variant][3] is None:
+            self.msgLog(replyto, "I don't have any rumors for " + variant + ".")
+            return
+        else:
+            url = 'https://raw.githubusercontent.com/' + self.variants[variant][3] + '/dat/rumors.' + suffix
+
+        rumors = self.rumorCacheGet(url)
+        if rumors == False:
+            self.msgLog(replyto, "Sorry, I couldn't get the rumors file.")
+            return
+        if getBoth:
+            url = url[:-3] + 'fal' # url was forced to 'tru' earlier...
+            moreRumors = self.rumorCacheGet(url)
+            if moreRumors == False:
+                self.msgLog(replyto, "Sorry, I couldn't get the rumors file.")
+                return
+            rumors += moreRumors
+
+        # Simple (case insensitive) string match; this could be a regex match
+        # but that's probably overkill
+        if match is not None:
+            rumors = [r for r in filter(lambda r : match.lower() in r.lower(), rumors)]
+
+        # potential future improvement: grab and cache a copy of the vanilla
+        # rumors, and bias against picking one of those if a variant is specified
+
+        if len(rumors) == 0:
+            self.msgLog(replyto, 'No rumors matching "' + match + '".')
+            return
+
+        self.msgLog(replyto, random.choice(rumors))
+
 
     def takeMessage(self, sender, replyto, msgwords):
         if len(msgwords) < 3:
@@ -1561,7 +1386,7 @@ class DeathBotProtocol(irc.IRCClient):
 
     def usageWhereIs(self, sender, replyto, msgwords):
         if (len(msgwords) != 2):
-            self.respond(replyto, sender, "!" + msgwords[0] + " <player> - finds a player in the dungeon." + replytag)
+            self.respond(replyto, sender, "!" + msgwords[0] + " <player> - finds a player in the dungeon.")
             return False
         return True
 
@@ -1918,8 +1743,8 @@ class DeathBotProtocol(irc.IRCClient):
         # Hello processing first.
         if re.match(r'^(hello|hi|hey|salut|hallo|guten tag|shalom|ciao|hola|aloha|bonjour|hei|gday|konnichiwa|nuqneh)[!?. ]*$', message.lower()):
             self.doHello(sender, replyto)
-        if re.match(r'^(rip|r\.i\.p|rest in p).*$', message.lower()):
-            self.doRip(sender, replyto)
+#        if re.match(r'^(rip|r\.i\.p|rest in p).*$', message.lower()):
+#            self.doRip(sender, replyto)
         # Message checks next.
         self.checkMessages(sender)
         # Proxy pino queries
@@ -2084,6 +1909,19 @@ class DeathBotProtocol(irc.IRCClient):
 
         if (not report): return # we're just reading through old entries at startup
 
+        # format duration string based on realtime and/or wallclock duration
+        if "starttime" in game and "endtime" in game:
+            game["wallclock"] = timedelta_int(game["endtime"] - game["starttime"])
+        if "realtime" in game and "wallclock" in game:
+            if game["realtime"] == game["wallclock"]:
+                game["duration_str"] = f"[{game['realtime']}]"
+            else:
+                game["duration_str"] = f"rt[{game['realtime']}], wc[{game['wallclock']}]"
+        elif "realtime" in game and "wallclock" not in game:
+                game["duration_str"] = f"rt[{game['realtime']}]"
+        elif "wallclock" in game and "realtime" not in game:
+                game["duration_str"] = f"wc[{game['wallclock']}]"
+
         # start of actual reporting
         if game.get("charname", False):
             if game.get("name", False):
@@ -2100,6 +1938,9 @@ class DeathBotProtocol(irc.IRCClient):
             if game.get("version","unknown") == "NH-1.3d":
                 yield ("[{displaystring}] {name} ({role} {gender}), "
                        "{points} points, T:{turns}, {death}{ascsuff}").format(**game)
+            elif var == "seed" and "duration_str" in game:
+                yield ("[{displaystring}] {name} ({role} {race} {gender} {align}), "
+                       "{points} points, T:{turns}, {duration_str}, {death}{ascsuff}").format(**game)
             else:
                 yield ("[{displaystring}] {name} ({role} {race} {gender} {align}), "
                        "{points} points, T:{turns}, {death}{ascsuff}").format(**game)
@@ -2138,8 +1979,20 @@ class DeathBotProtocol(irc.IRCClient):
                     event["lltype"] &= ~t
                     if not event["lltype"]: return
         if "message" in event:
-            yield ("[{displaystring}] {player} ({role} {race} {gender} {align}) "
-                   "{message}, on T:{turns}").format(**event)
+            if event["message"] == "entered the Dungeons of Doom":
+                if "user_seed" in event and "seed" in event and event["user_seed"]:
+                    yield("[{displaystring}] {player} ({role} {race} {gender} {align}) "
+                    "{message} [chosen seed: {seed}]".format(**event))
+                else:
+                    yield("[{displaystring}] {player} ({role} {race} {gender} {align}) "
+                    "{message} [random seed]".format(**event))
+            elif "realtime" in event:
+                event["realtime_fmt"] = str(event["realtime"])
+                yield ("[{displaystring}] {player} ({role} {race} {gender} {align}) "
+                       "{message}, on T:{turns}, rt[{realtime_fmt}]").format(**event)
+            else:
+                yield ("[{displaystring}] {player} ({role} {race} {gender} {align}) "
+                       "{message}, on T:{turns}").format(**event)
         elif "wish" in event:
             yield ("[{displaystring}] {player} ({role} {race} {gender} {align}) "
                    'wished for "{wish}", on T:{turns}').format(**event)
