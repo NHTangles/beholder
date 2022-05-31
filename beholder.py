@@ -174,7 +174,7 @@ class DeathBotProtocol(irc.IRCClient):
                  filepath.FilePath(FILEROOT+"setseed.40/var/xlogfile"): ("seed", "\t", "setseed/dumplog/{starttime}.seed.html"),
                  filepath.FilePath(FILEROOT+"slashthem-0.9.6/xlogfile"): ("slth", ":", "slashthem/dumplog/{starttime}.slth.txt"),
                  filepath.FilePath(FILEROOT+"gnollhack-4.1.0.22/var/xlogfile"): ("gnoll", "\t", "gnollhack/dumplog/{starttime}.gnoll.txt"),
-                 filepath.FilePath(FILEROOT+"unnethack-6.0.4/var/unnethack/xlogfile"): ("un", "\t", "unnethack/dumplog/{starttime}.un.txt.html")}
+                 filepath.FilePath(FILEROOT+"unnethack-6.0.5/var/unnethack/xlogfile"): ("un", "\t", "unnethack/dumplog/{starttime}.un.txt.html")}
     livelogs  = {filepath.FilePath(FILEROOT+"nh343-hdf/var/livelog"): ("nh343", ":"),
                  filepath.FilePath(FILEROOT+"nh363-hdf/var/livelog"): ("nh363", "\t"),
                  filepath.FilePath(FILEROOT+"nh370.59-hdf/var/livelog"): ("nh370", "\t"),
@@ -191,7 +191,7 @@ class DeathBotProtocol(irc.IRCClient):
                  filepath.FilePath(FILEROOT+"evilhack-0.8.0/var/livelog"): ("evil", "\t"),
                  filepath.FilePath(FILEROOT+"setseed.40/var/livelog"): ("seed", "\t"),
                  filepath.FilePath(FILEROOT+"slashthem-0.9.6/livelog"): ("slth", ":"),
-                 filepath.FilePath(FILEROOT+"unnethack-6.0.4/var/unnethack/livelog"): ("un", "\t")}
+                 filepath.FilePath(FILEROOT+"unnethack-6.0.5/var/unnethack/livelog"): ("un", "\t")}
 
     # Forward events to other bots at the request of maintainers of other variant-specific channels
     forwards = {"nh343" : [],
@@ -272,7 +272,7 @@ class DeathBotProtocol(irc.IRCClient):
                   "un" : [INPR+"un531/", INPR+"un532/",
                           INPR+"un600/", INPR+"un601/",
                           INPR+"un602/", INPR+"un603/",
-                          INPR+"un604/"],
+                          INPR+"un604/", INPR+"un605/"],
                  "dnh" : [INPR+"dnh3171/", INPR+"dnh318/",
                           INPR+"dnh319/", INPR+"dnh3191/",
                           INPR+"dnh320/", INPR+"dnh321/",
@@ -417,7 +417,8 @@ class DeathBotProtocol(irc.IRCClient):
                          FILEROOT+"unnethack-6.0.1/var/unnethack/",
                          FILEROOT+"unnethack-6.0.2/var/unnethack/",
                          FILEROOT+"unnethack-6.0.3/var/unnethack/",
-                         FILEROOT+"unnethack-6.0.4/var/unnethack/"]}
+                         FILEROOT+"unnethack-6.0.4/var/unnethack/",
+                         FILEROOT+"unnethack-6.0.5/var/unnethack/"]}
 
     dungeons = {"nh343": ["The Dungeons of Doom","Gehennom","The Gnomish Mines","The Quest",
                           "Sokoban","Fort Ludios","Vlad's Tower","The Elemental Planes"],
