@@ -1120,7 +1120,15 @@ class DeathBotProtocol(irc.IRCClient):
            self.respond(replyto, sender, self.variants[v][0][0] + " " + self.racename[random.choice(self.variants[v][2])])
 
     def doVariant(self, sender, replyto, msgwords):
-        self.respond(replyto, sender, self.variants[random.choice(list(self.variants.keys()))][0][0])
+
+        # Do not return tnnt if we're not in November.
+        chosen_variant = self.variants[random.choice(list(self.variants.keys()))][0][0]
+        today_month = datetime.now().month
+        # XXX: doesn't handle the case of getting chosen_variant=tnnt twice
+        if month != 11 and chosen_variant == 'tnnt':  # not November and we got tnnt?
+            chosen_variant = self.variants[random.choice(list(self.variants.keys()))][0][0]  # try again
+
+        self.respond(replyto, sender, chosen_variant)
 
     def doBeer(self, sender, replyto, msgwords):
         self.respond(replyto, sender, random.choice(["It's your shout!", "I thought you'd never ask!",
