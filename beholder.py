@@ -1125,7 +1125,7 @@ class DeathBotProtocol(irc.IRCClient):
         chosen_variant = self.variants[random.choice(list(self.variants.keys()))][0][0]
         today_month = datetime.now().month
         # XXX: doesn't handle the case of getting chosen_variant=tnnt twice
-        if month != 11 and chosen_variant == 'tnnt':  # not November and we got tnnt?
+        if today_month != 11 and chosen_variant == 'tnnt':  # not November and we got tnnt?
             chosen_variant = self.variants[random.choice(list(self.variants.keys()))][0][0]  # try again
 
         self.respond(replyto, sender, chosen_variant)
