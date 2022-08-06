@@ -171,7 +171,6 @@ class DeathBotProtocol(irc.IRCClient):
                  filepath.FilePath(FILEROOT+"slashem-0.0.8E0F2/xlogfile"): ("slshm", ":", "slashem/dumplog/{starttime}.slashem.txt"),
                  filepath.FilePath(FILEROOT+"notdnethack-2022.05.30/xlogfile"): ("ndnh", ":", "notdnethack/dumplog/{starttime}.ndnh.txt"),
                  filepath.FilePath(FILEROOT+"evilhack-0.8.0/var/xlogfile"): ("evil", "\t", "evilhack/dumplog/{starttime}.evil.html"),
-                 filepath.FilePath(FILEROOT+"setseed.40/var/xlogfile"): ("seed", "\t", "setseed/dumplog/{starttime}.seed.html"),
                  filepath.FilePath(FILEROOT+"slashthem-0.9.7/xlogfile"): ("slth", ":", "slashthem/dumplog/{starttime}.slth.txt"),
                  filepath.FilePath(FILEROOT+"gnollhack-4.1.0.29/var/xlogfile"): ("gnoll", "\t", "gnollhack/dumplog/{starttime}.gnoll.txt"),
                  filepath.FilePath(FILEROOT+"acehack/xlogfile"): ("ace", ":", "acehack/dumplog/{starttime}.ace.txt"),
@@ -190,7 +189,6 @@ class DeathBotProtocol(irc.IRCClient):
                  filepath.FilePath(FILEROOT+"slashem-0.0.8E0F2/livelog"): ("slshm", ":"),
                  filepath.FilePath(FILEROOT+"notdnethack-2022.05.30/livelog"): ("ndnh", ":"),
                  filepath.FilePath(FILEROOT+"evilhack-0.8.0/var/livelog"): ("evil", "\t"),
-                 filepath.FilePath(FILEROOT+"setseed.40/var/livelog"): ("seed", "\t"),
                  filepath.FilePath(FILEROOT+"slashthem-0.9.7/livelog"): ("slth", ":"),
                  filepath.FilePath(FILEROOT+"acehack/livelog"): ("ace", ":"),
                  filepath.FilePath(FILEROOT+"unnethack-6.0.5/var/unnethack/livelog"): ("un", "\t")}
@@ -214,7 +212,6 @@ class DeathBotProtocol(irc.IRCClient):
                  "tnnt" : [],
                  "ndnh" : [],
                  "evil" : [],
-                 "seed" : [],
                  "slth" : [],
                 "gnoll" : [],
                   "ace" : [],
@@ -240,7 +237,6 @@ class DeathBotProtocol(irc.IRCClient):
                       "evil" : "\x0304evil\x03",
                       "tnnt" : "\x0310tnnt\x03",
                         "un" : "\x0308un\x03",
-                      "seed" : "\x0315seed\x03",
                       "slth" : "\x0305slth\x03",
                      "gnoll" : "\x0309gnoll\x03",
                        "ace" : "\x0311ace\x03",
@@ -311,10 +307,6 @@ class DeathBotProtocol(irc.IRCClient):
                           INPR+"evil060/", INPR+"evil070/",
                           INPR+"evil071/", INPR+"evil080/"],
                 "tnnt" : [INPR+"tnnt/"],
-                "seed" : [INPR+"seed/", INPR+"seed.32/",
-                          INPR+"seed.32-1/", INPR+"seed.35/",
-                          INPR+"seed.36/", INPR+"seed.38/",
-                          INPR+"seed.40/"],
                 "slth" : [INPR+"slth095/", INPR+"slth096/",
                           INPR+"slth097/"],
                "gnoll" : [INPR+"gnoll4104/", INPR+"gnoll410b2/",
@@ -414,13 +406,6 @@ class DeathBotProtocol(irc.IRCClient):
                          FILEROOT+"evilhack-0.7.1/var/whereis/",
                          FILEROOT+"evilhack-0.8.0/var/whereis/"],
                 "tnnt": [FILEROOT+"tnnt/var/whereis/"],
-                "seed": [FILEROOT+"setseed/var/whereis/",
-                         FILEROOT+"setseed.32/var/whereis/",
-                         FILEROOT+"setseed.32-1/var/whereis/",
-                         FILEROOT+"setseed.35/var/whereis/",
-                         FILEROOT+"setseed.36/var/whereis/",
-                         FILEROOT+"setseed.38/var/whereis/",
-                         FILEROOT+"setseed.40/var/whereis/"],
                 "slth": [FILEROOT+"slashthem-0.9.5/whereis/",
                          FILEROOT+"slashthem-0.9.6/whereis/",
                          FILEROOT+"slashthem-0.9.7/whereis/"],
@@ -491,8 +476,6 @@ class DeathBotProtocol(irc.IRCClient):
                  "evil": ["The Dungeons of Doom","Gehennom","The Gnomish Mines","Goblin Town",
                           "The Quest","Sokoban","Fort Ludios","The Ice Queen's Realm","Vecna's Domain",
                           "Vlad's Tower","The Elemental Planes"],
-                 "seed": ["The Dungeons of Doom","Gehennom","The Gnomish Mines","The Quest",
-                          "Sokoban","Fort Ludios","Vlad's Tower","The Elemental Planes"],
                 "gnoll": ["The Dungeons of Doom","Gehennom","The Gnomish Mines","The Quest",
                           "Sokoban","Fort Ludios","Vlad's Tower","The Elemental Planes"],
                   "ace": ["The Dungeons of Doom","Gehennom","The Gnomish Mines","The Quest",
@@ -645,9 +628,6 @@ class DeathBotProtocol(irc.IRCClient):
                  "tnnt": (["tnnt"],
                           vanilla_roles, vanilla_races,
                           None), # no different from vanilla
-                 "seed": (["seed"],
-                          vanilla_roles, vanilla_races,
-                          None), # no different from vanilla
                  "evil": (["evilhack", "evil", "evl"],
                           vanilla_roles + ["con", "inf"],
                           vanilla_races + ["cen", "gia", "hob", "ill", "trt"],
@@ -660,7 +640,7 @@ class DeathBotProtocol(irc.IRCClient):
                           "hyvanmielenpelit/GnollHack/master")}
 
     # variants which support streaks.
-    streakvars = ["nh343", "nh363", "nh370", "nh13d", "gh", "dnh", "un", "sp", "xnh", "spl", "slshm", "tnnt", "ndnh", "evil", "seed", "slth", "ace", "gnoll"]
+    streakvars = ["nh343", "nh363", "nh370", "nh13d", "gh", "dnh", "un", "sp", "xnh", "spl", "slshm", "tnnt", "ndnh", "evil", "slth", "ace", "gnoll"]
     # for !asc statistics - assume these are the same for all variants, or at least the sane ones.
     aligns = ["Law", "Neu", "Cha"]
     genders = ["Mal", "Fem"]
