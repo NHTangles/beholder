@@ -172,7 +172,7 @@ class DeathBotProtocol(irc.IRCClient):
                  filepath.FilePath(FILEROOT+"notdnethack-2022.09.18/xlogfile"): ("ndnh", ":", "notdnethack/dumplog/{starttime}.ndnh.txt"),
                  filepath.FilePath(FILEROOT+"evilhack-0.8.0/var/xlogfile"): ("evil", "\t", "evilhack/dumplog/{starttime}.evil.html"),
                  filepath.FilePath(FILEROOT+"slashthem-0.9.7/xlogfile"): ("slth", ":", "slashthem/dumplog/{starttime}.slth.txt"),
-                 filepath.FilePath(FILEROOT+"gnollhack-4.1.0.29/var/xlogfile"): ("gnoll", "\t", "gnollhack/dumplog/{starttime}.gnoll.txt"),
+                 filepath.FilePath(FILEROOT+"gnollhack-4.1.0.34/var/xlogfile"): ("gnoll", "\t", "gnollhack/dumplog/{starttime}.gnoll.txt"),
                  filepath.FilePath(FILEROOT+"acehack/xlogfile"): ("ace", ":", "acehack/dumplog/{starttime}.ace.txt"),
                  filepath.FilePath(FILEROOT+"unnethack-6.0.6/var/unnethack/xlogfile"): ("un", "\t", "unnethack/dumplog/{starttime}.un.txt.html")}
     livelogs  = {filepath.FilePath(FILEROOT+"nh343-hdf/var/livelog"): ("nh343", ":"),
@@ -313,7 +313,8 @@ class DeathBotProtocol(irc.IRCClient):
                 "slth" : [INPR+"slth095/", INPR+"slth096/",
                           INPR+"slth097/"],
                "gnoll" : [INPR+"gnoll4104/", INPR+"gnoll410b2/",
-                          INPR+"gnoll410b4/", INPR+"gnoll410b9/"],
+                          INPR+"gnoll410b4/", INPR+"gnoll410b9/",
+                          INPR+"gnoll410b14/"],
                  "ace" : [INPR+"ace/"],
                  "dyn" : [INPR+"dyn/"]}
 
@@ -420,7 +421,8 @@ class DeathBotProtocol(irc.IRCClient):
                "gnoll": [FILEROOT+"gnollhack-4.1.0.4/var/whereis/",
                          FILEROOT+"gnollhack-4.1.0.22/var/whereis/",
                          FILEROOT+"gnollhack-4.1.0.24/var/whereis/",
-                         FILEROOT+"gnollhack-4.1.0.29/var/whereis/"],
+                         FILEROOT+"gnollhack-4.1.0.29/var/whereis/",
+                         FILEROOT+"gnollhack-4.1.0.34/var/whereis/"],
                   "un": [FILEROOT+"un531/var/unnethack/",
                          FILEROOT+"un532/var/unnethack/",
                          FILEROOT+"unnethack-6.0.0/var/unnethack/",
