@@ -58,9 +58,6 @@ site.addsitedir('.')
 from botconf import HOST, PORT, CHANNEL, NICK, USERNAME, REALNAME, BOTDIR
 from botconf import PWFILE, FILEROOT, WEBROOT, LOGROOT, PINOBOT, ADMIN
 from botconf import SERVERTAG
-#from botconf import HOST, PORT, CHANNEL
-#from botconf import NICK, USERNAME, REALNAME
-#from botconf import PWFILE, LOGDIR, PINOBOT, ADMIN
 
 try: from botconf import LOGBASE
 except: LOGBASE = "/var/log/Beholder.log"
@@ -99,12 +96,7 @@ xlogfile_parse = dict.fromkeys(
      "uid", "turns", "xplevel", "exp","depth","dnum","score","amulet", "lltype"), int)
 xlogfile_parse.update(dict.fromkeys(
     ("conduct", "event", "carried", "flags", "achieve"), ast.literal_eval))
-#xlogfile_parse["starttime"] = fromtimestamp_int
-#xlogfile_parse["curtime"] = fromtimestamp_int
-#xlogfile_parse["endtime"] = fromtimestamp_int
 xlogfile_parse["realtime"] = timedelta_int
-#xlogfile_parse["deathdate"] = xlogfile_parse["birthdate"] = isodate
-#xlogfile_parse["dumplog"] = fixdump
 
 def parse_xlogfile_line(line, delim):
     record = {}
@@ -114,12 +106,6 @@ def parse_xlogfile_line(line, delim):
             value = xlogfile_parse[key](value)
         record[key] = value
     return record
-
-#def xlogfile_entries(fp):
-#    if fp is None: return
-#    with fp.open("rt") as handle:
-#        for line in handle:
-#            yield parse_xlogfile_line(line)
 
 class DeathBotProtocol(irc.IRCClient):
     nickname = NICK
@@ -1446,7 +1432,7 @@ class DeathBotProtocol(irc.IRCClient):
 
     # !players callback. Actually print the output.
     def outPlayers(self,q):
-        outmsg = " | ".join(q["resp"].values())
+        outmsg = " :: ".join(q["resp"].values())
         self.respond(q["replyto"],q["sender"],outmsg)
 
     def usageWhereIs(self, sender, replyto, msgwords):
@@ -1496,7 +1482,7 @@ class DeathBotProtocol(irc.IRCClient):
                 player = q["resp"][server].split(" ")[1]
             else:
                 msgs += [q["resp"][server]]
-        outmsg = " | ".join(msgs)
+        outmsg = " :: ".join(msgs)
         if not outmsg: outmsg = player + " is not playing."
         self.respond(q["replyto"],q["sender"],outmsg)
 
@@ -1611,7 +1597,7 @@ class DeathBotProtocol(irc.IRCClient):
                 fallback_msg = q["resp"][server]
             else:
                msgs += [q["resp"][server]]
-        outmsg = " | ".join(msgs)
+        outmsg = " :: ".join(msgs)
         if not outmsg: outmsg = fallback_msg
         self.respond(q["replyto"],q["sender"],outmsg)
 
@@ -2057,7 +2043,7 @@ class DeathBotProtocol(irc.IRCClient):
             elif "realtime" in event:
                 event["realtime_fmt"] = str(event["realtime"])
                 yield ("[{displaystring}] {player} ({role} {race} {gender} {align}) "
-                       "{message}, on T:{turns}, rt[{realtime_fmt}]").format(**event)
+                       "{message}, on T:{turns} ({realtime_fmt})").format(**event)
             else:
                 yield ("[{displaystring}] {player} ({role} {race} {gender} {align}) "
                        "{message}, on T:{turns}").format(**event)
