@@ -313,7 +313,7 @@ class DeathBotProtocol(irc.IRCClient):
                "gnoll" : [INPR+"gnoll4104/", INPR+"gnoll410b2/",
                           INPR+"gnoll410b4/", INPR+"gnoll410b9/",
                           INPR+"gnoll410b14/", INPR+"gnoll410b15/",
-                          INPR+"gnoll410/"],
+                          INPR+"gnoll41041/", INPR+"gnoll410/"],
                  "ace" : [INPR+"ace/"],
                "hackm" : [INPR+"hackem100/", INPR+"hackem110/"],
                  "dyn" : [INPR+"dyn/"]}
