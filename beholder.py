@@ -158,7 +158,7 @@ class DeathBotProtocol(irc.IRCClient):
                  filepath.FilePath(FILEROOT+"notdnethack-2023.05.15/xlogfile"): ("ndnh", ":", "notdnethack/dumplog/{starttime}.ndnh.txt"),
                  filepath.FilePath(FILEROOT+"evilhack-0.8.2/var/xlogfile"): ("evil", "\t", "evilhack/dumplog/{starttime}.evil.html"),
                  filepath.FilePath(FILEROOT+"slashthem-0.9.7/xlogfile"): ("slth", ":", "slashthem/dumplog/{starttime}.slth.txt"),
-                 filepath.FilePath(FILEROOT+"gnollhack-4.1.1.0/var/xlogfile"): ("gnoll", "\t", "gnollhack/dumplog/{starttime}.gnoll.txt"),
+                 filepath.FilePath(FILEROOT+"gnollhack-4.1.2.3/var/xlogfile"): ("gnoll", "\t", "gnollhack/dumplog/{starttime}.gnoll.html"),
                  filepath.FilePath(FILEROOT+"acehack/xlogfile"): ("ace", ":", "acehack/dumplog/{starttime}.ace.txt"),
                  filepath.FilePath(FILEROOT+"hackem-1.1.4/var/xlogfile"): ("hackm", "\t", "hackem/dumplog/{starttime}.hackem.html"),
                  filepath.FilePath(FILEROOT+"unnethack-6.0.8/var/xlogfile"): ("un", "\t", "unnethack/dumplog/{starttime}.un.txt.html")}
@@ -177,6 +177,7 @@ class DeathBotProtocol(irc.IRCClient):
                  filepath.FilePath(FILEROOT+"notdnethack-2023.05.15/livelog"): ("ndnh", ":"),
                  filepath.FilePath(FILEROOT+"evilhack-0.8.2/var/livelog"): ("evil", "\t"),
                  filepath.FilePath(FILEROOT+"slashthem-0.9.7/livelog"): ("slth", ":"),
+                 filepath.FilePath(FILEROOT+"gnollhack-4.1.2.3/var/livelog"): ("gnoll", "\t"),
                  filepath.FilePath(FILEROOT+"acehack/livelog"): ("ace", ":"),
                  filepath.FilePath(FILEROOT+"hackem-1.1.4/var/livelog"): ("hackm", "\t"),
                  filepath.FilePath(FILEROOT+"unnethack-6.0.8/var/livelog"): ("un", "\t")}
@@ -315,7 +316,7 @@ class DeathBotProtocol(irc.IRCClient):
                           INPR+"gnoll410b4/", INPR+"gnoll410b9/",
                           INPR+"gnoll410b14/", INPR+"gnoll410b15/",
                           INPR+"gnoll41041/", INPR+"gnoll410/",
-                          INPR+"gnoll411/"],
+                          INPR+"gnoll411/", INPR+"gnoll4123/"],
                  "ace" : [INPR+"ace/"],
                "hackm" : [INPR+"hackem100/", INPR+"hackem110/",
                           INPR+"hackem114/"],
@@ -437,6 +438,7 @@ class DeathBotProtocol(irc.IRCClient):
                 "slth": [FILEROOT+"slashthem-0.9.5/whereis/",
                          FILEROOT+"slashthem-0.9.6/whereis/",
                          FILEROOT+"slashthem-0.9.7/whereis/"],
+               "gnoll": [FILEROOT+"gnollhack-4.1.2.3/var/whereis/"],
                "hackm": [FILEROOT+"hackem-1.0.0/var/whereis/",
                          FILEROOT+"hackem-1.1.0/var/whereis/",
                          FILEROOT+"hackem-1.1.4/var/whereis/"],
