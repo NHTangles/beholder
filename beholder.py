@@ -1913,7 +1913,6 @@ class DeathBotProtocol(irc.IRCClient):
         if not lname in self.allgames[var]:
             self.allgames[var][lname] = 0
         self.allgames[var][lname] += 1
-        if self.startscummed(game): return
 
         dumplog = game.get("dumplog",False)
         if dumplog and var != "dyn":
@@ -1927,15 +1926,6 @@ class DeathBotProtocol(irc.IRCClient):
             # assume the rest of the url prefix is safe.
             dumpurl = urllib.parse.quote(game["dumpfmt"].format(**game))
             dumpurl = self.dump_url_prefix.format(**game) + dumpurl
-        self.lg["{variant}:{name}".format(**game).lower()] = dumpurl
-        if (game["endtime"] > self.lge.get(lname, 0)):
-            self.lge[lname] = game["endtime"]
-            self.lg[lname] = dumpurl
-        self.lg[var] = dumpurl
-        if (game["endtime"] > self.tlastgame):
-            self.lastgame = dumpurl
-            self.tlastgame = game["endtime"]
-
         # Kludge for nethack 1.3d -
         # populate race and align with dummy values.
         if "race" not in game: game["race"] = "###"
@@ -1983,9 +1973,20 @@ class DeathBotProtocol(irc.IRCClient):
             if var in self.streakvars:
                 if lname in self.curstreak[var]:
                     del self.curstreak[var][lname]
-            if self.plr_tc_notreached(game["name"], game["turns"]): return # ignore due to !setmintc, only if not ascended
-        # end of statistics gathering
+            if self.plr_tc_notreached(game["name"], game["turns"]): report = False # ignore due to !setmintc, only if not ascended
 
+        if self.startscummed(game): return
+        # only populate "!lastgame" fields for non-scummed games
+        self.lg["{variant}:{name}".format(**game).lower()] = dumpurl
+        if (game["endtime"] > self.lge.get(lname, 0)):
+            self.lge[lname] = game["endtime"]
+            self.lg[lname] = dumpurl
+        self.lg[var] = dumpurl
+        if (game["endtime"] > self.tlastgame):
+            self.lastgame = dumpurl
+            self.tlastgame = game["endtime"]
+
+        # end of statistics gathering
         if (not report): return # we're just reading through old entries at startup
 
         # format duration string based on realtime and/or wallclock duration
