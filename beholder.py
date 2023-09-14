@@ -156,7 +156,7 @@ class DeathBotProtocol(irc.IRCClient):
                  filepath.FilePath(FILEROOT+"nh13d/xlogfile"): ("nh13d", ":", "nh13d/dumplog/{starttime}.nh13d.txt"),
                  filepath.FilePath(FILEROOT+"slashem-0.0.8E0F2/xlogfile"): ("slshm", ":", "slashem/dumplog/{starttime}.slashem.txt"),
                  filepath.FilePath(FILEROOT+"notdnethack-2023.05.15/xlogfile"): ("ndnh", ":", "notdnethack/dumplog/{starttime}.ndnh.txt"),
-                 filepath.FilePath(FILEROOT+"evilhack-0.8.2/var/xlogfile"): ("evil", "\t", "evilhack/dumplog/{starttime}.evil.html"),
+                 filepath.FilePath(FILEROOT+"evilhack-0.8.3/var/xlogfile"): ("evil", "\t", "evilhack/dumplog/{starttime}.evil.html"),
                  filepath.FilePath(FILEROOT+"slashthem-0.9.7/xlogfile"): ("slth", ":", "slashthem/dumplog/{starttime}.slth.txt"),
                  filepath.FilePath(FILEROOT+"gnollhack-4.1.2.3/var/xlogfile"): ("gnoll", "\t", "gnollhack/dumplog/{starttime}.gnoll.html"),
                  filepath.FilePath(FILEROOT+"acehack/xlogfile"): ("ace", ":", "acehack/dumplog/{starttime}.ace.txt"),
@@ -175,7 +175,7 @@ class DeathBotProtocol(irc.IRCClient):
                  filepath.FilePath(FILEROOT+"nh13d/livelog"): ("nh13d", ":"),
                  filepath.FilePath(FILEROOT+"slashem-0.0.8E0F2/livelog"): ("slshm", ":"),
                  filepath.FilePath(FILEROOT+"notdnethack-2023.05.15/livelog"): ("ndnh", ":"),
-                 filepath.FilePath(FILEROOT+"evilhack-0.8.2/var/livelog"): ("evil", "\t"),
+                 filepath.FilePath(FILEROOT+"evilhack-0.8.3/var/livelog"): ("evil", "\t"),
                  filepath.FilePath(FILEROOT+"slashthem-0.9.7/livelog"): ("slth", ":"),
                  filepath.FilePath(FILEROOT+"gnollhack-4.1.2.3/var/livelog"): ("gnoll", "\t"),
                  filepath.FilePath(FILEROOT+"acehack/livelog"): ("ace", ":"),
@@ -310,7 +310,8 @@ class DeathBotProtocol(irc.IRCClient):
                           INPR+"evil042/", INPR+"evil050/",
                           INPR+"evil060/", INPR+"evil070/",
                           INPR+"evil071/", INPR+"evil080/",
-                          INPR+"evil081/", INPR+"evil082/"],
+                          INPR+"evil081/", INPR+"evil082/",
+                          INPR+"evil083/"],
                 "tnnt" : [INPR+"tnnt/"],
                 "slth" : [INPR+"slth095/", INPR+"slth096/",
                           INPR+"slth097/"],
@@ -438,7 +439,8 @@ class DeathBotProtocol(irc.IRCClient):
                          FILEROOT+"evilhack-0.7.1/var/whereis/",
                          FILEROOT+"evilhack-0.8.0/var/whereis/",
                          FILEROOT+"evilhack-0.8.1/var/whereis/",
-                         FILEROOT+"evilhack-0.8.2/var/whereis/"],
+                         FILEROOT+"evilhack-0.8.2/var/whereis/",
+                         FILEROOT+"evilhack-0.8.3/var/whereis/"],
                 "tnnt": [FILEROOT+"tnnt/var/whereis/"],
                 "slth": [FILEROOT+"slashthem-0.9.5/whereis/",
                          FILEROOT+"slashthem-0.9.6/whereis/",
@@ -511,8 +513,9 @@ class DeathBotProtocol(irc.IRCClient):
                           "Sokoban","Fort Ludios","DevTeam's Office","Deathmatch Arena",
                           "Vlad's Tower","The Elemental Planes"],
                  "evil": ["The Dungeons of Doom","Gehennom","The Gnomish Mines","Goblin Town",
-                          "The Quest","Sokoban","Fort Ludios","The Ice Queen's Realm","Vecna's Domain",
-                          "Vlad's Tower","Purgatory","The Elemental Planes"],
+                          "The Quest","Sokoban","Fort Ludios","The Ice Queen's Realm","The Hidden Dungeon",
+                          "Vecna's Domain","Vlad's Tower","Purgatory","The Wizards Tower",
+                          "The Elemental Planes"],
                 "gnoll": ["The Dungeons of Doom","Gehennom","The Gnomish Mines","The Large Circular Dungeon",
                           "The Quest","Sokoban","Fort Ludios","Plane of the Modron","Hellish Pastures",
                           "Vlad's Tower","The Elemental Planes"],
@@ -672,7 +675,7 @@ class DeathBotProtocol(irc.IRCClient):
                           None), # no different from vanilla
                  "evil": (["evilhack", "evil", "evl"],
                           vanilla_roles + ["con", "inf"],
-                          vanilla_races + ["cen", "gia", "hob", "ill", "trt"],
+                          vanilla_races + ["cen", "gia", "hob", "ill", "trt", "dro"],
                           "k21971/EvilHack/master"),
                   "ace": (["ace"],
                           vanilla_roles, vanilla_races,
@@ -692,7 +695,7 @@ class DeathBotProtocol(irc.IRCClient):
     genders = ["Mal", "Fem"]
 
     #who is making tea? - bots of the nethack community who have influenced this project.
-    brethren = ["Rodney", "Athame", "Arsinoe", "Izchak", "TheresaMayBot", "FCCBot", "the late Pinobot", "Announcy", "demogorgon", "the /dev/null/oracle", "NotTheOracle\\dnt", "Croesus"]
+    brethren = ["Rodney", "Athame", "Arsinoe", "Izchak", "TheresaMayBot", "FCCBot", "the late Pinobot", "Announcy", "demogorgon", "the /dev/null/oracle", "NotTheOracle\\dnt", "Croesus", "Hecubus", "Yendor"]
     looping_calls = None
 
     # SASL auth nonsense required if we run on AWS
