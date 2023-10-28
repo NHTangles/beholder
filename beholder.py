@@ -565,6 +565,13 @@ class DeathBotProtocol(irc.IRCClient):
         "dan": "dancer",
         # Evilhack, includes all of vanilla
         "inf": "infidel",
+        # SLASH'EM/SlashTHEM/HackEM
+        "uds": "undead slayer",
+        "fla": "flame mage",
+        "ice": "ice mage",
+        "nec": "necromancer",
+        "yeo": "yeoman",
+        "jed": "jedi",
     }
 
     racename = {
@@ -600,6 +607,9 @@ class DeathBotProtocol(irc.IRCClient):
         "hob": "hobbit",
         "ill": "illithid",
         "trt": "tortle",
+        #SLASH'EM/Hack'EM
+        "dop": "doppelganger",
+        "lyc": "lycanthrope",
     }
     # save typing these out in multiple places
     vanilla_roles = ["arc","bar","cav","hea","kni","mon","pri",
@@ -683,8 +693,8 @@ class DeathBotProtocol(irc.IRCClient):
                           vanilla_roles, vanilla_races,
                           None), # no different from vanilla
                 "hackm": (["hackem", "hackm"],
-                          vanilla_roles + ["con", "fla", "ice", "inf", "nec", "uds", "yeo"],
-                          vanilla_races + ["cen", "gia", "hob", "ill", "trt", "vam"],
+                          vanilla_roles + ["con", "inf", "fla", "ice", "nec", "uds", "yeo", "jed", "pir"],
+                          vanilla_races + ["cen", "gia", "hob", "ill", "trt", "vam", "dop"],
                           "elunna/hackem/master"),
                 "gnoll": (["gnoll", "gnollhack"],
                           vanilla_roles, vanilla_races,
