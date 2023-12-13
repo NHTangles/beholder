@@ -553,30 +553,49 @@ class DeathBotProtocol(irc.IRCClient):
         "tou": "tourist",
         "val": "valkyrie",
         "wiz": "wizard",
-        # NetHack 1.3d Vanilla has a role of 'Elf' as well as 'Fighter' and 'Ninja' (the latter already included below from Slash'EM Extended roles)
+        # NetHack 1.3d Vanilla has a role of 'Elf' as well as 'Fighter' and 'Ninja' (the latter already included below from SlashTHEM roles)
         "elf": "elf",
+        "fig": "fighter",
         # Dnh, includes all of vanilla
         "ana": "anachrononaut",
         "bin": "binder",
         "nob": "noble",
         "pir": "pirate",
-        "trb": "troubadour",
+        "brd": "troubadour",
         "con": "convict",
+        "mad": "madman",
         # Ndnh, includes all of vanilla and dnh
         "acu": "illithanachronounbinder",
         # SpliceHack, includes all of vanilla
         "car": "cartomancer",
-        "dgn": "dragonmaster",
-        "dan": "dancer",
+        "dra": "dragon rider",
         # Evilhack, includes all of vanilla
         "inf": "infidel",
         # SLASH'EM/SlashTHEM/HackEM
-        "uds": "undead slayer",
+        "und": "undead slayer",
         "fla": "flame mage",
         "ice": "ice mage",
         "nec": "necromancer",
         "yeo": "yeoman",
         "jed": "jedi",
+        "nin": "ninja",
+        "unt": "undertaker",
+        "pal": "paladin",
+        "loc": "locksmith",
+        "cor": "corsair",
+        "chf": "chef",
+        "fir": "firefighter",
+        "off": "officer",
+        "ele": "electric mage",
+        "aci": "acid mage",
+        "hac": "hacker",
+        "gee": "geek",
+        "dru": "drunk",
+        "gla": "gladiator",
+        "div": "diver",
+        "lun": "lunatic",
+        "mus": "musician",
+        "zoo": "zookeeper",
     }
 
     racename = {
@@ -598,23 +617,30 @@ class DeathBotProtocol(irc.IRCClient):
         "yuk": "yuki-onna",
         "dro": "drow",
         "bat": "chiropteran",
+        "and": "android",
+        # Ndnh, includes all of vanilla and dnh
+        "sal": "salamander",
+        "eth": "etherealoid",
+        "ent": "treant",
         # 4k, includes vanilla
         "scu": "scurrier",
         "syl": "sylph",
         #SpliceHack, includes vanilla
-        "ang": "angel",
-        "chg": "changeling",
         "inf": "infernal",
         "mer": "merfolk",
-        "wlf": "werewolf",
         #EvilHack, includes vanilla
         "cen": "centaur",
         "hob": "hobbit",
-        "ill": "illithid",
+        "ith": "illithid",
         "trt": "tortle",
         #SLASH'EM/Hack'EM
         "dop": "doppelganger",
         "lyc": "lycanthrope",
+        #SlashTHEM
+        "ill": "illithid",
+        "nym": "nymph",
+        "tro": "troll",
+        "gul": "ghoul",
     }
     # save typing these out in multiple places
     vanilla_roles = ["arc","bar","cav","hea","kni","mon","pri",
@@ -648,15 +674,15 @@ class DeathBotProtocol(irc.IRCClient):
                           "NHTangles/GruntHack/master"),
                   "dnh": (["dnethack", "dn"],
                           vanilla_roles
-                            + ["ana", "bin", "nob", "pir", "trb", "con"],
+                            + ["ana", "bin", "nob", "pir", "brd", "con", "mad"],
                           vanilla_races
-                            + ["clk", "con", "bat", "dro", "hlf", "inc", "vam", "swn"],
-                          "Chris-plus-alphanumericgibberish/dNAO/compat-3.20.0"), # not ideal...
+                            + ["clk", "con", "bat", "dro", "hlf", "inc", "vam", "swn", "and"],
+                          "Chris-plus-alphanumericgibberish/dNAO/compat-3.22.0"), # not ideal...
                  "ndnh": (["notdnethack", "ndn"],
                           vanilla_roles
-                            + ["ana", "bin", "nob", "pir", "trb", "con", "acu"],
+                            + ["ana", "bin", "nob", "pir", "brd", "con", "mad", "acu"],
                           vanilla_races
-                            + ["clk", "con", "bat", "dro", "hlf", "inc", "vam", "swn", "sal"],
+                            + ["clk", "con", "bat", "dro", "hlf", "inc", "vam", "swn", "and", "sal", "eth", "ent"],
                           "demogorgon22/notdnethack/master"),
                    "un": (["unnethack", "unh"],
                           vanilla_roles + ["con"], vanilla_races,
@@ -665,7 +691,7 @@ class DeathBotProtocol(irc.IRCClient):
                           vanilla_roles, vanilla_races,
                           "copperwater/xNetHack/master"),
                   "spl": (["splicehack", "splice", "spl"],
-                          vanilla_roles + ["car", "dgn", "dan"], vanilla_races + ["ang", "chg", "inf", "mer", "wlf"],
+                          vanilla_roles + ["con", "pir", "car", "dra"], vanilla_races + ["vam", "inf", "mer"],
                           "NullCGT/SpliceHack/Master"),
                   "dyn": (["dynahack", "dyna"],
                           vanilla_roles + ["con"], vanilla_races + ["vam"],
@@ -680,26 +706,29 @@ class DeathBotProtocol(irc.IRCClient):
                           vanilla_roles, vanilla_races + ["gia", "scu", "syl"],
                           "tsadok/nhfourk/master/libnethack"),
                 "slshm": (["slash", "slash'em", "slshm"],
-                          vanilla_roles + ["fla", "ice", "nec", "uds", "yeo"],
+                          vanilla_roles + ["fla", "ice", "nec", "und", "yeo"],
                           vanilla_races + ["dop", "dro", "hob", "lyc", "vam"],
                           "k21971/SlashEM/master"),
                  "slth": (["slashthem", "slth"],
-                          vanilla_roles + ["fla", "ice", "nec", "uds", "yeo"],
-                          vanilla_races + ["dop", "dro", "hob", "lyc", "vam"],
+                          vanilla_roles + ["fla", "ice", "nec", "und", "yeo", "jed",
+                                           "nin", "unt", "pal", "loc", "cor", "chf",
+                                           "fir", "off", "ele", "aci", "hac", "gee",
+                                           "dru", "gla", "div", "lun", "mus", "zoo"],
+                          vanilla_races + ["dop", "dro", "hob", "lyc", "vam", "ill", "nym", "tro", "gul"],
                           "k21971/SlashTHEM/master"),
                  "tnnt": (["tnnt"],
                           vanilla_roles, vanilla_races,
                           None), # no different from vanilla
                  "evil": (["evilhack", "evil", "evl"],
                           vanilla_roles + ["con", "inf"],
-                          vanilla_races + ["cen", "gia", "hob", "ill", "trt", "dro"],
+                          vanilla_races + ["cen", "gia", "hob", "ith", "trt", "dro"],
                           "k21971/EvilHack/master"),
                   "ace": (["ace"],
                           vanilla_roles, vanilla_races,
                           None), # no different from vanilla
                 "hackm": (["hackem", "hackm"],
-                          vanilla_roles + ["con", "inf", "fla", "ice", "nec", "uds", "yeo", "jed", "pir"],
-                          vanilla_races + ["cen", "gia", "hob", "ill", "trt", "vam", "dop"],
+                          vanilla_roles + ["con", "inf", "fla", "ice", "nec", "und", "yeo", "jed", "pir"],
+                          vanilla_races + ["cen", "gia", "hob", "ith", "trt", "vam", "dop"],
                           "elunna/hackem/master"),
                 "gnoll": (["gnoll", "gnollhack"],
                           vanilla_roles, vanilla_races,
@@ -708,8 +737,8 @@ class DeathBotProtocol(irc.IRCClient):
     # variants which support streaks.
     streakvars = ["nh343", "nh363", "nh370", "nh13d", "gh", "dnh", "un", "sp", "xnh", "spl", "slshm", "tnnt", "ndnh", "evil", "slth", "ace", "gnoll", "hackm"]
     # for !asc statistics - assume these are the same for all variants, or at least the sane ones.
-    aligns = ["Law", "Neu", "Cha"]
-    genders = ["Mal", "Fem"]
+    aligns = ["Law", "Neu", "Cha", "Una", "Non"]
+    genders = ["Mal", "Fem", "Nbn"]
 
     #who is making tea? - bots of the nethack community who have influenced this project.
     brethren = ["Rodney", "Athame", "Arsinoe", "Izchak", "TheresaMayBot", "FCCBot", "the late Pinobot", "Announcy", "demogorgon", "the /dev/null/oracle", "NotTheOracle\\dnt", "Croesus", "Hecubus", "Yendor"]
@@ -1620,6 +1649,7 @@ class DeathBotProtocol(irc.IRCClient):
             if plr in self.asc[var]:
                 varasc = self.asc[var][plr].get("Mal",0)
                 varasc += self.asc[var][plr].get("Fem",0)
+                varasc += self.asc[var][plr].get("Nbn",0)
                 totasc += varasc
                 if stats: stats += ","
                 stats += " " + self.displaystring[var] + ":" + str(varasc) + " ({:0.2f}%)".format((100.0 * varasc)
