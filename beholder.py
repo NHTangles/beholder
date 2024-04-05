@@ -199,6 +199,7 @@ class DeathBotProtocol(irc.IRCClient):
                 "nh13d" : [],
                 "slshm" : [],
                  "tnnt" : [],
+               "nhthon" : [],
                  "ndnh" : [],
                  "evil" : [],
                  "slth" : [],
@@ -226,6 +227,7 @@ class DeathBotProtocol(irc.IRCClient):
                       "ndnh" : "\x0313ndnh\x03",
                       "evil" : "\x0304evil\x03",
                       "tnnt" : "\x0310tnnt\x03",
+                    "nhthon" : "\x0310nhthon\x03",
                         "un" : "\x0308un\x03",
                       "slth" : "\x0305slth\x03",
                      "gnoll" : "\x0309gnoll\x03",
@@ -315,6 +317,7 @@ class DeathBotProtocol(irc.IRCClient):
                           INPR+"evil081/", INPR+"evil082/",
                           INPR+"evil083/"],
                 "tnnt" : [INPR+"tnnt/"],
+              "nhthon" : [INPR+"nethackathon/"],
                 "slth" : [INPR+"slth095/", INPR+"slth096/",
                           INPR+"slth097/"],
                "gnoll" : [INPR+"gnoll4104/", INPR+"gnoll410b2/",
@@ -451,6 +454,7 @@ class DeathBotProtocol(irc.IRCClient):
                          FILEROOT+"evilhack-0.8.2/var/whereis/",
                          FILEROOT+"evilhack-0.8.3/var/whereis/"],
                 "tnnt": [FILEROOT+"tnnt/var/whereis/"],
+              "nhthon": [FILEROOT+"nethackathon/var/whereis/"],
                 "slth": [FILEROOT+"slashthem-0.9.5/whereis/",
                          FILEROOT+"slashthem-0.9.6/whereis/",
                          FILEROOT+"slashthem-0.9.7/whereis/"],
@@ -522,6 +526,9 @@ class DeathBotProtocol(irc.IRCClient):
                           "The Temple of Moloch","The Giant Caverns","Vlad's Tower","Frankenstein's Lab",
                           "The Elemental Planes"],
                  "tnnt": ["The Dungeons of Doom","Gehennom","The Gnomish Mines","The Quest",
+                          "Sokoban","Fort Ludios","DevTeam's Office","Deathmatch Arena",
+                          "Vlad's Tower","The Elemental Planes"],
+               "nhthon": ["The Dungeons of Doom","Gehennom","The Gnomish Mines","The Quest",
                           "Sokoban","Fort Ludios","DevTeam's Office","Deathmatch Arena",
                           "Vlad's Tower","The Elemental Planes"],
                  "evil": ["The Dungeons of Doom","Gehennom","The Gnomish Mines","Goblin Town",
@@ -724,6 +731,9 @@ class DeathBotProtocol(irc.IRCClient):
                  "tnnt": (["tnnt"],
                           vanilla_roles, vanilla_races,
                           None), # no different from vanilla
+               "nhthon": (["nethackathon", "nhthon"],
+                          vanilla_roles, vanilla_races,
+                          None), # no different from vanilla
                  "evil": (["evilhack", "evil", "evl"],
                           vanilla_roles + ["con", "inf"],
                           vanilla_races + ["cen", "gia", "hob", "ith", "trt", "dro"],
@@ -740,7 +750,7 @@ class DeathBotProtocol(irc.IRCClient):
                           "hyvanmielenpelit/GnollHack/master")}
 
     # variants which support streaks.
-    streakvars = ["nh343", "nh363", "nh370", "nh13d", "gh", "dnh", "un", "sp", "xnh", "spl", "slshm", "tnnt", "ndnh", "evil", "slth", "ace", "gnoll", "hackm"]
+    streakvars = ["nh343", "nh363", "nh370", "nh13d", "gh", "dnh", "un", "sp", "xnh", "spl", "slshm", "tnnt", "nhthon", "ndnh", "evil", "slth", "ace", "gnoll", "hackm"]
     # for !asc statistics - assume these are the same for all variants, or at least the sane ones.
     aligns = ["Law", "Neu", "Cha", "Una", "Non"]
     genders = ["Mal", "Fem", "Nbn"]
