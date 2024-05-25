@@ -163,7 +163,7 @@ class DeathBotProtocol(irc.IRCClient):
                  filepath.FilePath(FILEROOT+"acehack/xlogfile"): ("ace", ":", "acehack/dumplog/{starttime}.ace.txt"),
                  filepath.FilePath(FILEROOT+"hackem-1.2.2/var/xlogfile"): ("hackm", "\t", "hackem/dumplog/{starttime}.hackem.html"),
                  filepath.FilePath(FILEROOT+"nethackathon/var/xlogfile"): ("nhthon", "\t", "nethackathon/dumplog/{starttime}.nhthon.html"),
-                 filepath.FilePath(FILEROOT+"unnethack-6.0.11/var/xlogfile"): ("un", "\t", "unnethack/dumplog/{starttime}.un.txt.html")}
+                 filepath.FilePath(FILEROOT+"unnethack-6.0.12/var/xlogfile"): ("un", "\t", "unnethack/dumplog/{starttime}.un.txt.html")}
     livelogs  = {filepath.FilePath(FILEROOT+"nh343-hdf/var/livelog"): ("nh343", ":"),
                  filepath.FilePath(FILEROOT+"nh363-hdf/var/livelog"): ("nh363", "\t"),
                  filepath.FilePath(FILEROOT+"nh370.103-hdf/var/livelog"): ("nh370", "\t"),
@@ -183,7 +183,7 @@ class DeathBotProtocol(irc.IRCClient):
                  filepath.FilePath(FILEROOT+"gnollhack-4.1.3.52/var/livelog"): ("gnoll", "\t"),
                  filepath.FilePath(FILEROOT+"acehack/livelog"): ("ace", ":"),
                  filepath.FilePath(FILEROOT+"hackem-1.2.2/var/livelog"): ("hackm", "\t"),
-                 filepath.FilePath(FILEROOT+"unnethack-6.0.11/var/livelog"): ("un", "\t")}
+                 filepath.FilePath(FILEROOT+"unnethack-6.0.12/var/livelog"): ("un", "\t")}
 
     # Forward events to other bots at the request of maintainers of other variant-specific channels
     forwards = {"nh343" : [],
@@ -286,7 +286,8 @@ class DeathBotProtocol(irc.IRCClient):
                           INPR+"un604/", INPR+"un605/",
                           INPR+"un606/", INPR+"un607/",
                           INPR+"un608/", INPR+"un609/",
-                          INPR+"un6010/", INPR+"un6011/"],
+                          INPR+"un6010/", INPR+"un6011/",
+                          INPR+"un6012/"],
                  "dnh" : [INPR+"dnh3171/", INPR+"dnh318/",
                           INPR+"dnh319/", INPR+"dnh3191/",
                           INPR+"dnh320/", INPR+"dnh321/",
@@ -497,7 +498,8 @@ class DeathBotProtocol(irc.IRCClient):
                          FILEROOT+"unnethack-6.0.8/var/whereis/",
                          FILEROOT+"unnethack-6.0.9/var/whereis/",
                          FILEROOT+"unnethack-6.0.10/var/whereis/",
-                         FILEROOT+"unnethack-6.0.11/var/whereis/"]}
+                         FILEROOT+"unnethack-6.0.11/var/whereis/",
+                         FILEROOT+"unnethack-6.0.12/var/whereis/"]}
 
     dungeons = {"nh343": ["The Dungeons of Doom","Gehennom","The Gnomish Mines","The Quest",
                           "Sokoban","Fort Ludios","Vlad's Tower","The Elemental Planes"],
@@ -512,18 +514,18 @@ class DeathBotProtocol(irc.IRCClient):
                           "Sokoban","Fort Ludios","The Lost Tomb","The Sunless Sea",
                           "The Temple of Moloch","The Dispensary","Vlad's Tower",
                           "The Elemental Planes"],
-                 "ndnh": ["The Dungeons of Doom","Nowhere","The Collapsed Mineshaft","Gehennom",
+                 "ndnh": ["The Dungeons of Doom","Gehennom","Nowhere","The Collapsed Mineshaft",
                           "The Gnomish Mines","The Ice Caves","The Black Forest","The Dismal Swamp",
-                          "The Archipelago","Law Quest","Neutral Quest","The Lost Cities",
-                          "Chaos Quest","The Quest","Lokoban","Fort Ludios","The Void","Sacristy",
-                          "The Lost Tomb","The Sunless Sea","The Temple of Moloch","The Dispensary",
-                          "The Spire","Vlad's Tower","The Elemental Planes"],
-                "nndnh": ["The Dungeons of Doom","Nowhere","The Collapsed Mineshaft","Gehennom",
+                          "The Archipelago","Law Quest","Neutral Quest","The Lost Cities","Chaos Quest",
+                          "The Quest","Lokoban","Fort Ludios","The Void","Sacristy","The Lost Tomb",
+                          "The Sunless Sea","The Temple of Moloch","The Dispensary","The Spire",
+                          "Vlad's Tower","The Elemental Planes"],
+                "nndnh": ["The Dungeons of Doom","Gehennom","Nowhere","The Collapsed Mineshaft",
                           "The Gnomish Mines","The Ice Caves","The Black Forest","The Dismal Swamp",
-                          "The Archipelago","Law Quest","Neutral Quest","The Lost Cities",
-                          "Chaos Quest","The Quest","Lokoban","Fort Ludios","The Void","Sacristy",
-                          "The Lost Tomb","The Sunless Sea","The Temple of Moloch","The Dispensary",
-                          "The Spire","Vlad's Tower","The Elemental Planes"],
+                          "The Archipelago","Law Quest","Neutral Quest","The Lost Cities","Chaos Quest",
+                          "The Quest","Lokoban","Fort Ludios","The Void","Sacristy","The Lost Tomb",
+                          "The Sunless Sea","The Temple of Moloch","The Dispensary","The Spire",
+                          "Vlad's Tower","The Elemental Planes"],
                    "fh": ["The Dungeons of Doom","Gehennom","The Gnomish Mines","The Quest",
                           "Sokoban","Fort Ludios","Vlad's Tower","The Elemental Planes"],
                   "dyn": ["The Dungeons of Doom","Gehennom","The Gnomish Mines","The Quest",
@@ -605,6 +607,8 @@ class DeathBotProtocol(irc.IRCClient):
         "mad": "madman",
         # Ndnh, includes all of vanilla and dnh
         "acu": "illithanachronounbinder",
+        # Nndnh, includes all of vanilla and dnh, ndnh
+        "oct": "octopode",
         # SpliceHack, includes all of vanilla
         "car": "cartomancer",
         "dra": "dragon rider",
@@ -672,6 +676,7 @@ class DeathBotProtocol(irc.IRCClient):
         "hob": "hobbit",
         "ith": "illithid",
         "trt": "tortle",
+        "dra": "draugr",
         #SLASH'EM/Hack'EM
         "dop": "doppelganger",
         "lyc": "lycanthrope",
@@ -727,7 +732,7 @@ class DeathBotProtocol(irc.IRCClient):
                           vanilla_roles
                             + ["ana", "bin", "nob", "pir", "brd", "con", "mad", "acu"],
                           vanilla_races
-                            + ["clk", "con", "bat", "dro", "hlf", "inc", "vam", "swn", "and", "sal", "eth", "ent"],
+                            + ["clk", "con", "bat", "dro", "hlf", "inc", "vam", "swn", "and", "sal", "eth", "ent", "oct"],
                           "k21971/notnotdnethack/master"),
                    "un": (["unnethack", "unh"],
                           vanilla_roles + ["con"], vanilla_races,
@@ -769,7 +774,7 @@ class DeathBotProtocol(irc.IRCClient):
                           None), # no different from vanilla
                  "evil": (["evilhack", "evil", "evl"],
                           vanilla_roles + ["con", "inf"],
-                          vanilla_races + ["cen", "gia", "hob", "ith", "trt", "dro"],
+                          vanilla_races + ["cen", "gia", "hob", "ith", "trt", "dro", "dra"],
                           "k21971/EvilHack/master"),
                   "ace": (["ace"],
                           vanilla_roles, vanilla_races,
