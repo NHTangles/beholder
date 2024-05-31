@@ -1921,8 +1921,9 @@ class DeathBotProtocol(irc.IRCClient):
             replyto = CHANNEL
             if (sender == DCBRIDGE):
                 message = message.partition("<")[2] #everything after the first <
-                (sender,message) = message.partition(">")[0,2] #everything remaining before/after the first >
+                sender,x,message = message.partition(">") #everything remaining before/after the first >
                 message = message.partition(" ")[2] # everything after the first space (discard colour-codes at end of nickname)
+                if len(sender) == 0: return
         else: #private msg
             replyto = sender
         # Hello processing first.
