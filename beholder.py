@@ -1919,10 +1919,10 @@ class DeathBotProtocol(irc.IRCClient):
         if (dest == CHANNEL): #public message
             self.log("<"+sender+"> " + message)
             replyto = CHANNEL
-            if (sender == DCBRIDGE and message[0] == '<'):
-                msgparts = message[1:].split('> ')
-                sender = msgparts[0]
-                message = "> ".join(msgparts[1:]) # in case there's more "> " in the message
+            if (sender == DCBRIDGE):
+                message = message.partition("<")[2] #everything after the first <
+                (sender,message) = message.partition(">")[0,2] #everything remaining before/after the first >
+                message = message.partition(" ")[2] # everything after the first space (discard colour-codes at end of nickname)
         else: #private msg
             replyto = sender
         # Hello processing first.
