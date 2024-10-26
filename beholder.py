@@ -59,8 +59,8 @@ from botconf import HOST, PORT, CHANNEL, NICK, USERNAME, REALNAME, BOTDIR
 from botconf import PWFILE, FILEROOT, WEBROOT, LOGROOT, PINOBOT, ADMIN
 from botconf import SERVERTAG
 
-try: from botconf import LOGBASE
-except: LOGBASE = "/var/log/Beholder.log"
+#try: from botconf import LOGBASE
+#except: LOGBASE = "/var/log/Beholder.log"
 try: from botconf import LL_TURNCOUNTS
 except: LL_TURNCOUNTS = {}
 try: from botconf import DCBRIDGE
@@ -2287,7 +2287,7 @@ class DeathBotFactory(ReconnectingClientFactory):
 
 if __name__ == '__main__':
     # initialize logging
-    log.startLogging(DailyLogFile.fromFullPath(LOGBASE))
+    #log.startLogging(DailyLogFile.fromFullPath(LOGBASE))
 
     # create factory protocol and application
     f = DeathBotFactory()
