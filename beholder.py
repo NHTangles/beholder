@@ -596,7 +596,10 @@ class DeathBotProtocol(irc.IRCClient):
                    "un": ["The Dungeons of Doom","Gehennom","Sheol","The Gnomish Mines",
                           "The Quest","Sokoban","Town","The Ruins of Moria","Fort Ludios",
                           "One-eyed Sam's Market","Vlad's Tower","The Dragon Caves",
-                          "The Elemental Planes","Advent Calendar"]}
+                          "The Elemental Planes","Advent Calendar"],
+                 "nerf": ["The Dungeons of Doom","Gehennom","The Gnomish Mines","The Quest","Sokoban",
+                          "Fort Ludios","Head of the Lethe River","The Lost Tomb","The Temple of Moloch",
+                          "Vlad's Tower","The Wizard's Tower","The Elemental Planes","The Tutorial"]}
 
     # variant related stuff that does not relate to xlogfile processing
     rolename = 	{
