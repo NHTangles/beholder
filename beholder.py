@@ -359,7 +359,7 @@ class DeathBotProtocol(irc.IRCClient):
                           INPR+"hackem122/", INPR+"hackem130/",
                           INPR+"hackem131/", INPR+"hackem132/"],
                 "nerf" : [INPR+"nerf200/", INPR+"nerf210/"],
-                 "cre" : [INPR+"cre/"],
+                 "cre" : [INPR+"cre100/"],
                  "dyn" : [INPR+"dyn/"]}
 
     # for !whereis
