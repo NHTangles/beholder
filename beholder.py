@@ -164,6 +164,7 @@ class DeathBotProtocol(irc.IRCClient):
                  filepath.FilePath(FILEROOT+"hackem-1.3.2/var/xlogfile"): ("hackm", "\t", "hackem/dumplog/{starttime}.hackem.html"),
                  filepath.FilePath(FILEROOT+"nethackathon/var/xlogfile"): ("nhthon", "\t", "nethackathon/dumplog/{starttime}.nhthon.html"),
                  filepath.FilePath(FILEROOT+"nerfhack-2.1.0/var/xlogfile"): ("nerf", "\t", "nerfhack/dumplog/{starttime}.nerf.html"),
+                 filepath.FilePath(FILEROOT+"crecellehack-1.0.0/var/xlogfile"): ("cre", "\t", "crecellehack/dumplog/{starttime}.cre.html"),
                  filepath.FilePath(FILEROOT+"unnethack-6.0.13/var/xlogfile"): ("un", "\t", "unnethack/dumplog/{starttime}.un.txt.html")}
     livelogs  = {filepath.FilePath(FILEROOT+"nh343-hdf/var/livelog"): ("nh343", ":"),
                  filepath.FilePath(FILEROOT+"nh363-hdf/var/livelog"): ("nh363", "\t"),
@@ -185,6 +186,7 @@ class DeathBotProtocol(irc.IRCClient):
                  filepath.FilePath(FILEROOT+"acehack/livelog"): ("ace", ":"),
                  filepath.FilePath(FILEROOT+"hackem-1.3.2/var/livelog"): ("hackm", "\t"),
                  filepath.FilePath(FILEROOT+"nerfhack-2.1.0/var/livelog"): ("nerf", "\t"),
+                 filepath.FilePath(FILEROOT+"crecellehack-1.0.0/var/livelog"): ("cre", "\t"),
                  filepath.FilePath(FILEROOT+"unnethack-6.0.13/var/livelog"): ("un", "\t")}
 
     # Forward events to other bots at the request of maintainers of other variant-specific channels
@@ -213,6 +215,7 @@ class DeathBotProtocol(irc.IRCClient):
                   "ace" : [],
                 "hackm" : [],
                  "nerf" : [],
+                  "cre" : [],
                    "un" : []}
 
     # for displaying variants and server tags in colour
@@ -242,6 +245,7 @@ class DeathBotProtocol(irc.IRCClient):
                        "ace" : "\x0311ace\x03",
                      "hackm" : "\x0315hackm\x03",
                       "nerf" : "\x0308nerf\x03",
+                       "cre" : "\x0311cre\x03",
                     "hdf-us" : "\x1D\x0304hdf-us\x03\x0F",
                     "hdf-au" : "\x1D\x0303hdf-au\x03\x0F",
                     "hdf-eu" : "\x1D\x0312hdf-eu\x03\x0F"}
@@ -355,6 +359,7 @@ class DeathBotProtocol(irc.IRCClient):
                           INPR+"hackem122/", INPR+"hackem130/",
                           INPR+"hackem131/", INPR+"hackem132/"],
                 "nerf" : [INPR+"nerf200/", INPR+"nerf210/"],
+                 "cre" : [INPR+"cre/"],
                  "dyn" : [INPR+"dyn/"]}
 
     # for !whereis
@@ -517,6 +522,7 @@ class DeathBotProtocol(irc.IRCClient):
                          FILEROOT+"hackem-1.3.2/var/whereis/"],
                 "nerf": [FILEROOT+"nerfhack-2.0.0/var/whereis/",
                          FILEROOT+"nerfhack-2.1.0/var/whereis/"],
+                 "cre": [FILEROOT+"crecellehack-1.0.0/var/whereis/"],
                   "un": [FILEROOT+"un531/var/unnethack/",
                          FILEROOT+"un532/var/unnethack/",
                          FILEROOT+"unnethack-6.0.0/var/unnethack/",
@@ -615,7 +621,10 @@ class DeathBotProtocol(irc.IRCClient):
                           "The Elemental Planes","Advent Calendar"],
                  "nerf": ["The Dungeons of Doom","Gehennom","The Gnomish Mines","The Quest","Sokoban",
                           "Fort Ludios","Head of the Lethe River","The Lost Tomb","The Temple of Moloch",
-                          "Vlad's Tower","The Wizard's Tower","The Elemental Planes","The Tutorial"]}
+                          "Vlad's Tower","The Wizard's Tower","The Elemental Planes","The Tutorial"],
+                  "cre": ["The Dungeons of Doom","Gehennom","The Gnomish Mines","The Quest",
+                          "Sokoban","Fort Ludios","Vlad's Tower","The Elemental Planes",
+                          "The Tutorial"]}
 
     # variant related stuff that does not relate to xlogfile processing
     rolename = 	{
@@ -827,12 +836,15 @@ class DeathBotProtocol(irc.IRCClient):
                           vanilla_roles + ["car"],
                           vanilla_races + ["vam"],
                           "elunna/NerfHack/master"),
+                  "cre": (["cre", "crecellehack"],
+                          vanilla_roles, vanilla_races,
+                          "NullCGT/CrecelleHack/main"), # no different from vanilla
                 "gnoll": (["gnoll", "gnollhack"],
                           vanilla_roles, vanilla_races,
                           "hyvanmielenpelit/GnollHack/master")}
 
     # variants which support streaks.
-    streakvars = ["nh343", "nh363", "nh370", "nh13d", "gh", "dnh", "un", "sp", "xnh", "spl", "slshm", "tnnt", "nhthon", "ndnh", "evil", "slth", "ace", "gnoll", "hackm", "nndnh"]
+    streakvars = ["nh343", "nh363", "nh370", "nh13d", "gh", "dnh", "un", "sp", "xnh", "spl", "slshm", "tnnt", "nhthon", "ndnh", "evil", "slth", "ace", "gnoll", "hackm", "nndnh", "nerf", "cre"]
     # for !asc statistics - assume these are the same for all variants, or at least the sane ones.
     aligns = ["Law", "Neu", "Cha", "Una", "Non"]
     genders = ["Mal", "Fem", "Nbn"]
