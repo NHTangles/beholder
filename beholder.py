@@ -688,6 +688,8 @@ class DeathBotProtocol(irc.IRCClient):
         "lun": "lunatic",
         "mus": "musician",
         "zoo": "zookeeper",
+        # CrecelleHack
+        "wre": "wrestler",
     }
 
     racename = {
@@ -837,7 +839,8 @@ class DeathBotProtocol(irc.IRCClient):
                           vanilla_races + ["vam"],
                           "elunna/NerfHack/master"),
                   "cre": (["cre", "crecellehack"],
-                          vanilla_roles, vanilla_races,
+                          vanilla_roles + ["wre"],
+                          vanilla_races,
                           "NullCGT/CrecelleHack/main"), # no different from vanilla
                 "gnoll": (["gnoll", "gnollhack"],
                           vanilla_roles, vanilla_races,
