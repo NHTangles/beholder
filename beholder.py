@@ -624,7 +624,7 @@ class DeathBotProtocol(irc.IRCClient):
                           "One-eyed Sam's Market","Vlad's Tower","The Dragon Caves",
                           "The Elemental Planes","Advent Calendar"],
                  "nerf": ["The Dungeons of Doom","Gehennom","The Gnomish Mines","The Quest","Sokoban",
-                          "Fort Ludios","Head of the Lethe River","The Lost Tomb","The Temple of Moloch",
+                          "Fort Ludios","The Lost Tomb","The Wyrm Caves","The Temple of Moloch",
                           "Vlad's Tower","The Wizard's Tower","The Elemental Planes","The Tutorial"],
                   "cre": ["The Dungeons of Doom","Gehennom","The Gnomish Mines","The Quest",
                           "Sokoban","Fort Ludios","Vlad's Tower","The Elemental Planes",
@@ -740,6 +740,8 @@ class DeathBotProtocol(irc.IRCClient):
         "nym": "nymph",
         "tro": "troll",
         "gul": "ghoul",
+        #NerfHack
+        "gru": "grung",
     }
     # save typing these out in multiple places
     vanilla_roles = ["arc","bar","cav","hea","kni","mon","pri",
@@ -839,8 +841,8 @@ class DeathBotProtocol(irc.IRCClient):
                           vanilla_races + ["cen", "gia", "hob", "ith", "trt", "vam", "dop"],
                           "nethack-cleaner/HackEM/master"),
                  "nerf": (["nerf", "nerfhack"],
-                          vanilla_roles + ["car"],
-                          vanilla_races + ["vam"],
+                          vanilla_roles + ["car", "und"],
+                          vanilla_races + ["vam", "gru"],
                           "elunna/NerfHack/master"),
                   "cre": (["cre", "crecellehack"],
                           vanilla_roles + ["wre"],
