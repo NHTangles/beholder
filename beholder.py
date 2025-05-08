@@ -163,7 +163,7 @@ class DeathBotProtocol(irc.IRCClient):
                  filepath.FilePath(FILEROOT+"acehack/xlogfile"): ("ace", ":", "acehack/dumplog/{starttime}.ace.txt"),
                  filepath.FilePath(FILEROOT+"hackem-1.3.2/var/xlogfile"): ("hackm", "\t", "hackem/dumplog/{starttime}.hackem.html"),
                  filepath.FilePath(FILEROOT+"nethackathon/var/xlogfile"): ("nhthon", "\t", "nethackathon/dumplog/{starttime}.nhthon.html"),
-                 filepath.FilePath(FILEROOT+"nerfhack-2.1.0/var/xlogfile"): ("nerf", "\t", "nerfhack/dumplog/{starttime}.nerf.html"),
+                 filepath.FilePath(FILEROOT+"nerfhack-2.2.1/var/xlogfile"): ("nerf", "\t", "nerfhack/dumplog/{starttime}.nerf.html"),
                  filepath.FilePath(FILEROOT+"crecellehack-1.0.1/var/xlogfile"): ("cre", "\t", "crecellehack/dumplog/{starttime}.cre.html"),
                  filepath.FilePath(FILEROOT+"unnethack-6.0.13/var/xlogfile"): ("un", "\t", "unnethack/dumplog/{starttime}.un.txt.html")}
     livelogs  = {filepath.FilePath(FILEROOT+"nh343-hdf/var/livelog"): ("nh343", ":"),
@@ -185,7 +185,7 @@ class DeathBotProtocol(irc.IRCClient):
                  filepath.FilePath(FILEROOT+"gnollhack-4.2.0.20/var/livelog"): ("gnoll", "\t"),
                  filepath.FilePath(FILEROOT+"acehack/livelog"): ("ace", ":"),
                  filepath.FilePath(FILEROOT+"hackem-1.3.2/var/livelog"): ("hackm", "\t"),
-                 filepath.FilePath(FILEROOT+"nerfhack-2.1.0/var/livelog"): ("nerf", "\t"),
+                 filepath.FilePath(FILEROOT+"nerfhack-2.2.1/var/livelog"): ("nerf", "\t"),
                  filepath.FilePath(FILEROOT+"crecellehack-1.0.1/var/livelog"): ("cre", "\t"),
                  filepath.FilePath(FILEROOT+"unnethack-6.0.13/var/livelog"): ("un", "\t")}
 
@@ -358,7 +358,8 @@ class DeathBotProtocol(irc.IRCClient):
                           INPR+"hackem114/", INPR+"hackem120/",
                           INPR+"hackem122/", INPR+"hackem130/",
                           INPR+"hackem131/", INPR+"hackem132/"],
-                "nerf" : [INPR+"nerf200/", INPR+"nerf210/"],
+                "nerf" : [INPR+"nerf200/", INPR+"nerf210/",
+                          INPR+"nerf221/"],
                  "cre" : [INPR+"cre100/", INPR+"cre101/"],
                  "dyn" : [INPR+"dyn/"]}
 
@@ -522,7 +523,8 @@ class DeathBotProtocol(irc.IRCClient):
                          FILEROOT+"hackem-1.3.1/var/whereis/",
                          FILEROOT+"hackem-1.3.2/var/whereis/"],
                 "nerf": [FILEROOT+"nerfhack-2.0.0/var/whereis/",
-                         FILEROOT+"nerfhack-2.1.0/var/whereis/"],
+                         FILEROOT+"nerfhack-2.1.0/var/whereis/",
+                         FILEROOT+"nerfhack-2.2.1/var/whereis/"],
                  "cre": [FILEROOT+"crecellehack-1.0.0/var/whereis/",
                          FILEROOT+"crecellehack-1.0.1/var/whereis/"],
                   "un": [FILEROOT+"un531/var/unnethack/",
