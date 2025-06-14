@@ -54,6 +54,12 @@ import random   # for !rng and friends
 import glob     # for matching in !whereis
 import requests # for !rumor
 
+# Configuration constants for timeouts and limits
+QUERY_TIMEOUT = 5  # Timeout for queries in seconds
+MAX_VARIANT_CHOICES = 10  # Maximum random variant choices
+LOG_CHECK_INTERVAL = 3  # How often to check log files (seconds)
+FILE_MONITOR_INTERVAL = 1  # How often to check for file changes (seconds)
+
 site.addsitedir('.')
 from botconf import HOST, PORT, CHANNEL, NICK, USERNAME, REALNAME, BOTDIR
 from botconf import PWFILE, FILEROOT, WEBROOT, LOGROOT, PINOBOT, ADMIN
@@ -121,8 +127,10 @@ class DeathBotProtocol(irc.IRCClient):
         #...and the masters list
         MASTERS += [NICK]
     try:
-        password = open(PWFILE, "r").read().strip()
-    except:
+        with open(PWFILE, "r") as f:
+            password = f.read().strip()
+    except (IOError, FileNotFoundError) as e:
+        print(f"Warning: Could not read password file {PWFILE}: {e}")
         password = "NotTHEPassword"
 
     sourceURL = "https://github.com/NHTangles/beholder"
@@ -1051,7 +1059,7 @@ class DeathBotProtocol(irc.IRCClient):
         # sequentially read xlogfiles from beginning to pre-populate lastgame data.
         for filepath in self.xlogfiles:
             with filepath.open("r") as handle:
-                for line in handle.readlines():
+                for line in handle:
                     delim = self.logs[filepath][2]
                     game = parse_xlogfile_line(line, delim)
                     game["variant"] = self.logs[filepath][1]
@@ -1402,7 +1410,7 @@ class DeathBotProtocol(irc.IRCClient):
         if len(msgwords) > 1: target = msgwords[1]
         else: target = sender
         drink = random.choice([msgwords[0]] * 50 + list(self.bev["drink"].keys()))
-        for vchoice in range(10):
+        for vchoice in range(MAX_VARIANT_CHOICES):
             vessel = random.choice(self.bev["vessel"]["all"])
             if drink not in self.bev["vessel"].keys(): break # anything goes for these
             if vessel in self.bev["vessel"][drink]: break # match!
@@ -1616,7 +1624,7 @@ class DeathBotProtocol(irc.IRCClient):
             print("forwardQuery: " + sl)
             self.msg(sl,message)
         # set up the timeout in 5 seconds.
-        reactor.callLater(5, self.timeoutQuery, q)
+        reactor.callLater(QUERY_TIMEOUT, self.timeoutQuery, q)
 
     # Multi-server command entry point (forwards query to slaves)
     def multiServerCmd(self, sender, replyto, msgwords):
@@ -2303,7 +2311,7 @@ class DeathBotProtocol(irc.IRCClient):
         with filepath.open("r") as handle:
             handle.seek(self.logs_seek[filepath])
 
-            for line in handle.readlines():
+            for line in handle:
                 delim = self.logs[filepath][2]
                 game = parse_xlogfile_line(line, delim)
                 game["variant"] = self.logs[filepath][1]
