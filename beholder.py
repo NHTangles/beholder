@@ -935,7 +935,10 @@ class DeathBotProtocol(irc.IRCClient):
         self.sendLine('MODE {} -R'.format(self.nickname))
         if not SLAVE: self.join(CHANNEL)
         random.seed()
-        
+
+        # Track bot start time for uptime calculation
+        self.starttime = time.time()
+
         self._initializeLogs()
         self._initializeGameTracking()
         self._initializeStreaks()
@@ -945,7 +948,7 @@ class DeathBotProtocol(irc.IRCClient):
         self._seekToEndOfLivelogs()
         self._populateHistoricalData()
         self._startMonitoringTasks()
-    
+
     def _initializeLogs(self):
         """Initialize log file tracking"""
         self.logs = {}
@@ -956,7 +959,7 @@ class DeathBotProtocol(irc.IRCClient):
 
         self.logs_seek = {}
         self.looping_calls = {}
-    
+
     def _initializeGameTracking(self):
         """Initialize last game tracking"""
         self.lastgame = "No last game recorded"
@@ -970,7 +973,7 @@ class DeathBotProtocol(irc.IRCClient):
         self.tlastgame = 0
         self.lae = {}
         self.tlastasc = 0
-    
+
     def _initializeStreaks(self):
         """Initialize streak tracking"""
         self.curstreak = {}
@@ -980,7 +983,7 @@ class DeathBotProtocol(irc.IRCClient):
             self.curstreak[v] = {}
             # longstreak - as above
             self.longstreak[v] = {}
-    
+
     def _initializeAscensions(self):
         """Initialize ascension tracking"""
         # ascensions (for !asc)
@@ -999,7 +1002,7 @@ class DeathBotProtocol(irc.IRCClient):
         for v in self.variants:
             self.asc[v] = {};
             self.allgames[v] = {};
-    
+
     def _initializeDatabases(self):
         """Initialize shelve databases"""
         # for !tell
@@ -1013,7 +1016,7 @@ class DeathBotProtocol(irc.IRCClient):
             self.plr_tc = shelve.open(BOTDIR + "/plrtc.db", writeback=False)
         except (OSError, IOError):
             self.plr_tc = shelve.open(BOTDIR + "/plrtc", writeback=False, protocol=2)
-    
+
     def _initializeCommands(self):
         """Initialize command mappings"""
 
@@ -1059,6 +1062,7 @@ class DeathBotProtocol(irc.IRCClient):
                          "setmintc" : self.multiServerCmd,
                          "rumor"    : self.doRumor,
                          "rumour"   : self.doRumor,
+                         "status"   : self.doStatus,
                          # these ones are for control messages between master and slaves
                          # sender is checked, so these can't be used by the public
                          "#q#"      : self.doQuery,
@@ -1092,7 +1096,7 @@ class DeathBotProtocol(irc.IRCClient):
                           #"lastgame": self.usageLastGame,
                           #"lastasc" : self.usageLastAsc,
                           "setmintc": self.usagePlrTC}
-    
+
     def _seekToEndOfLivelogs(self):
         """Seek to end of livelog files"""
 
@@ -1101,7 +1105,7 @@ class DeathBotProtocol(irc.IRCClient):
             with filepath.open("r") as handle:
                 handle.seek(0, 2)
                 self.logs_seek[filepath] = handle.tell()
-    
+
     def _populateHistoricalData(self):
         """Read xlogfiles to populate historical game data"""
         # sequentially read xlogfiles from beginning to pre-populate lastgame data.
@@ -1119,7 +1123,7 @@ class DeathBotProtocol(irc.IRCClient):
                     for line in self.logs[filepath][0](game,False):
                         pass
                 self.logs_seek[filepath] = handle.tell()
-    
+
     def _startMonitoringTasks(self):
         """Start periodic monitoring tasks"""
         # poll logs for updates every LOG_CHECK_INTERVAL seconds
@@ -1132,7 +1136,7 @@ class DeathBotProtocol(irc.IRCClient):
         # in use when we signed on, but a 30-second looping call won't kill us
         self.looping_calls["nick"] = task.LoopingCall(self.nickCheck)
         self.looping_calls["nick"].start(30)
-        
+
         # Cleanup old data periodically (every hour)
         self.looping_calls["cleanup"] = task.LoopingCall(self.cleanupOldData)
         self.looping_calls["cleanup"].start(3600)
@@ -1142,35 +1146,35 @@ class DeathBotProtocol(irc.IRCClient):
         if not SLAVE: self.join(CHANNEL)
         if (self.nickname != NICK):
             self.setNick(NICK)
-    
+
     def cleanupOldData(self):
         """Clean up old undelivered messages and limit cache sizes"""
         now = time.time()
-        
+
         # Clean up undelivered !tell messages older than 30 days
         try:
             old_recipients = []
             for recipient in self.tellbuf:
                 messages = self.tellbuf[recipient]
                 # Filter out messages older than 30 days
-                new_messages = [(fwd, sender, ts, msg) for (fwd, sender, ts, msg) in messages 
+                new_messages = [(fwd, sender, ts, msg) for (fwd, sender, ts, msg) in messages
                                if now - ts < 30 * 24 * 3600]
                 if new_messages != messages:
                     if new_messages:
                         self.tellbuf[recipient] = new_messages
                     else:
                         old_recipients.append(recipient)
-            
+
             # Delete empty entries
             for recipient in old_recipients:
                 del self.tellbuf[recipient]
-            
+
             if old_recipients:
                 self.tellbuf.sync()
                 print(f"Cleaned up old messages for {len(old_recipients)} recipients")
         except Exception as e:
             print(f"Error cleaning up tellbuf: {e}")
-        
+
         # Limit rumor cache to 50 most recent entries
         if len(self.rumorCache) > 50:
             # Sort by timestamp and keep newest 50
@@ -1462,6 +1466,51 @@ class DeathBotProtocol(irc.IRCClient):
                                                            "\x1DAs I see it, yes\x0F", "\x1DMost likely\x0F", "\x1DOutlook good\x0F", "\x1DYes\x0F", "\x1DSigns point to yes\x0F", "\x1DReply hazy try again\x0F",
                                                            "\x1DAsk again later\x0F", "\x1DBetter not tell you now\x0F", "\x1DCannot predict now\x0F", "\x1DConcentrate and ask again\x0F",
                                                            "\x1DDon't count on it\x0F", "\x1DMy reply is no\x0F", "\x1DMy sources say no\x0F", "\x1DOutlook not so good\x0F", "\x1DVery doubtful\x0F"]))
+
+    def doStatus(self, sender, replyto, msgwords):
+        if sender not in self.admin:
+            self.respond(replyto, sender, "Admin access required.")
+            return
+
+        # Get memory usage of current process
+        try:
+            import resource
+            mem_usage = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
+            # On Linux, ru_maxrss is in KB
+            mem_mb = mem_usage / 1024
+        except ImportError:
+            mem_mb = "N/A"
+
+        # Calculate uptime
+        uptime_seconds = int(time.time() - self.starttime)
+        uptime_days = uptime_seconds // 86400
+        uptime_hours = (uptime_seconds % 86400) // 3600
+        uptime_mins = (uptime_seconds % 3600) // 60
+
+        # Count active file monitors
+        monitor_count = 0
+        for v in self.xlogfiles:
+            monitor_count += len(self.xlogfiles[v])
+        for v in self.livelogs:
+            monitor_count += len(self.livelogs[v])
+
+        # Count queries in queue
+        query_count = len(self.queries) if hasattr(self, 'queries') else 0
+
+        # Count cached messages
+        msg_count = len(self.tellbuf) if hasattr(self, 'tellbuf') else 0
+
+        # Build status message
+        status_parts = []
+        status_parts.append("Status: {} on {}".format(NICK, SERVERTAG))
+        status_parts.append("Uptime: {}d {}h {}m".format(uptime_days, uptime_hours, uptime_mins))
+        if mem_mb != "N/A":
+            status_parts.append("Memory: {:.1f}MB".format(mem_mb))
+        status_parts.append("Monitors: {}".format(monitor_count))
+        status_parts.append("Queries: {}".format(query_count))
+        status_parts.append("Messages: {}".format(msg_count))
+
+        self.respond(replyto, sender, " | ".join(status_parts))
 
     # The following started as !tea resulting in the bot making a cup of tea.
     # Now it does other stuff.
@@ -1775,7 +1824,7 @@ class DeathBotProtocol(irc.IRCClient):
                 if ttyrec_files:
                     player_found = True
                     break
-            
+
             if player_found:
                 # Look for whereis file
                 for widir in self.whereis[var]:
@@ -1789,7 +1838,7 @@ class DeathBotProtocol(irc.IRCClient):
                             if wipath.split("/")[-1].lower() == (msgwords[1] + ".whereis").lower():
                                 whereis_files = [wipath]
                                 break
-                    
+
                     if whereis_files:
                         wipath = whereis_files[0]
                         plr = wipath.split("/")[-1].split(".")[0] # Correct case
@@ -1869,7 +1918,7 @@ class DeathBotProtocol(irc.IRCClient):
                 self.msg(master,"#R# " + query + " " + repl)
                 return
             stats_parts = []
-            
+
             # Roles
             role_stats = []
             for role in self.variants[var][1]:
@@ -1879,7 +1928,7 @@ class DeathBotProtocol(irc.IRCClient):
                     role_stats.append("{}x{}".format(self.asc[var][plr][role], role))
             if role_stats:
                 stats_parts.append(" ".join(role_stats))
-            
+
             # Races
             race_stats = []
             for race in self.variants[var][2]:
@@ -1888,7 +1937,7 @@ class DeathBotProtocol(irc.IRCClient):
                     race_stats.append("{}x{}".format(self.asc[var][plr][race], race))
             if race_stats:
                 stats_parts.append(" ".join(race_stats))
-            
+
             # Alignments
             align_stats = []
             for alig in self.aligns:
@@ -1896,7 +1945,7 @@ class DeathBotProtocol(irc.IRCClient):
                     align_stats.append("{}x{}".format(self.asc[var][plr][alig], alig))
             if align_stats:
                 stats_parts.append(" ".join(align_stats))
-            
+
             # Genders
             gender_stats = []
             for gend in self.genders:
@@ -1904,7 +1953,7 @@ class DeathBotProtocol(irc.IRCClient):
                     gender_stats.append("{}x{}".format(self.asc[var][plr][gend], gend))
             if gender_stats:
                 stats_parts.append(" ".join(gender_stats))
-            
+
             stats = " " + ", ".join(stats_parts) + "."
             self.msg(master, "#R# " + query + " " + self.displaytag(SERVERTAG)
                              + " " + PLR
@@ -1926,7 +1975,7 @@ class DeathBotProtocol(irc.IRCClient):
                 varasc += self.asc[var][plr].get("Nbn",0)
                 totasc += varasc
                 variant_stats.append("{}: {} ({:0.2f}%)".format(
-                    self.displaystring[var], varasc, 
+                    self.displaystring[var], varasc,
                     (100.0 * varasc) / self.allgames[var][plr]))
         if totasc:
             stats = ", ".join(variant_stats)
