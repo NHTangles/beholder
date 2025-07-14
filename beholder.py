@@ -1814,13 +1814,21 @@ class DeathBotProtocol(irc.IRCClient):
 
     def getWhereIs(self, master, sender, query, msgwords):
         ammy = ["", " (with Amulet)"]
-        target_player = msgwords[1].lower()
+
+        # Validate player name to prevent path traversal
+        player_name = msgwords[1]
+        if "/" in player_name or ".." in player_name or "\\" in player_name:
+            self.msg(master, "#R# " + query + " " + self.displaytag(SERVERTAG)
+                     + " Invalid player name.")
+            return
+
+        target_player = player_name.lower()
         # look for inrpogress file first, only report active games
         for var in self.inprog:
             # Check if player has an active game in this variant
             player_found = False
             for inpdir in self.inprog[var]:
-                ttyrec_pattern = "{}{}:*.ttyrec".format(inpdir, msgwords[1])
+                ttyrec_pattern = "{}{}:*.ttyrec".format(inpdir, player_name)
                 ttyrec_files = glob.glob(ttyrec_pattern)
                 if ttyrec_files:
                     player_found = True
@@ -1829,14 +1837,14 @@ class DeathBotProtocol(irc.IRCClient):
             if player_found:
                 # Look for whereis file
                 for widir in self.whereis[var]:
-                    whereis_file = "{}{}.whereis".format(widir, msgwords[1])
+                    whereis_file = "{}{}.whereis".format(widir, player_name)
                     # Try case-insensitive match
                     whereis_files = glob.glob(whereis_file)
                     if not whereis_files:
                         # Try with different case
                         whereis_pattern = "{}*.whereis".format(widir)
                         for wipath in glob.glob(whereis_pattern):
-                            if wipath.split("/")[-1].lower() == (msgwords[1] + ".whereis").lower():
+                            if wipath.split("/")[-1].lower() == (player_name + ".whereis").lower():
                                 whereis_files = [wipath]
                                 break
 
@@ -1855,7 +1863,7 @@ class DeathBotProtocol(irc.IRCClient):
                                  + ammy[wirec["amulet"]])
                         return
         self.msg(master, "#R# " + query + " " + self.displaytag(SERVERTAG)
-                                        + " " + msgwords[1]
+                                        + " " + player_name
                                         + " is not currently playing on this server.")
 
     def outWhereIs(self,q):
