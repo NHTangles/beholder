@@ -2283,6 +2283,37 @@ class DeathBotProtocol(irc.IRCClient):
         return (name.lower() in self.plr_tc
            and turns < self.plr_tc[name.lower()])
 
+    def generate_dumplog_url(self, game, dumpfile):
+        """Generate dumplog URL, checking local storage first, then S3.
+
+        Returns the URL if file exists in either location, None otherwise.
+        """
+        # First check if file exists locally
+        if os.path.exists(dumpfile):
+            # File exists locally, use regular URL
+            dumpurl = urllib.parse.quote(game["dumpfmt"].format(**game))
+            return self.dump_url_prefix.format(**game) + dumpurl
+
+        # File doesn't exist locally - generate S3 URL
+        # S3 URL structure differs by server
+        s3_base = None
+        if SERVERTAG == "hdf-us":
+            s3_base = "https://hdf-us.s3.amazonaws.com/dumplogs/"
+        elif SERVERTAG == "hdf-eu":
+            s3_base = "https://hdf-eu.s3.amazonaws.com/dumplogs/"
+        elif SERVERTAG == "hdf-au":
+            s3_base = "https://hdf-au.s3.amazonaws.com/dumplogs/"
+
+        if s3_base:
+            # Generate S3 URL
+            dumppath = urllib.parse.quote(game["dumpfmt"].format(**game))
+            # S3 path structure: dumplogs/{name[0]}/{name}/{variant}/dumplog/{filename}
+            s3_url = s3_base + "{name[0]}/{name}/".format(**game) + dumppath
+            return s3_url
+
+        # If we can't determine S3 location, return None
+        return None
+
     def xlogfileReport(self, game, report = True):
         var = game["variant"] # Make code less ugly
         # lowercased name is used for lookups
@@ -2297,13 +2328,19 @@ class DeathBotProtocol(irc.IRCClient):
             game["dumplog"] = fixdump(dumplog)
         # Need to figure out the dump path before messing with the name below
         dumpfile = (self.dump_file_prefix + game["dumpfmt"]).format(**game)
-        dumpurl = "(sorry, no dump exists for {variant}:{name})".format(**game)
-        if TEST or os.path.exists(dumpfile): # dump files may not exist on test system
-            # quote only the game-specific part, not the prefix.
-            # Otherwise it quotes the : in https://
-            # assume the rest of the url prefix is safe.
+
+        # Generate dumplog URL using new method that checks both local and S3
+        if TEST:
+            # In test mode, always generate a URL
             dumpurl = urllib.parse.quote(game["dumpfmt"].format(**game))
             dumpurl = self.dump_url_prefix.format(**game) + dumpurl
+        else:
+            # In production, check both local and S3 locations
+            generated_url = self.generate_dumplog_url(game, dumpfile)
+            if generated_url:
+                dumpurl = generated_url
+            else:
+                dumpurl = "(sorry, no dump exists for {variant}:{name})".format(**game)
         # Kludge for nethack 1.3d -
         # populate race and align with dummy values.
         if "race" not in game: game["race"] = "###"
