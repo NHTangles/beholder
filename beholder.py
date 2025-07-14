@@ -125,12 +125,30 @@ xlogfile_parse.update(dict.fromkeys(
     ("conduct", "event", "carried", "flags", "achieve"), safe_int_parse))
 xlogfile_parse["realtime"] = timedelta_int
 
+def sanitize_format_string(text):
+    """Sanitize text to prevent format string injection attacks.
+
+    Escapes curly braces that could be used in format string attacks.
+    """
+    if not isinstance(text, str):
+        return text
+    return text.replace('{', '{{').replace('}', '}}')
+
 def parse_xlogfile_line(line, delim):
     record = {}
+    # Fields that contain user-controlled text that could be used in format strings
+    user_controlled_fields = {'name', 'charname', 'death', 'killer', 'wish',
+                              'shout', 'genocided_monster', 'bones_killed',
+                              'bones_monst', 'killed_uniq', 'defeated',
+                              'shopkeeper', 'killed_shopkeeper'}
+
     for field in line.strip().decode(encoding='UTF-8', errors='ignore').split(delim):
         key, _, value = field.partition("=")
         if key in xlogfile_parse:
             value = xlogfile_parse[key](value)
+        # Sanitize user-controlled fields to prevent format string injection
+        elif key in user_controlled_fields:
+            value = sanitize_format_string(value)
         record[key] = value
     return record
 
@@ -1703,7 +1721,10 @@ class DeathBotProtocol(irc.IRCClient):
         messages.append((forwardto,sender,time.time(),message))
         self.tellbuf[rcpt_lower] = messages
         self.tellbuf.sync()
-        self.msgLog(replyto,random.choice(willDo).format(sender,rcpt))
+        # Sanitize sender and recipient names to prevent format string injection
+        safe_sender = sanitize_format_string(sender)
+        safe_rcpt = sanitize_format_string(rcpt)
+        self.msgLog(replyto,random.choice(willDo).format(safe_sender,safe_rcpt))
 
     def msgTime(self, stamp):
         # Timezone handling is not great, but the following seems to work.
@@ -1729,13 +1750,15 @@ class DeathBotProtocol(irc.IRCClient):
                 self.respond(user,user, "Message from " + sender + " at " + self.msgTime(ts) + ": " + message)
             # "tom" "tom and dick" "tom, dick, and harry"
             if nicksfrom:
-                if len(nicksfrom) == 1:
-                    fromstr = nicksfrom[0]
-                elif len(nicksfrom) == 2:
-                    fromstr = "{} and {}".format(nicksfrom[0], nicksfrom[1])
+                # Sanitize all nicknames to prevent format string injection
+                safe_nicks = [sanitize_format_string(nick) for nick in nicksfrom]
+                if len(safe_nicks) == 1:
+                    fromstr = safe_nicks[0]
+                elif len(safe_nicks) == 2:
+                    fromstr = "{} and {}".format(safe_nicks[0], safe_nicks[1])
                 else:
                     # oxford comma for 3 or more
-                    fromstr = "{}, and {}".format(", ".join(nicksfrom[:-1]), nicksfrom[-1])
+                    fromstr = "{}, and {}".format(", ".join(safe_nicks[:-1]), safe_nicks[-1])
                 self.respond(CHANNEL, user, "Messages from " + fromstr + " have been forwarded to you privately.");
 
         else:
