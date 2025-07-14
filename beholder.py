@@ -929,12 +929,25 @@ class DeathBotProtocol(irc.IRCClient):
     irc_905 = irc_904
 
     def signedOn(self):
+        """Called when bot successfully connects to IRC"""
         self.factory.resetDelay()
         self.startHeartbeat()
         self.sendLine('MODE {} -R'.format(self.nickname))
         if not SLAVE: self.join(CHANNEL)
         random.seed()
-
+        
+        self._initializeLogs()
+        self._initializeGameTracking()
+        self._initializeStreaks()
+        self._initializeAscensions()
+        self._initializeDatabases()
+        self._initializeCommands()
+        self._seekToEndOfLivelogs()
+        self._populateHistoricalData()
+        self._startMonitoringTasks()
+    
+    def _initializeLogs(self):
+        """Initialize log file tracking"""
         self.logs = {}
         for xlogfile, (variant, delim, dumpfmt) in self.xlogfiles.items():
             self.logs[xlogfile] = (self.xlogfileReport, variant, delim, dumpfmt)
@@ -943,8 +956,9 @@ class DeathBotProtocol(irc.IRCClient):
 
         self.logs_seek = {}
         self.looping_calls = {}
-
-        #lastgame shite
+    
+    def _initializeGameTracking(self):
+        """Initialize last game tracking"""
         self.lastgame = "No last game recorded"
         self.lg = {}
         self.lastasc = "No last ascension recorded"
@@ -956,8 +970,9 @@ class DeathBotProtocol(irc.IRCClient):
         self.tlastgame = 0
         self.lae = {}
         self.tlastasc = 0
-
-        # streaks
+    
+    def _initializeStreaks(self):
+        """Initialize streak tracking"""
         self.curstreak = {}
         self.longstreak = {}
         for v in self.streakvars:
@@ -965,7 +980,9 @@ class DeathBotProtocol(irc.IRCClient):
             self.curstreak[v] = {}
             # longstreak - as above
             self.longstreak[v] = {}
-
+    
+    def _initializeAscensions(self):
+        """Initialize ascension tracking"""
         # ascensions (for !asc)
         # "!asc plr var" will give something like Rodney's output.
         # "!asc plr" will give breakdown by variant.
@@ -982,18 +999,23 @@ class DeathBotProtocol(irc.IRCClient):
         for v in self.variants:
             self.asc[v] = {};
             self.allgames[v] = {};
-
+    
+    def _initializeDatabases(self):
+        """Initialize shelve databases"""
         # for !tell
         try:
-            self.tellbuf = shelve.open(BOTDIR + "/tellmsg.db", writeback=True)
+            self.tellbuf = shelve.open(BOTDIR + "/tellmsg.db", writeback=False)
         except (OSError, IOError):
-            self.tellbuf = shelve.open(BOTDIR + "/tellmsg", writeback=True, protocol=2)
+            self.tellbuf = shelve.open(BOTDIR + "/tellmsg", writeback=False, protocol=2)
 
         # for !setmintc
         try:
-            self.plr_tc = shelve.open(BOTDIR + "/plrtc.db", writeback=True)
+            self.plr_tc = shelve.open(BOTDIR + "/plrtc.db", writeback=False)
         except (OSError, IOError):
-            self.plr_tc = shelve.open(BOTDIR + "/plrtc", writeback=True, protocol=2)
+            self.plr_tc = shelve.open(BOTDIR + "/plrtc", writeback=False, protocol=2)
+    
+    def _initializeCommands(self):
+        """Initialize command mappings"""
 
         # Commands must be lowercase here.
         self.commands = {"ping"     : self.doPing,
@@ -1070,13 +1092,18 @@ class DeathBotProtocol(irc.IRCClient):
                           #"lastgame": self.usageLastGame,
                           #"lastasc" : self.usageLastAsc,
                           "setmintc": self.usagePlrTC}
+    
+    def _seekToEndOfLivelogs(self):
+        """Seek to end of livelog files"""
 
         # seek to end of livelogs
         for filepath in self.livelogs:
             with filepath.open("r") as handle:
                 handle.seek(0, 2)
                 self.logs_seek[filepath] = handle.tell()
-
+    
+    def _populateHistoricalData(self):
+        """Read xlogfiles to populate historical game data"""
         # sequentially read xlogfiles from beginning to pre-populate lastgame data.
         for filepath in self.xlogfiles:
             with filepath.open("r") as handle:
@@ -1092,7 +1119,9 @@ class DeathBotProtocol(irc.IRCClient):
                     for line in self.logs[filepath][0](game,False):
                         pass
                 self.logs_seek[filepath] = handle.tell()
-
+    
+    def _startMonitoringTasks(self):
+        """Start periodic monitoring tasks"""
         # poll logs for updates every LOG_CHECK_INTERVAL seconds
         for filepath in self.logs:
             self.looping_calls[filepath] = task.LoopingCall(self.logReport, filepath)
@@ -1103,12 +1132,51 @@ class DeathBotProtocol(irc.IRCClient):
         # in use when we signed on, but a 30-second looping call won't kill us
         self.looping_calls["nick"] = task.LoopingCall(self.nickCheck)
         self.looping_calls["nick"].start(30)
+        
+        # Cleanup old data periodically (every hour)
+        self.looping_calls["cleanup"] = task.LoopingCall(self.cleanupOldData)
+        self.looping_calls["cleanup"].start(3600)
 
     def nickCheck(self):
         # also rejoin the channel here, in case we drop off for any reason
         if not SLAVE: self.join(CHANNEL)
         if (self.nickname != NICK):
             self.setNick(NICK)
+    
+    def cleanupOldData(self):
+        """Clean up old undelivered messages and limit cache sizes"""
+        now = time.time()
+        
+        # Clean up undelivered !tell messages older than 30 days
+        try:
+            old_recipients = []
+            for recipient in self.tellbuf:
+                messages = self.tellbuf[recipient]
+                # Filter out messages older than 30 days
+                new_messages = [(fwd, sender, ts, msg) for (fwd, sender, ts, msg) in messages 
+                               if now - ts < 30 * 24 * 3600]
+                if new_messages != messages:
+                    if new_messages:
+                        self.tellbuf[recipient] = new_messages
+                    else:
+                        old_recipients.append(recipient)
+            
+            # Delete empty entries
+            for recipient in old_recipients:
+                del self.tellbuf[recipient]
+            
+            if old_recipients:
+                self.tellbuf.sync()
+                print(f"Cleaned up old messages for {len(old_recipients)} recipients")
+        except Exception as e:
+            print(f"Error cleaning up tellbuf: {e}")
+        
+        # Limit rumor cache to 50 most recent entries
+        if len(self.rumorCache) > 50:
+            # Sort by timestamp and keep newest 50
+            sorted_items = sorted(self.rumorCache.items(), key=lambda x: x[1][0], reverse=True)
+            self.rumorCache = dict(sorted_items[:50])
+            print(f"Trimmed rumor cache to 50 entries")
 
     def nickChanged(self, nn):
         # catch successful changing of nick from above and identify with nickserv
@@ -1461,13 +1529,24 @@ class DeathBotProtocol(irc.IRCClient):
         now = time.time()
         if not url in self.rumorCache or now > self.rumorCache[url][0] + 3600:
             print("url", url, "not found or expired in rumor cache, downloading...")
-            r = requests.get(url)
-            if r.status_code != requests.codes.ok:
-                return False
+            try:
+                r = requests.get(url, timeout=10)
+                if r.status_code != requests.codes.ok:
+                    print(f"Failed to fetch {url}: HTTP {r.status_code}")
+                    return False
 
-            # filter out comments (# at start of line) and blanks, no point saving them
-            rumors = [r for r in filter(lambda r : len(r) > 0 and r[0] != '#', r.text.splitlines())]
-            self.rumorCache[url] = (now, rumors)
+                # filter out comments (# at start of line) and blanks, no point saving them
+                rumors = [r for r in filter(lambda r : len(r) > 0 and r[0] != '#', r.text.splitlines())]
+                self.rumorCache[url] = (now, rumors)
+            except requests.exceptions.Timeout:
+                print(f"Timeout fetching {url}")
+                return False
+            except requests.exceptions.ConnectionError as e:
+                print(f"Connection error fetching {url}: {e}")
+                return False
+            except requests.exceptions.RequestException as e:
+                print(f"Error fetching {url}: {e}")
+                return False
 
         return self.rumorCache[url][1]
 
@@ -1569,9 +1648,10 @@ class DeathBotProtocol(irc.IRCClient):
             message = "[private] " + message
         else: # !tell on channel
             forwardto = replyto # so pass to channel
-        if not self.tellbuf.get(rcpt.lower(),False):
-            self.tellbuf[rcpt.lower()] = []
-        self.tellbuf[rcpt.lower()].append((forwardto,sender,time.time(),message))
+        rcpt_lower = rcpt.lower()
+        messages = self.tellbuf.get(rcpt_lower, [])
+        messages.append((forwardto,sender,time.time(),message))
+        self.tellbuf[rcpt_lower] = messages
         self.tellbuf.sync()
         self.msgLog(replyto,random.choice(willDo).format(sender,rcpt))
 
