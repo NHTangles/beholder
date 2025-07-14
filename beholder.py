@@ -44,7 +44,6 @@ import base64   # for sasl login
 import sys      # for logging something4
 import datetime # for timestamp stuff
 import time     # for !time
-import ast      # for conduct/achievement bitfields - not really used
 import os       # for check path exists (dumplogs), and chmod
 import stat     # for chmod mode bits
 import re       # for hello, and other things.
@@ -59,6 +58,16 @@ QUERY_TIMEOUT = 5  # Timeout for queries in seconds
 MAX_VARIANT_CHOICES = 10  # Maximum random variant choices
 LOG_CHECK_INTERVAL = 3  # How often to check log files (seconds)
 FILE_MONITOR_INTERVAL = 1  # How often to check for file changes (seconds)
+
+# Pre-compiled regex patterns for better performance
+RE_COLOR_FG_BG = re.compile(r'\x03\d\d,\d\d')  # fg,bg pair
+RE_COLOR_FG = re.compile(r'\x03\d\d')  # fg only
+RE_COLOR_END = re.compile(r'[\x1D\x03\x0f]')  # end of colour and italics
+RE_DICE_CMD = re.compile(r'^\d*d$')  # !d, !4d is rubbish input
+RE_DIGITS = re.compile(r'^\d+$')  # match only digits
+RE_DICE_FULL = re.compile(r'^\d*d\d*$')  # full dice pattern
+RE_HELLO = re.compile(r'^(hello|hi|hey|salut|hallo|guten tag|shalom|ciao|hola|aloha|bonjour|hei|gday|konnichiwa|nuqneh)[!?. ]*$', re.IGNORECASE)
+RE_SPACE_COLOR = re.compile(r'^ [\x1D\x03\x0f]*')  # space and color codes
 
 site.addsitedir('.')
 from botconf import HOST, PORT, CHANNEL, NICK, USERNAME, REALNAME, BOTDIR
@@ -96,12 +105,24 @@ def isodate(s):
 def fixdump(s):
     return s.replace("_",":")
 
+def safe_int_parse(s):
+    """Safely parse integers, including hex values like 0x1234"""
+    try:
+        # Try to parse as int, supports base 10, hex (0x), octal (0o), binary (0b)
+        return int(s, 0)
+    except ValueError:
+        # If that fails, try without base detection
+        try:
+            return int(s)
+        except ValueError:
+            return 0  # Default to 0 for invalid values
+
 xlogfile_parse = dict.fromkeys(
     ("points", "deathdnum", "deathlev", "maxlvl", "hp", "maxhp", "deaths",
      "starttime", "curtime", "endtime", "user_seed",
      "uid", "turns", "xplevel", "exp","depth","dnum","score","amulet", "lltype"), int)
 xlogfile_parse.update(dict.fromkeys(
-    ("conduct", "event", "carried", "flags", "achieve"), ast.literal_eval))
+    ("conduct", "event", "carried", "flags", "achieve"), safe_int_parse))
 xlogfile_parse["realtime"] = timedelta_int
 
 def parse_xlogfile_line(line, delim):
@@ -147,7 +168,7 @@ class DeathBotProtocol(irc.IRCClient):
         logday = time.strftime("%d")
         chanLogName = LOGROOT + CHANNEL + time.strftime("-%Y-%m-%d.log")
         chanLog = open(chanLogName,'a')
-        os.chmod(chanLogName,stat.S_IRUSR|stat.S_IWUSR|stat.S_IRGRP|stat.S_IROTH)
+        os.chmod(chanLogName,stat.S_IRUSR|stat.S_IWUSR)
 
     xlogfiles = {filepath.FilePath(FILEROOT+"nh343-hdf/var/xlogfile"): ("nh343", ":", "nh343/dumplog/{starttime}.nh343.txt"),
                  filepath.FilePath(FILEROOT+"nh363-hdf/var/xlogfile"): ("nh363", "\t", "nethack/dumplog/{starttime}.nh.html"),
@@ -965,13 +986,13 @@ class DeathBotProtocol(irc.IRCClient):
         # for !tell
         try:
             self.tellbuf = shelve.open(BOTDIR + "/tellmsg.db", writeback=True)
-        except:
+        except (OSError, IOError):
             self.tellbuf = shelve.open(BOTDIR + "/tellmsg", writeback=True, protocol=2)
 
         # for !setmintc
         try:
             self.plr_tc = shelve.open(BOTDIR + "/plrtc.db", writeback=True)
-        except:
+        except (OSError, IOError):
             self.plr_tc = shelve.open(BOTDIR + "/plrtc", writeback=True, protocol=2)
 
         # Commands must be lowercase here.
@@ -1072,10 +1093,10 @@ class DeathBotProtocol(irc.IRCClient):
                         pass
                 self.logs_seek[filepath] = handle.tell()
 
-        # poll logs for updates every 3 seconds
+        # poll logs for updates every LOG_CHECK_INTERVAL seconds
         for filepath in self.logs:
             self.looping_calls[filepath] = task.LoopingCall(self.logReport, filepath)
-            self.looping_calls[filepath].start(3)
+            self.looping_calls[filepath].start(LOG_CHECK_INTERVAL)
 
         # Additionally, keep an eye on our nick to make sure it's right.
         # Perhaps we only need to set this up if the nick was originally
@@ -1114,9 +1135,9 @@ class DeathBotProtocol(irc.IRCClient):
     def stripText(self, msg):
         # strip the colour control stuff out
         # This can probably all be done with a single RE but I have a headache.
-        message = re.sub(r'\x03\d\d,\d\d', '', msg) # fg,bg pair
-        message = re.sub(r'\x03\d\d', '', message) # fg only
-        message = re.sub(r'[\x1D\x03\x0f]', '', message) # end of colour and italics
+        message = RE_COLOR_FG_BG.sub('', msg) # fg,bg pair
+        message = RE_COLOR_FG.sub('', message) # fg only
+        message = RE_COLOR_END.sub('', message) # end of colour and italics
         return message
 
     # Write log
@@ -1304,7 +1325,7 @@ class DeathBotProtocol(irc.IRCClient):
             self.respond(replyto, sender, random.choice(msgwords[1:]))
 
     def rollDice(self, sender, replyto, msgwords):
-        if re.match(r'^\d*d$', msgwords[0]): # !d, !4d is rubbish input.
+        if RE_DICE_CMD.match(msgwords[0]): # !d, !4d is rubbish input.
             self.respond(replyto, sender, "No dice!")
             return
         dice = msgwords[0].split('d')
@@ -1636,15 +1657,18 @@ class DeathBotProtocol(irc.IRCClient):
 
     # !players - respond to forwarded query and actually pull the info
     def getPlayers(self, master, sender, query, msgwords):
-        plrvar = ""
+        plrvar_list = []
         for var in self.inprog.keys():
             for inpdir in self.inprog[var]:
                 for inpfile in glob.iglob(inpdir + "*.ttyrec"):
                     # /stuff/crap/PLAYER:shit:garbage.ttyrec
                     # we want AFTER last '/', BEFORE 1st ':'
-                    plrvar += inpfile.split("/")[-1].split(":")[0] + " " + self.displaytag(var) + " "
-        if len(plrvar) == 0:
+                    player = inpfile.split("/")[-1].split(":")[0]
+                    plrvar_list.append(player + " " + self.displaytag(var))
+        if not plrvar_list:
             plrvar = "No current players"
+        else:
+            plrvar = " ".join(plrvar_list) + " "
         response = "#R# " + query + " " + self.displaytag(SERVERTAG) + " " + plrvar
         self.msg(master, response)
 
@@ -1671,7 +1695,8 @@ class DeathBotProtocol(irc.IRCClient):
                             for wipath in glob.iglob(widir + "*.whereis"):
                                 if wipath.split("/")[-1].lower() == (msgwords[1] + ".whereis").lower():
                                     plr = wipath.split("/")[-1].split(".")[0] # Correct case
-                                    wirec = parse_xlogfile_line(open(wipath, "rb").read(),":")
+                                    with open(wipath, "rb") as f:
+                                        wirec = parse_xlogfile_line(f.read(),":")
 
                                     self.msg(master, "#R# " + query
                                              + " " + self.displaytag(SERVERTAG) + " " + plr
@@ -1944,7 +1969,7 @@ class DeathBotProtocol(irc.IRCClient):
 
     def setPlrTC(self, master, sender, query, msgwords):
         if len(msgwords) == 2:
-            if re.match(r'^\d+$',msgwords[1]):
+            if RE_DIGITS.match(msgwords[1]):
                 self.plr_tc[sender.lower()] = int(msgwords[1])
                 self.plr_tc.sync()
                 self.msg(master, "#R# " + query + " " + self.displaytag(SERVERTAG)
@@ -1963,7 +1988,7 @@ class DeathBotProtocol(irc.IRCClient):
             return
         if sender in self.admin:
             if len(msgwords) == 3:
-                if re.match(r'^\d+$',msgwords[2]):
+                if RE_DIGITS.match(msgwords[2]):
                     self.plr_tc[msgwords[1].lower()] = int(msgwords[2])
                     self.plr_tc.sync()
                     self.msg(master, "#R# " + query + " " + self.displaytag(SERVERTAG)
@@ -2007,12 +2032,12 @@ class DeathBotProtocol(irc.IRCClient):
             if (sender == DCBRIDGE):
                 message = message.partition("<")[2] #everything after the first <
                 sender,x,message = message.partition(">") #everything remaining before/after the first >
-                message = re.sub(r'^ [\x1D\x03\x0f]*', '', message) # everything after the first space and any colour codes
+                message = RE_SPACE_COLOR.sub('', message) # everything after the first space and any colour codes
                 if len(sender) == 0: return
         else: #private msg
             replyto = sender
         # Hello processing first.
-        if re.match(r'^(hello|hi|hey|salut|hallo|guten tag|shalom|ciao|hola|aloha|bonjour|hei|gday|konnichiwa|nuqneh)[!?. ]*$', message.lower()):
+        if RE_HELLO.match(message):
             self.doHello(sender, replyto)
 #        if re.match(r'^(rip|r\.i\.p|rest in p).*$', message.lower()):
 #            self.doRip(sender, replyto)
@@ -2031,7 +2056,7 @@ class DeathBotProtocol(irc.IRCClient):
         else: # pop the '!'
             message = message[1:]
         msgwords = message.strip().split(" ")
-        if re.match(r'^\d*d\d*$', msgwords[0]):
+        if RE_DICE_FULL.match(msgwords[0]):
             self.rollDice(sender, replyto, msgwords)
             return
         if self.commands.get(msgwords[0].lower(), False):
@@ -2306,6 +2331,11 @@ class DeathBotProtocol(irc.IRCClient):
         if self.looping_calls is None: return
         for call in self.looping_calls.values():
             call.stop()
+        # Clean up shelve databases
+        if hasattr(self, 'tellbuf') and self.tellbuf is not None:
+            self.tellbuf.close()
+        if hasattr(self, 'plr_tc') and self.plr_tc is not None:
+            self.plr_tc.close()
 
     def logReport(self, filepath):
         with filepath.open("r") as handle:
