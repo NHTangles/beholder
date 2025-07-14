@@ -979,7 +979,7 @@ class DeathBotProtocol(irc.IRCClient):
         # allgames[var][player] = count;
         self.asc = {}
         self.allgames = {}
-        for v in self.variants.keys():
+        for v in self.variants:
             self.asc[v] = {};
             self.allgames[v] = {};
 
@@ -1118,8 +1118,8 @@ class DeathBotProtocol(irc.IRCClient):
     #lookup canonical variant id from alias
     def varalias(self,alias):
         alias = alias.lower()
-        if alias in self.variants.keys(): return alias
-        for v in self.variants.keys():
+        if alias in self.variants: return alias
+        for v in self.variants:
             if alias in self.variants[v][0]: return v
         # return original (lowercase) if not found.
         # this is used for variant/player agnosticism in !lastgame
@@ -1185,7 +1185,7 @@ class DeathBotProtocol(irc.IRCClient):
         # msgwords is [ #R#, <query_id>, [server-tag], command output, ...]
         if sender in self.slaves and msgwords[1] in self.queries:
             self.queries[msgwords[1]]["resp"][sender] = " ".join(msgwords[2:])
-            if set(self.queries[msgwords[1]]["resp"].keys()) >= set(self.slaves.keys()):
+            if set(self.queries[msgwords[1]]["resp"]) >= set(self.slaves):
                 #all slaves have responded
                 self.queries[msgwords[1]]["callback"](self.queries.pop(msgwords[1]))
         else:
@@ -1253,7 +1253,7 @@ class DeathBotProtocol(irc.IRCClient):
                 dt += aday
             days = "days."
             if daysleft == 1: days = "day."
-            resp += " for " + str(daysleft) + " more " + days
+            resp = "{} for {} more {}".format(resp, daysleft, days)
         else:
             daysuntil = 1 # again, we are counting today
             dt += aday
@@ -1262,7 +1262,7 @@ class DeathBotProtocol(irc.IRCClient):
                dt += aday
             days = " days."
             if daysuntil == 1: days = " day."
-            resp += "; " + mp[self.getPom(dt)] + " moon in " + str(daysuntil) + days
+            resp = "{}; {} moon in {}{}".format(resp, mp[self.getPom(dt)], daysuntil, days)
 
         self.respond(replyto, sender, resp)
 
@@ -1337,14 +1337,16 @@ class DeathBotProtocol(irc.IRCClient):
         if d1 > 1000:
             self.respond(replyto, sender, "Those dice are too big!")
             return
-        (s, tot) = (None, 0)
+        rolls = []
+        tot = 0
         for i in range(0,d0):
             d = random.randrange(1,d1+1)
-            if s: s += " + " + str(d)
-            else: s = str(d)
+            rolls.append(str(d))
             tot += d
-        if "+" in s: s += " = " + str(tot)
-        else: s = str(tot)
+        if len(rolls) > 1:
+            s = "{} = {}".format(" + ".join(rolls), tot)
+        else:
+            s = str(tot)
         self.respond(replyto, sender, s)
 
     def doRole(self, sender, replyto, msgwords):
@@ -1433,7 +1435,7 @@ class DeathBotProtocol(irc.IRCClient):
         drink = random.choice([msgwords[0]] * 50 + list(self.bev["drink"].keys()))
         for vchoice in range(MAX_VARIANT_CHOICES):
             vessel = random.choice(self.bev["vessel"]["all"])
-            if drink not in self.bev["vessel"].keys(): break # anything goes for these
+            if drink not in self.bev["vessel"]: break # anything goes for these
             if vessel in self.bev["vessel"][drink]: break # match!
         fulldrink = random.choice(self.bev["drink"][drink])
         if drink not in self.bev["suppress"]: fulldrink += " " + drink
@@ -1488,7 +1490,7 @@ class DeathBotProtocol(irc.IRCClient):
                 suffix = 'fal'
             else:
                 var = self.varalias(w)
-                if variant is None and var in self.variants.keys():
+                if variant is None and var in self.variants:
                     variant = var
                 else:
                     # not some other argument, assume string match; combine
@@ -1593,23 +1595,17 @@ class DeathBotProtocol(irc.IRCClient):
         if len(self.tellbuf[plainuser]) > 2 and user[0] != '@':
             for (forwardto,sender,ts,message) in self.tellbuf[plainuser]:
                 if forwardto.lower() != user.lower(): # don't add sender to list if message was private
-                    if sender not in nicksfrom: nicksfrom += [sender]
+                    if sender not in nicksfrom: nicksfrom.append(sender)
                 self.respond(user,user, "Message from " + sender + " at " + self.msgTime(ts) + ": " + message)
             # "tom" "tom and dick" "tom, dick, and harry"
-            fromstr = ""
-            for (i,n) in enumerate(nicksfrom):
-                # first item
-                if (i == 0):
-                    fromstr = n
-                # last item
-                elif (i == len(nicksfrom)-1):
-                    if (i > 1): fromstr += "," # oxford comma :P
-                    fromstr += " and " + n
-                # middle items
+            if nicksfrom:
+                if len(nicksfrom) == 1:
+                    fromstr = nicksfrom[0]
+                elif len(nicksfrom) == 2:
+                    fromstr = "{} and {}".format(nicksfrom[0], nicksfrom[1])
                 else:
-                   fromstr += ", " + n
-
-            if fromstr: # don't say anything if all messages were private
+                    # oxford comma for 3 or more
+                    fromstr = "{}, and {}".format(", ".join(nicksfrom[:-1]), nicksfrom[-1])
                 self.respond(CHANNEL, user, "Messages from " + fromstr + " have been forwarded to you privately.");
 
         else:
@@ -1641,7 +1637,7 @@ class DeathBotProtocol(irc.IRCClient):
         self.queries[q]["resp"] = {}
         message = "#Q# " + " ".join([q,sender] + msgwords)
 
-        for sl in self.slaves.keys():
+        for sl in self.slaves:
             print("forwardQuery: " + sl)
             self.msg(sl,message)
         # set up the timeout in 5 seconds.
@@ -1658,9 +1654,12 @@ class DeathBotProtocol(irc.IRCClient):
     # !players - respond to forwarded query and actually pull the info
     def getPlayers(self, master, sender, query, msgwords):
         plrvar_list = []
-        for var in self.inprog.keys():
+        # Build a list of all ttyrec files with their associated variant
+        for var in self.inprog:
             for inpdir in self.inprog[var]:
-                for inpfile in glob.iglob(inpdir + "*.ttyrec"):
+                # Get all ttyrec files in this directory at once
+                ttyrec_files = glob.glob(inpdir + "*.ttyrec")
+                for inpfile in ttyrec_files:
                     # /stuff/crap/PLAYER:shit:garbage.ttyrec
                     # we want AFTER last '/', BEFORE 1st ':'
                     player = inpfile.split("/")[-1].split(":")[0]
@@ -1685,33 +1684,45 @@ class DeathBotProtocol(irc.IRCClient):
 
     def getWhereIs(self, master, sender, query, msgwords):
         ammy = ["", " (with Amulet)"]
+        target_player = msgwords[1].lower()
         # look for inrpogress file first, only report active games
-        for var in self.inprog.keys():
+        for var in self.inprog:
+            # Check if player has an active game in this variant
+            player_found = False
             for inpdir in self.inprog[var]:
-                for inpfile in glob.iglob(inpdir + "*.ttyrec"):
-                    plr = inpfile.split("/")[-1].split(":")[0]
-                    if plr.lower() == msgwords[1].lower():
-                        for widir in self.whereis[var]:
-                            for wipath in glob.iglob(widir + "*.whereis"):
-                                if wipath.split("/")[-1].lower() == (msgwords[1] + ".whereis").lower():
-                                    plr = wipath.split("/")[-1].split(".")[0] # Correct case
-                                    with open(wipath, "rb") as f:
-                                        wirec = parse_xlogfile_line(f.read(),":")
+                ttyrec_pattern = "{}{}:*.ttyrec".format(inpdir, msgwords[1])
+                ttyrec_files = glob.glob(ttyrec_pattern)
+                if ttyrec_files:
+                    player_found = True
+                    break
+            
+            if player_found:
+                # Look for whereis file
+                for widir in self.whereis[var]:
+                    whereis_file = "{}{}.whereis".format(widir, msgwords[1])
+                    # Try case-insensitive match
+                    whereis_files = glob.glob(whereis_file)
+                    if not whereis_files:
+                        # Try with different case
+                        whereis_pattern = "{}*.whereis".format(widir)
+                        for wipath in glob.glob(whereis_pattern):
+                            if wipath.split("/")[-1].lower() == (msgwords[1] + ".whereis").lower():
+                                whereis_files = [wipath]
+                                break
+                    
+                    if whereis_files:
+                        wipath = whereis_files[0]
+                        plr = wipath.split("/")[-1].split(".")[0] # Correct case
+                        with open(wipath, "rb") as f:
+                            wirec = parse_xlogfile_line(f.read(),":")
 
-                                    self.msg(master, "#R# " + query
-                                             + " " + self.displaytag(SERVERTAG) + " " + plr
-                                             + " "+self.displaytag(var)
-                                             + ": ({role} {race} {gender} {align}) T:{turns} ".format(**wirec)
-                                             + self.dungeons[var][wirec["dnum"]]
-                                             + " level: " + str(wirec["depth"])
-                                             + ammy[wirec["amulet"]])
-                                    return
-
-                        self.msg(master, "#R# " + query + " "
-                                                + self.displaytag(SERVERTAG)
-                                                + " " + plr + " "
-                                                + self.displaytag(var)
-                                                + ": No details available")
+                        self.msg(master, "#R# " + query
+                                 + " " + self.displaytag(SERVERTAG) + " " + plr
+                                 + " "+self.displaytag(var)
+                                 + ": ({role} {race} {gender} {align}) T:{turns} ".format(**wirec)
+                                 + self.dungeons[var][wirec["dnum"]]
+                                 + " level: " + str(wirec["depth"])
+                                 + ammy[wirec["amulet"]])
                         return
         self.msg(master, "#R# " + query + " " + self.displaytag(SERVERTAG)
                                         + " " + msgwords[1]
@@ -1739,10 +1750,10 @@ class DeathBotProtocol(irc.IRCClient):
         if len(msgwords) == 3:
             vp = self.varalias(msgwords[1])
             pv = self.varalias(msgwords[2])
-            if vp in self.variants.keys():
+            if vp in self.variants:
                 # !streak dnh Tangles
                 return (msgwords[2], vp)
-            if pv in self.variants.keys():
+            if pv in self.variants:
                 # !streak K2 UnNethHack
                 return (msgwords[1],pv)
             # !streak bogus garbage
@@ -1750,7 +1761,7 @@ class DeathBotProtocol(irc.IRCClient):
             return (None, None)
         if len(msgwords) == 2:
             vp = self.varalias(msgwords[1])
-            if vp in self.variants.keys():
+            if vp in self.variants:
                 # !streak Grunthack
                 return (sender, vp)
             # !streak Grasshopper
@@ -1777,25 +1788,44 @@ class DeathBotProtocol(irc.IRCClient):
                 repl += self.variants[var][0][0] + "."
                 self.msg(master,"#R# " + query + " " + repl)
                 return
+            stats_parts = []
+            
+            # Roles
+            role_stats = []
             for role in self.variants[var][1]:
                 role = role.title() # capitalise the first letter
                 if role in self.asc[var][plr]:
                     totasc += self.asc[var][plr][role]
-                    stats += " " + str(self.asc[var][plr][role]) + "x" + role
-            stats += ", "
+                    role_stats.append("{}x{}".format(self.asc[var][plr][role], role))
+            if role_stats:
+                stats_parts.append(" ".join(role_stats))
+            
+            # Races
+            race_stats = []
             for race in self.variants[var][2]:
                 race = race.title()
                 if race in self.asc[var][plr]:
-                    stats += " " + str(self.asc[var][plr][race]) + "x" + race
-            stats += ", "
+                    race_stats.append("{}x{}".format(self.asc[var][plr][race], race))
+            if race_stats:
+                stats_parts.append(" ".join(race_stats))
+            
+            # Alignments
+            align_stats = []
             for alig in self.aligns:
                 if alig in self.asc[var][plr]:
-                    stats += " " + str(self.asc[var][plr][alig]) + "x" + alig
-            stats += ", "
+                    align_stats.append("{}x{}".format(self.asc[var][plr][alig], alig))
+            if align_stats:
+                stats_parts.append(" ".join(align_stats))
+            
+            # Genders
+            gender_stats = []
             for gend in self.genders:
                 if gend in self.asc[var][plr]:
-                    stats += " " + str(self.asc[var][plr][gend]) + "x" + gend
-            stats += "."
+                    gender_stats.append("{}x{}".format(self.asc[var][plr][gend], gend))
+            if gender_stats:
+                stats_parts.append(" ".join(gender_stats))
+            
+            stats = " " + ", ".join(stats_parts) + "."
             self.msg(master, "#R# " + query + " " + self.displaytag(SERVERTAG)
                              + " " + PLR
                              + " has ascended " + self.variants[var][0][0] + " "
@@ -1807,6 +1837,7 @@ class DeathBotProtocol(irc.IRCClient):
             return
         # no variant. Do player stats across variants.
         totgames = 0
+        variant_stats = []
         for var in self.asc:
             totgames += self.allgames[var].get(plr,0)
             if plr in self.asc[var]:
@@ -1814,10 +1845,11 @@ class DeathBotProtocol(irc.IRCClient):
                 varasc += self.asc[var][plr].get("Fem",0)
                 varasc += self.asc[var][plr].get("Nbn",0)
                 totasc += varasc
-                if stats: stats += ","
-                stats += " " + self.displaystring[var] + ":" + str(varasc) + " ({:0.2f}%)".format((100.0 * varasc)
-                                                                                             / self.allgames[var][plr])
+                variant_stats.append("{}: {} ({:0.2f}%)".format(
+                    self.displaystring[var], varasc, 
+                    (100.0 * varasc) / self.allgames[var][plr]))
         if totasc:
+            stats = ", ".join(variant_stats)
             self.msg(master, "#R# " + query + " "
                          + self.displaytag(SERVERTAG) + " " + PLR
                          + " has ascended " + str(totasc) + " times in "
@@ -1870,15 +1902,15 @@ class DeathBotProtocol(irc.IRCClient):
                 reply += "No streaks for " + PLR + self.displaytag(var) + "."
                 self.msg(master,reply)
                 return
-            reply += self.displaytag(SERVERTAG) + " " + PLR + self.displaytag(var)
-            reply += " Max: " + str(llength) + " (" + self.streakDate(lstart) \
-                              + " - " + self.streakDate(lend) + ")"
+            reply = "{} {} {} Max: {} ({} - {})".format(
+                reply, self.displaytag(SERVERTAG), PLR + self.displaytag(var),
+                llength, self.streakDate(lstart), self.streakDate(lend))
             if clength > 0:
                 if cstart == lstart:
                     reply += "(current)"
                 else:
-                    reply += ". Current: " + str(clength) + " (since " \
-                                           + self.streakDate(cstart) + ")"
+                    reply = "{}. Current: {} (since {})".format(
+                        reply, clength, self.streakDate(cstart))
             reply += "."
             self.msg(master,reply)
             return
@@ -1894,15 +1926,15 @@ class DeathBotProtocol(irc.IRCClient):
             reply += "No streaks for " + PLR + "."
             self.msg(master, reply)
             return
-        reply += self.displaytag(SERVERTAG) + " " + PLR + " Max[" + self.displaystring[lvar] + "]: " + str(lmax)
-        reply += " (" + self.streakDate(lsmax) \
-                      + " - " + self.streakDate(lemax) + ")"
+        reply = "{} {} {} Max[{}]: {} ({} - {})".format(
+            reply, self.displaytag(SERVERTAG), PLR, self.displaystring[lvar],
+            lmax, self.streakDate(lsmax), self.streakDate(lemax))
         if cmax > 0:
             if csmax == lsmax:
                 reply += "(current)"
             else:
-                reply += ". Current[" + self.displaystring[cvar] + "]: " + str(cmax)
-                reply += " (since " + self.streakDate(csmax) + ")"
+                reply = "{}. Current[{}]: {} (since {})".format(
+                    reply, self.displaystring[cvar], cmax, self.streakDate(csmax))
         reply += "."
         self.msg(master, reply)
 
@@ -1977,7 +2009,7 @@ class DeathBotProtocol(irc.IRCClient):
                                  + " set to " + msgwords[1])
                 return
         if len(msgwords) == 1:
-            if sender.lower() in self.plr_tc.keys():
+            if sender.lower() in self.plr_tc:
                 del self.plr_tc[sender.lower()]
                 self.plr_tc.sync()
                 self.msg(master, "#R# " + query + " " + self.displaytag(SERVERTAG)
@@ -1996,7 +2028,7 @@ class DeathBotProtocol(irc.IRCClient):
                                      + " set to " + msgwords[2])
                     return
             if len(msgwords) == 2:
-                if msgwords[1].lower() in self.plr_tc.keys():
+                if msgwords[1].lower() in self.plr_tc:
                     del self.plr_tc[msgwords[1].lower()]
                     self.plr_tc.sync()
                     self.msg(master, "#R# " + query + " " + self.displaytag(SERVERTAG)
@@ -2119,7 +2151,7 @@ class DeathBotProtocol(irc.IRCClient):
 
     # players can request their deaths and other events not be reported if less than x turns
     def plr_tc_notreached(self, name, turns):
-        return (name.lower() in self.plr_tc.keys()
+        return (name.lower() in self.plr_tc
            and turns < self.plr_tc[name.lower()])
 
     def xlogfileReport(self, game, report = True):
