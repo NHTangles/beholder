@@ -58,6 +58,8 @@ QUERY_TIMEOUT = 5  # Timeout for queries in seconds
 MAX_VARIANT_CHOICES = 10  # Maximum random variant choices
 LOG_CHECK_INTERVAL = 3  # How often to check log files (seconds)
 FILE_MONITOR_INTERVAL = 1  # How often to check for file changes (seconds)
+MAX_QUERIES = 100  # Maximum concurrent queries to prevent memory leaks
+MAX_TELLBUF_MESSAGES = 1000  # Maximum total tell messages stored
 
 # Pre-compiled regex patterns for better performance
 RE_COLOR_FG_BG = re.compile(r'\x03\d\d,\d\d')  # fg,bg pair
@@ -1170,14 +1172,14 @@ class DeathBotProtocol(irc.IRCClient):
         """Clean up old undelivered messages and limit cache sizes"""
         now = time.time()
 
-        # Clean up undelivered !tell messages older than 30 days
+        # Clean up undelivered !tell messages older than 180 days
         try:
             old_recipients = []
             for recipient in self.tellbuf:
                 messages = self.tellbuf[recipient]
-                # Filter out messages older than 30 days
+                # Filter out messages older than 180 days
                 new_messages = [(fwd, sender, ts, msg) for (fwd, sender, ts, msg) in messages
-                               if now - ts < 30 * 24 * 3600]
+                               if now - ts < 180 * 24 * 3600]
                 if new_messages != messages:
                     if new_messages:
                         self.tellbuf[recipient] = new_messages
@@ -1193,6 +1195,24 @@ class DeathBotProtocol(irc.IRCClient):
                 print(f"Cleaned up old messages for {len(old_recipients)} recipients")
         except Exception as e:
             print(f"Error cleaning up tellbuf: {e}")
+
+        # Clean up stale queries older than 1 hour (in case timeoutQuery failed)
+        try:
+            stale_queries = []
+            for query_id in list(self.queries.keys()):
+                # If query lacks timestamp, assume it's stale
+                if "timestamp" not in self.queries[query_id]:
+                    stale_queries.append(query_id)
+                elif now - self.queries[query_id].get("timestamp", 0) > 3600:
+                    stale_queries.append(query_id)
+
+            for query_id in stale_queries:
+                self.queries.pop(query_id, None)
+
+            if stale_queries:
+                print(f"Cleaned up {len(stale_queries)} stale queries")
+        except Exception as e:
+            print(f"Error cleaning up queries: {e}")
 
         # Limit rumor cache to 50 most recent entries
         if len(self.rumorCache) > 50:
@@ -1718,6 +1738,13 @@ class DeathBotProtocol(irc.IRCClient):
             forwardto = replyto # so pass to channel
         rcpt_lower = rcpt.lower()
         messages = self.tellbuf.get(rcpt_lower, [])
+
+        # Prevent memory leaks by limiting total tell messages
+        total_messages = sum(len(msgs) for msgs in self.tellbuf.values())
+        if total_messages >= MAX_TELLBUF_MESSAGES:
+            self.respond(replyto, sender, "Tell message limit reached, try again later")
+            return
+
         messages.append((forwardto,sender,time.time(),message))
         self.tellbuf[rcpt_lower] = messages
         self.tellbuf.sync()
@@ -1782,12 +1809,19 @@ class DeathBotProtocol(irc.IRCClient):
         # [elsewhere]
         # record query responses, and call callback when all received (or timeout)
         # This all becomes easier if we just treat ourself (master) as one of the slaves
+
+        # Prevent memory leaks by limiting concurrent queries
+        if len(self.queries) >= MAX_QUERIES:
+            self.respond(replyto, sender, "Query limit reached, try again later")
+            return
+
         q = self.newQueryId()
         self.queries[q] = {}
         self.queries[q]["callback"] = callback
         self.queries[q]["replyto"] = replyto
         self.queries[q]["sender"] = sender
         self.queries[q]["resp"] = {}
+        self.queries[q]["timestamp"] = time.time()
         message = "#Q# " + " ".join([q,sender] + msgwords)
 
         for sl in self.slaves:
