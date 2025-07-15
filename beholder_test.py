@@ -80,25 +80,25 @@ RE_HELLO = re.compile(r'^(hello|hi|hey|salut|hallo|guten tag|shalom|ciao|hola|al
 RE_SPACE_COLOR = re.compile(r'^ [\x1D\x03\x0f]*')  # space and color codes
 
 site.addsitedir('.')
-from botconf import HOST, PORT, CHANNEL, NICK, USERNAME, REALNAME, BOTDIR
-from botconf import PWFILE, FILEROOT, WEBROOT, LOGROOT, PINOBOT, ADMIN
-from botconf import SERVERTAG
+from botconf_test import HOST, PORT, CHANNEL, NICK, USERNAME, REALNAME, BOTDIR
+from botconf_test import PWFILE, FILEROOT, WEBROOT, LOGROOT, PINOBOT, ADMIN
+from botconf_test import SERVERTAG
 
 #try: from botconf import LOGBASE
 #except: LOGBASE = "/var/log/Beholder.log"
-try: from botconf import LL_TURNCOUNTS
+try: from botconf_test import LL_TURNCOUNTS
 except: LL_TURNCOUNTS = {}
-try: from botconf import DCBRIDGE
+try: from botconf_test import DCBRIDGE
 except: DCBRIDGE = None
-try: from botconf import TEST
+try: from botconf_test import TEST
 except: TEST = False
 try:
-    from botconf import REMOTES
+    from botconf_test import REMOTES
 except:
     SLAVE = True #if we have no slaves, we (probably) are the slave
     REMOTES = {}
 try:
-    from botconf import MASTERS
+    from botconf_test import MASTERS
 except:
     SLAVE = False #if we have no master we (definitely) are the master
     MASTERS = []
@@ -936,6 +936,15 @@ class DeathBotProtocol(irc.IRCClient):
     # copied from https://github.com/habnabit/txsocksx/blob/master/examples/tor-irc.py
     # irc_CAP and irc_9xx are UNDOCUMENTED.
     def connectionMade(self):
+        # Skip SASL for testing if configured
+        try:
+            from botconf_test import DISABLE_SASL
+            if DISABLE_SASL:
+                irc.IRCClient.connectionMade(self)
+                return
+        except ImportError:
+            pass
+
         self.sendLine('CAP REQ :sasl')
         #self.deferred = Deferred()
         irc.IRCClient.connectionMade(self)
@@ -1130,12 +1139,12 @@ class DeathBotProtocol(irc.IRCClient):
     def _initializeRateLimiting(self):
         """Initialize rate limiting tracking with crash-safe defaults"""
         try:
-            # Rate limiting: track commands per minute
-            self.rate_limits = {}  # user -> list of command timestamps
+            # Simple time-window per user approach
+            self.rate_limits = {}
 
             # Abuse detection: track consecutive command patterns
-            self.abuse_penalties = {}  # user -> penalty end timestamp
-            self.consecutive_commands = {}  # user -> [command_time, command_time, ...]
+            self.abuse_penalties = {}  # user -> penalty_end_time
+            self.consecutive_commands = {}  # user -> [timestamp, timestamp, ...]
 
             # Response rate limiting: prevent penalty message spam
             self.penalty_responses = {}  # user -> [timestamp, timestamp, ...]
@@ -1160,6 +1169,8 @@ class DeathBotProtocol(irc.IRCClient):
         Uses fail-safe approach - if anything breaks, allow the command.
         """
         try:
+            # Apply rate limiting to all users (including admins for security)
+            # Get current time
             now = time.time()
 
             # Check if user is currently under abuse penalty
@@ -1169,10 +1180,9 @@ class DeathBotProtocol(irc.IRCClient):
                 else:
                     # Penalty expired, clean up
                     del self.abuse_penalties[sender]
-                    if sender in self.consecutive_commands:
-                        del self.consecutive_commands[sender]
+                    self.consecutive_commands[sender] = []
 
-            # Clean up old rate limit entries (older than 60 seconds)
+            # Clean up old entries first (older than rate limit window)
             if sender in self.rate_limits:
                 self.rate_limits[sender] = [
                     timestamp for timestamp in self.rate_limits[sender]
@@ -1197,24 +1207,25 @@ class DeathBotProtocol(irc.IRCClient):
             # Record this command attempt
             self.rate_limits[sender].append(now)
 
-            # Track consecutive commands for abuse detection
+            # Track commands for abuse detection (timestamp-based)
             if sender not in self.consecutive_commands:
                 self.consecutive_commands[sender] = []
 
-            # Clean up old consecutive command entries (older than ABUSE_WINDOW)
+            # Clean up old command timestamps (older than abuse window)
             self.consecutive_commands[sender] = [
                 timestamp for timestamp in self.consecutive_commands[sender]
                 if now - timestamp < ABUSE_WINDOW
             ]
 
-            # Add this command to consecutive tracking
+            # Record this command
             self.consecutive_commands[sender].append(now)
 
-            # Check for abuse pattern (too many commands within ABUSE_WINDOW)
+            # Check for abuse pattern (too many commands in time window)
             if len(self.consecutive_commands[sender]) >= ABUSE_THRESHOLD:
                 # Impose abuse penalty
                 self.abuse_penalties[sender] = now + ABUSE_PENALTY
                 self.consecutive_commands[sender] = []
+                print(f"Abuse penalty imposed on {sender}: spamming consecutive commands")
                 return False  # Block this command and future commands for penalty period
 
             return True  # Allow command
@@ -1226,39 +1237,44 @@ class DeathBotProtocol(irc.IRCClient):
 
     def _shouldSendPenaltyMessage(self, sender):
         """
-        Check if we should send a penalty message to prevent penalty message spam.
-        Returns True if we should send the message, False if we should silently ignore.
+        Check if we should send a penalty message to prevent spam.
+        Returns True if message should be sent, False if user is sending too many.
         """
         try:
             now = time.time()
 
-            # Initialize penalty response tracking for this user
+            # Clean up old penalty response timestamps
+            if sender in self.penalty_responses:
+                self.penalty_responses[sender] = [
+                    timestamp for timestamp in self.penalty_responses[sender]
+                    if now - timestamp < RESPONSE_RATE_WINDOW
+                ]
+
+                # Remove empty entries
+                if not self.penalty_responses[sender]:
+                    del self.penalty_responses[sender]
+
+            # Initialize if needed
             if sender not in self.penalty_responses:
                 self.penalty_responses[sender] = []
 
-            # Clean up old penalty response entries (older than RESPONSE_RATE_WINDOW)
-            self.penalty_responses[sender] = [
-                timestamp for timestamp in self.penalty_responses[sender]
-                if now - timestamp < RESPONSE_RATE_WINDOW
-            ]
-
-            # Check if user has exceeded penalty message rate limit
+            # Check if user has exceeded penalty response limit
             if len(self.penalty_responses[sender]) >= RESPONSE_RATE_LIMIT:
-                return False  # Don't send penalty message
+                return False  # Don't send penalty message (would be spam)
 
             # Record this penalty response
             self.penalty_responses[sender].append(now)
             return True  # Send penalty message
 
         except Exception as e:
-            print(f"Penalty response rate limiting error for {sender}: {e}")
-            # Fail-safe: allow penalty message if checking breaks
+            print(f"Penalty response check error for {sender}: {e}")
+            # Fail-safe: allow message
             return True
 
     def _checkBurstProtection(self, sender, command):
         """
-        Check if user is sending commands too rapidly (burst protection).
-        Returns True if command should be allowed, False if it should be silently ignored.
+        Check burst protection: only allow 1 command per time window.
+        Returns True if command should be allowed, False if it's a burst (silently ignore).
         """
         try:
             now = time.time()
@@ -1272,17 +1288,22 @@ class DeathBotProtocol(irc.IRCClient):
                 if time_since_last < burst_window:
                     return False  # Silently ignore burst commands
 
-            # Update last command time
+            # Record this command time for burst protection
             self.last_command_time[sender] = now
             return True  # Allow command
 
         except Exception as e:
             print(f"Burst protection error for {sender}: {e}")
-            # Fail-safe: allow command if burst protection breaks
+            # Fail-safe: allow command
             return True
 
     def _seekToEndOfLivelogs(self):
         """Seek to end of livelog files"""
+
+        # Skip file operations in test mode
+        if TEST:
+            print("Skipping livelog initialization in test mode")
+            return
 
         # seek to end of livelogs
         for filepath in self.livelogs:
@@ -1292,6 +1313,12 @@ class DeathBotProtocol(irc.IRCClient):
 
     def _populateHistoricalData(self):
         """Read xlogfiles to populate historical game data"""
+
+        # Skip file operations in test mode
+        if TEST:
+            print("Skipping historical data population in test mode")
+            return
+
         # sequentially read xlogfiles from beginning to pre-populate lastgame data.
         for filepath in self.xlogfiles:
             with filepath.open("r") as handle:
@@ -1310,6 +1337,19 @@ class DeathBotProtocol(irc.IRCClient):
 
     def _startMonitoringTasks(self):
         """Start periodic monitoring tasks"""
+
+        # Skip file monitoring in test mode
+        if TEST:
+            print("Skipping file monitoring tasks in test mode")
+            self.looping_calls = {}
+            # Still start nick check and cleanup tasks
+            self.looping_calls["nick"] = task.LoopingCall(self.nickCheck)
+            self.looping_calls["nick"].start(30)
+
+            self.looping_calls["cleanup"] = task.LoopingCall(self.cleanupOldData)
+            self.looping_calls["cleanup"].start(3600)
+            return
+
         # poll logs for updates every LOG_CHECK_INTERVAL seconds
         for filepath in self.logs:
             self.looping_calls[filepath] = task.LoopingCall(self.logReport, filepath)
@@ -1414,28 +1454,19 @@ class DeathBotProtocol(irc.IRCClient):
 
             for user in expired_penalties:
                 del self.abuse_penalties[user]
-                if user in self.consecutive_commands:
-                    del self.consecutive_commands[user]
+                self.consecutive_commands[user] = []
 
-            # Clean up old consecutive command entries (older than 24 hours)
+            # Clean up very old consecutive command timestamps (>24 hours inactive)
             old_consecutive = []
             for user in list(self.consecutive_commands.keys()):
-                if isinstance(self.consecutive_commands[user], list):
-                    # Clean up old timestamps from consecutive commands list
-                    self.consecutive_commands[user] = [
-                        timestamp for timestamp in self.consecutive_commands[user]
-                        if now - timestamp < 86400  # 24 hours
-                    ]
-                    if not self.consecutive_commands[user]:
+                if self.consecutive_commands[user]:
+                    # Check if all timestamps are older than 24 hours
+                    latest_command = max(self.consecutive_commands[user])
+                    if now - latest_command > 86400:  # 24 hours
                         old_consecutive.append(user)
                 else:
-                    # Old format - clean up if user inactive for 24 hours
-                    if user in self.rate_limits and self.rate_limits[user]:
-                        last_command = max(self.rate_limits[user])
-                        if now - last_command > 86400:
-                            old_consecutive.append(user)
-                    elif user not in self.rate_limits:
-                        old_consecutive.append(user)
+                    # Empty list, can be cleaned up
+                    old_consecutive.append(user)
 
             for user in old_consecutive:
                 self.consecutive_commands.pop(user, None)
@@ -1445,35 +1476,41 @@ class DeathBotProtocol(irc.IRCClient):
         except Exception as e:
             print(f"Error cleaning up abuse tracking: {e}")
 
-        # Clean up old penalty response tracking and burst protection data
+        # Clean up old penalty response tracking
         try:
-            cleaned_responses = 0
-            cleaned_burst = 0
-
-            # Clean up penalty response tracking (older than RESPONSE_RATE_WINDOW)
+            penalty_users_to_clean = []
             for user in list(self.penalty_responses.keys()):
-                old_count = len(self.penalty_responses[user])
+                # Remove timestamps older than penalty response window
                 self.penalty_responses[user] = [
                     timestamp for timestamp in self.penalty_responses[user]
                     if now - timestamp < RESPONSE_RATE_WINDOW
                 ]
+                # Remove empty entries
                 if not self.penalty_responses[user]:
-                    del self.penalty_responses[user]
-                    cleaned_responses += 1
-                elif len(self.penalty_responses[user]) < old_count:
-                    cleaned_responses += 1
+                    penalty_users_to_clean.append(user)
 
-            # Clean up burst protection data for inactive users (>24 hours)
+            for user in penalty_users_to_clean:
+                del self.penalty_responses[user]
+
+            if penalty_users_to_clean:
+                print(f"Cleaned up penalty response tracking for {len(penalty_users_to_clean)} users")
+        except Exception as e:
+            print(f"Error cleaning up penalty responses: {e}")
+
+        # Clean up old last command time tracking (older than 24 hours)
+        try:
+            old_command_times = []
             for user in list(self.last_command_time.keys()):
                 if now - self.last_command_time[user] > 86400:  # 24 hours
-                    del self.last_command_time[user]
-                    cleaned_burst += 1
+                    old_command_times.append(user)
 
-            if cleaned_responses or cleaned_burst:
-                print(f"Cleaned up rate limiting: {cleaned_responses} penalty responses, {cleaned_burst} burst data")
+            for user in old_command_times:
+                del self.last_command_time[user]
 
+            if old_command_times:
+                print(f"Cleaned up old command time tracking for {len(old_command_times)} users")
         except Exception as e:
-            print(f"Error cleaning up penalty/burst data: {e}")
+            print(f"Error cleaning up command times: {e}")
 
     def nickChanged(self, nn):
         # catch successful changing of nick from above and identify with nickserv
@@ -1550,7 +1587,11 @@ class DeathBotProtocol(irc.IRCClient):
         # msgwords is [ #R#, <query_id>, [server-tag], command output, ...]
         if sender in self.slaves and msgwords[1] in self.queries:
             self.queries[msgwords[1]]["resp"][sender] = " ".join(msgwords[2:])
-            if set(self.queries[msgwords[1]]["resp"]) >= set(self.slaves):
+
+            # In test mode, respond immediately to avoid delays
+            if TEST and sender == NICK:
+                self.queries[msgwords[1]]["callback"](self.queries.pop(msgwords[1]))
+            elif set(self.queries[msgwords[1]]["resp"]) >= set(self.slaves):
                 #all slaves have responded
                 self.queries[msgwords[1]]["callback"](self.queries.pop(msgwords[1]))
         else:
@@ -2095,11 +2136,43 @@ class DeathBotProtocol(irc.IRCClient):
 
     # Multi-server command entry point (forwards query to slaves)
     def multiServerCmd(self, sender, replyto, msgwords):
+        # NOTE: Burst protection and rate limiting already handled in main dispatch
+        command = msgwords[0].lower()
+        with open("/tmp/debug.log", "a") as f:
+            f.write(f"DEBUG: multiServerCmd called with command: {command}, sender: {sender}\n")
+            f.flush()
+
         if msgwords[0] in self.checkUsage:
+            with open("/tmp/debug.log", "a") as f:
+                f.write(f"DEBUG: Checking usage for {msgwords[0]}\n")
+                f.flush()
             if not self.checkUsage[msgwords[0]](sender, replyto, msgwords):
+                with open("/tmp/debug.log", "a") as f:
+                    f.write(f"DEBUG: Usage check failed for {msgwords[0]}\n")
+                    f.flush()
                 return
+
+        with open("/tmp/debug.log", "a") as f:
+            f.write(f"DEBUG: self.slaves = {getattr(self, 'slaves', 'NOT_SET')}\n")
+            f.write(f"DEBUG: TEST = {TEST}\n")
+            f.flush()
+
         if self.slaves:
+            with open("/tmp/debug.log", "a") as f:
+                f.write(f"DEBUG: Forwarding query to slaves\n")
+                f.flush()
             self.forwardQuery(sender, replyto, msgwords, self.callBacks.get(msgwords[0],None))
+        else:
+            # For testing: provide a simple response when no slaves configured
+            if TEST:
+                with open("/tmp/debug.log", "a") as f:
+                    f.write(f"DEBUG: Sending test response for {command}\n")
+                    f.flush()
+                self.respond(replyto, sender, f"Test response for !{command} (no slaves configured)")
+            else:
+                with open("/tmp/debug.log", "a") as f:
+                    f.write(f"DEBUG: No slaves and not in TEST mode\n")
+                    f.flush()
 
     # !players - respond to forwarded query and actually pull the info
     def getPlayers(self, master, sender, query, msgwords):
@@ -2551,18 +2624,30 @@ class DeathBotProtocol(irc.IRCClient):
             return
         if self.commands.get(msgwords[0].lower(), False):
             command = msgwords[0].lower()
+            with open("/tmp/debug.log", "a") as f:
+                f.write(f"DEBUG: Main dispatch found command: {command}\n")
+                f.flush()
 
             # Internal bot commands (#q#, #r#) bypass all rate limiting
             if command.startswith('#') and command.endswith('#'):
+                with open("/tmp/debug.log", "a") as f:
+                    f.write(f"DEBUG: Internal command {command} bypassing rate limits\n")
+                    f.flush()
                 self.commands[command](sender, replyto, msgwords)
                 return
 
             # Apply burst protection to user commands only
             if not self._checkBurstProtection(sender, command):
+                with open("/tmp/debug.log", "a") as f:
+                    f.write(f"DEBUG: Main dispatch blocked {command} due to burst protection\n")
+                    f.flush()
                 return  # Silently ignore burst commands
 
             # Apply rate limiting to user commands only
             if not self._checkRateLimit(sender, command):
+                with open("/tmp/debug.log", "a") as f:
+                    f.write(f"DEBUG: Main dispatch blocked {command} due to rate limiting\n")
+                    f.flush()
                 # Check if we should send a penalty message (prevent penalty spam)
                 if not self._shouldSendPenaltyMessage(sender):
                     return  # Silently ignore to prevent penalty message spam
@@ -2575,6 +2660,9 @@ class DeathBotProtocol(irc.IRCClient):
                     self.respond(replyto, sender, f"Rate limit exceeded. Please wait before using !{command} again.")
                 return
 
+            with open("/tmp/debug.log", "a") as f:
+                f.write(f"DEBUG: Main dispatch calling {command} -> {self.commands[command]}\n")
+                f.flush()
             self.commands[command](sender, replyto, msgwords)
             return
         if dest != CHANNEL and sender in self.slaves: # game announcement from slave
@@ -2949,7 +3037,8 @@ if __name__ == '__main__':
     f = DeathBotFactory()
 
     # connect factory to this host and port
-    reactor.connectSSL(HOST, PORT, f, ssl.ClientContextFactory())
+    # Use plain TCP for testing (no SSL)
+    reactor.connectTCP(HOST, PORT, f)
 
     # run bot
     reactor.run()
