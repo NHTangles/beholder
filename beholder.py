@@ -2511,7 +2511,10 @@ class DeathBotProtocol(irc.IRCClient):
 
     # Listen to the chatter
     def privmsg(self, sender, dest, message):
-        sender = sender.partition("!")[0]
+        # Extract nickname and user@host for rate limiting
+        sender_nick = sender.partition("!")[0]  # Just the nickname
+        sender_host = sender.partition("!")[2] if "!" in sender else sender_nick  # user@host or fallback to nick
+        sender = sender_nick  # Keep original behavior for display/admin checks
         if SLAVE and sender not in MASTERS: return
         if (sender == PINOBOT): # response to earlier pino query
             self.msgLog(CHANNEL,message)
@@ -2557,19 +2560,19 @@ class DeathBotProtocol(irc.IRCClient):
                 self.commands[command](sender, replyto, msgwords)
                 return
 
-            # Apply burst protection to user commands only
-            if not self._checkBurstProtection(sender, command):
+            # Apply burst protection to user commands only (use host for rate limiting)
+            if not self._checkBurstProtection(sender_host, command):
                 return  # Silently ignore burst commands
 
-            # Apply rate limiting to user commands only
-            if not self._checkRateLimit(sender, command):
+            # Apply rate limiting to user commands only (use host for rate limiting)
+            if not self._checkRateLimit(sender_host, command):
                 # Check if we should send a penalty message (prevent penalty spam)
-                if not self._shouldSendPenaltyMessage(sender):
+                if not self._shouldSendPenaltyMessage(sender_host):
                     return  # Silently ignore to prevent penalty message spam
 
-                # Provide specific error message based on penalty type
-                if hasattr(self, 'abuse_penalties') and sender in self.abuse_penalties:
-                    remaining = int(self.abuse_penalties[sender] - time.time())
+                # Provide specific error message based on penalty type (check host for penalty)
+                if hasattr(self, 'abuse_penalties') and sender_host in self.abuse_penalties:
+                    remaining = int(self.abuse_penalties[sender_host] - time.time())
                     self.respond(replyto, sender, f"Abuse penalty active: {remaining//60}m {remaining%60}s remaining. (Triggered by spamming consecutive commands)")
                 else:
                     self.respond(replyto, sender, f"Rate limit exceeded. Please wait before using !{command} again.")
