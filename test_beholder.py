@@ -80,25 +80,25 @@ RE_HELLO = re.compile(r'^(hello|hi|hey|salut|hallo|guten tag|shalom|ciao|hola|al
 RE_SPACE_COLOR = re.compile(r'^ [\x1D\x03\x0f]*')  # space and color codes
 
 site.addsitedir('.')
-from botconf_test import HOST, PORT, CHANNEL, NICK, USERNAME, REALNAME, BOTDIR
-from botconf_test import PWFILE, FILEROOT, WEBROOT, LOGROOT, PINOBOT, ADMIN
-from botconf_test import SERVERTAG
+from test_botconf import HOST, PORT, CHANNEL, NICK, USERNAME, REALNAME, BOTDIR
+from test_botconf import PWFILE, FILEROOT, WEBROOT, LOGROOT, PINOBOT, ADMIN
+from test_botconf import SERVERTAG
 
 #try: from botconf import LOGBASE
 #except: LOGBASE = "/var/log/Beholder.log"
-try: from botconf_test import LL_TURNCOUNTS
+try: from test_botconf import LL_TURNCOUNTS
 except: LL_TURNCOUNTS = {}
-try: from botconf_test import DCBRIDGE
+try: from test_botconf import DCBRIDGE
 except: DCBRIDGE = None
-try: from botconf_test import TEST
+try: from test_botconf import TEST
 except: TEST = False
 try:
-    from botconf_test import REMOTES
+    from test_botconf import REMOTES
 except:
     SLAVE = True #if we have no slaves, we (probably) are the slave
     REMOTES = {}
 try:
-    from botconf_test import MASTERS
+    from test_botconf import MASTERS
 except:
     SLAVE = False #if we have no master we (definitely) are the master
     MASTERS = []
@@ -938,7 +938,7 @@ class DeathBotProtocol(irc.IRCClient):
     def connectionMade(self):
         # Skip SASL for testing if configured
         try:
-            from botconf_test import DISABLE_SASL
+            from test_botconf import DISABLE_SASL
             if DISABLE_SASL:
                 irc.IRCClient.connectionMade(self)
                 return

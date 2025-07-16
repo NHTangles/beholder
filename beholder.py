@@ -1857,7 +1857,8 @@ class DeathBotProtocol(irc.IRCClient):
             if drink not in self.bev["vessel"]: break # anything goes for these
             if vessel in self.bev["vessel"][drink]: break # match!
         fulldrink = random.choice(self.bev["drink"][drink])
-        if drink not in self.bev["suppress"]: fulldrink += " " + drink
+        if drink not in self.bev["suppress"]:
+            fulldrink = fulldrink + " " + drink
         tempunit = random.choice(list(self.bev["degrees"].keys()))
         [tmin,tmax] = self.bev["degrees"][tempunit]
         temp = random.randrange(tmin,tmax)
@@ -1926,7 +1927,7 @@ class DeathBotProtocol(irc.IRCClient):
                     # not some other argument, assume string match; combine
                     # strings for multiple words
                     if match is not None:
-                        match += ' ' + w
+                        match = match + ' ' + w
                     else:
                         match = w
 
@@ -2357,7 +2358,7 @@ class DeathBotProtocol(irc.IRCClient):
             (lstart,lend,llength) = self.longstreak[var].get(plr,(0,0,0))
             (cstart,cend,clength) = self.curstreak[var].get(plr,(0,0,0))
             if llength == 0:
-                reply += "No streaks for " + PLR + self.displaytag(var) + "."
+                reply = reply + "No streaks for " + PLR + self.displaytag(var) + "."
                 self.msg(master,reply)
                 return
             reply = "{} {} {} Max: {} ({} - {})".format(
@@ -2365,11 +2366,11 @@ class DeathBotProtocol(irc.IRCClient):
                 llength, self.streakDate(lstart), self.streakDate(lend))
             if clength > 0:
                 if cstart == lstart:
-                    reply += "(current)"
+                    reply = reply + "(current)"
                 else:
                     reply = "{}. Current: {} (since {})".format(
                         reply, clength, self.streakDate(cstart))
-            reply += "."
+            reply = reply + "."
             self.msg(master,reply)
             return
         (lmax,cmax) = (0,0)
@@ -2381,7 +2382,7 @@ class DeathBotProtocol(irc.IRCClient):
             if clength > cmax:
                 (cmax, cvar, csmax, cemax)  = (clength, var, cstart, cend)
         if lmax == 0:
-            reply += "No streaks for " + PLR + "."
+            reply = reply + "No streaks for " + PLR + "."
             self.msg(master, reply)
             return
         reply = "{} {} {} Max[{}]: {} ({} - {})".format(
@@ -2389,11 +2390,11 @@ class DeathBotProtocol(irc.IRCClient):
             lmax, self.streakDate(lsmax), self.streakDate(lemax))
         if cmax > 0:
             if csmax == lsmax:
-                reply += "(current)"
+                reply = reply + "(current)"
             else:
                 reply = "{}. Current[{}]: {} (since {})".format(
                     reply, self.displaystring[cvar], cmax, self.streakDate(csmax))
-        reply += "."
+        reply = reply + "."
         self.msg(master, reply)
 
     def getLastGame(self, master, sender, query, msgwords):
