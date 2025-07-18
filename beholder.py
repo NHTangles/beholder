@@ -944,7 +944,7 @@ class DeathBotProtocol(irc.IRCClient):
         if params[1] != 'ACK' or params[2].split() != ['sasl']:
             print('sasl not available')
             self.quit('')
-        sasl_string = '{0}\0{0}\0{1}'.format(self.nickname, self.password)
+        sasl_string = f'{self.nickname}\0{self.nickname}\0{self.password}'
         sasl_b64_bytes = base64.b64encode(sasl_string.encode(encoding='UTF-8',errors='strict'))
         self.sendLine('AUTHENTICATE PLAIN')
         self.sendLine('AUTHENTICATE ' + sasl_b64_bytes.decode('UTF-8'))
@@ -961,7 +961,7 @@ class DeathBotProtocol(irc.IRCClient):
         """Called when bot successfully connects to IRC"""
         self.factory.resetDelay()
         self.startHeartbeat()
-        self.sendLine('MODE {} -R'.format(self.nickname))
+        self.sendLine(f'MODE {self.nickname} -R')
         if not SLAVE: self.join(CHANNEL)
         random.seed()
 
@@ -1618,7 +1618,7 @@ class DeathBotProtocol(irc.IRCClient):
                 dt += aday
             days = "days."
             if daysleft == 1: days = "day."
-            resp = "{} for {} more {}".format(resp, daysleft, days)
+            resp = f"{resp} for {daysleft} more {days}"
         else:
             daysuntil = 1 # again, we are counting today
             dt += aday
@@ -1627,7 +1627,7 @@ class DeathBotProtocol(irc.IRCClient):
                dt += aday
             days = " days."
             if daysuntil == 1: days = " day."
-            resp = "{}; {} moon in {}{}".format(resp, mp[self.getPom(dt)], daysuntil, days)
+            resp = f"{resp}; {mp[self.getPom(dt)]} moon in {daysuntil}{days}"
 
         self.respond(replyto, sender, resp)
 
@@ -1709,7 +1709,7 @@ class DeathBotProtocol(irc.IRCClient):
             rolls.append(str(d))
             tot += d
         if len(rolls) > 1:
-            s = "{} = {}".format(" + ".join(rolls), tot)
+            s = f"{' + '.join(rolls)} = {tot}"
         else:
             s = str(tot)
         self.respond(replyto, sender, s)
@@ -1801,16 +1801,16 @@ class DeathBotProtocol(irc.IRCClient):
 
         # Build status message
         status_parts = []
-        status_parts.append("Status: {} on {}".format(NICK, SERVERTAG))
-        status_parts.append("Uptime: {}d {}h {}m".format(uptime_days, uptime_hours, uptime_mins))
+        status_parts.append(f"Status: {NICK} on {SERVERTAG}")
+        status_parts.append(f"Uptime: {uptime_days}d {uptime_hours}h {uptime_mins}m")
         if mem_mb != "N/A":
-            status_parts.append("Memory: {:.1f}MB".format(mem_mb))
-        status_parts.append("Monitors: {}".format(monitor_count))
-        status_parts.append("Queries: {}".format(query_count))
-        status_parts.append("Messages: {}".format(msg_count))
-        status_parts.append("RateLimit: {}".format(rate_limit_count))
+            status_parts.append(f"Memory: {mem_mb:.1f}MB")
+        status_parts.append(f"Monitors: {monitor_count}")
+        status_parts.append(f"Queries: {query_count}")
+        status_parts.append(f"Messages: {msg_count}")
+        status_parts.append(f"RateLimit: {rate_limit_count}")
         if abuse_penalty_count > 0:
-            status_parts.append("AbusePenalty: {}".format(abuse_penalty_count))
+            status_parts.append(f"AbusePenalty: {abuse_penalty_count}")
 
         self.respond(replyto, sender, " | ".join(status_parts))
 
@@ -2015,12 +2015,14 @@ class DeathBotProtocol(irc.IRCClient):
         # Sanitize sender and recipient names to prevent format string injection
         safe_sender = sanitize_format_string(sender)
         safe_rcpt = sanitize_format_string(rcpt)
-        self.msgLog(replyto,random.choice(willDo).format(safe_sender,safe_rcpt))
+        willdo_msg = random.choice(willDo)
+        # Handle the format string template
+        self.msgLog(replyto, willdo_msg.replace('{0}', safe_sender).replace('{1}', safe_rcpt))
 
     def msgTime(self, stamp):
         # Timezone handling is not great, but the following seems to work.
         # assuming TZ has not changed between leaving & taking the message.
-        return datetime.datetime.fromtimestamp(stamp).strftime("%Y-%m-%d %H:%M") + time.strftime(" %Z")
+        return f"{datetime.datetime.fromtimestamp(stamp).strftime('%Y-%m-%d %H:%M')}{time.strftime(' %Z')}"
 
     def checkMessages(self, user):
         # this runs every time someone speaks on the channel,
@@ -2038,7 +2040,7 @@ class DeathBotProtocol(irc.IRCClient):
             for (forwardto,sender,ts,message) in self.tellbuf[plainuser]:
                 if forwardto.lower() != user.lower(): # don't add sender to list if message was private
                     if sender not in nicksfrom: nicksfrom.append(sender)
-                self.respond(user,user, "Message from " + sender + " at " + self.msgTime(ts) + ": " + message)
+                self.respond(user,user, f"Message from {sender} at {self.msgTime(ts)}: {message}")
             # "tom" "tom and dick" "tom, dick, and harry"
             if nicksfrom:
                 # Sanitize all nicknames to prevent format string injection
@@ -2046,10 +2048,10 @@ class DeathBotProtocol(irc.IRCClient):
                 if len(safe_nicks) == 1:
                     fromstr = safe_nicks[0]
                 elif len(safe_nicks) == 2:
-                    fromstr = "{} and {}".format(safe_nicks[0], safe_nicks[1])
+                    fromstr = f"{safe_nicks[0]} and {safe_nicks[1]}"
                 else:
                     # oxford comma for 3 or more
-                    fromstr = "{}, and {}".format(", ".join(safe_nicks[:-1]), safe_nicks[-1])
+                    fromstr = f"{', '.join(safe_nicks[:-1])}, and {safe_nicks[-1]}"
                 self.respond(CHANNEL, user, "Messages from " + fromstr + " have been forwarded to you privately.");
 
         else:
@@ -2149,7 +2151,7 @@ class DeathBotProtocol(irc.IRCClient):
             # Check if player has an active game in this variant
             player_found = False
             for inpdir in self.inprog[var]:
-                ttyrec_pattern = "{}{}:*.ttyrec".format(inpdir, player_name)
+                ttyrec_pattern = f"{inpdir}{player_name}:*.ttyrec"
                 ttyrec_files = glob.glob(ttyrec_pattern)
                 if ttyrec_files:
                     player_found = True
@@ -2158,12 +2160,12 @@ class DeathBotProtocol(irc.IRCClient):
             if player_found:
                 # Look for whereis file
                 for widir in self.whereis[var]:
-                    whereis_file = "{}{}.whereis".format(widir, player_name)
+                    whereis_file = f"{widir}{player_name}.whereis"
                     # Try case-insensitive match
                     whereis_files = glob.glob(whereis_file)
                     if not whereis_files:
                         # Try with different case
-                        whereis_pattern = "{}*.whereis".format(widir)
+                        whereis_pattern = f"{widir}*.whereis"
                         for wipath in glob.glob(whereis_pattern):
                             if wipath.split("/")[-1].lower() == (player_name + ".whereis").lower():
                                 whereis_files = [wipath]
@@ -2176,15 +2178,15 @@ class DeathBotProtocol(irc.IRCClient):
                             wirec = parse_xlogfile_line(f.read(),":")
 
                         self.msg(master, "#R# " + query
-                                 + " " + self.displaytag(SERVERTAG) + " " + plr
-                                 + " "+self.displaytag(var)
-                                 + ": ({role} {race} {gender} {align}) T:{turns} ".format(**wirec)
+                                 + f" {self.displaytag(SERVERTAG)} {plr}"
+                                 + f" {self.displaytag(var)}"
+                                 + f": ({wirec['role']} {wirec['race']} {wirec['gender']} {wirec['align']}) T:{wirec['turns']} "
                                  + self.dungeons[var][wirec["dnum"]]
-                                 + " level: " + str(wirec["depth"])
+                                 + f" level: {wirec['depth']}"
                                  + ammy[wirec["amulet"]])
                         return
         self.msg(master, "#R# " + query + " " + self.displaytag(SERVERTAG)
-                                        + " " + player_name
+                                        + f" {player_name}"
                                         + " is not currently playing on this server.")
 
     def outWhereIs(self,q):
@@ -2241,11 +2243,11 @@ class DeathBotProtocol(irc.IRCClient):
         totasc = 0
         if var:
             if not plr in self.asc[var]:
-                repl = self.displaytag(SERVERTAG) + " No ascensions for " + PLR + " in "
+                repl = f"{self.displaytag(SERVERTAG)} No ascensions for {PLR} in "
                 if plr in self.allgames[var]:
-                    repl += str(self.allgames[var][plr]) + " games of "
+                    repl += f"{self.allgames[var][plr]} games of "
                 repl += self.variants[var][0][0] + "."
-                self.msg(master,"#R# " + query + " " + repl)
+                self.msg(master, f"#R# {query} {repl}")
                 return
             stats_parts = []
 
@@ -2255,7 +2257,7 @@ class DeathBotProtocol(irc.IRCClient):
                 role = role.title() # capitalise the first letter
                 if role in self.asc[var][plr]:
                     totasc += self.asc[var][plr][role]
-                    role_stats.append("{}x{}".format(self.asc[var][plr][role], role))
+                    role_stats.append(f"{self.asc[var][plr][role]}x{role}")
             if role_stats:
                 stats_parts.append(" ".join(role_stats))
 
@@ -2264,7 +2266,7 @@ class DeathBotProtocol(irc.IRCClient):
             for race in self.variants[var][2]:
                 race = race.title()
                 if race in self.asc[var][plr]:
-                    race_stats.append("{}x{}".format(self.asc[var][plr][race], race))
+                    race_stats.append(f"{self.asc[var][plr][race]}x{race}")
             if race_stats:
                 stats_parts.append(" ".join(race_stats))
 
@@ -2272,7 +2274,7 @@ class DeathBotProtocol(irc.IRCClient):
             align_stats = []
             for alig in self.aligns:
                 if alig in self.asc[var][plr]:
-                    align_stats.append("{}x{}".format(self.asc[var][plr][alig], alig))
+                    align_stats.append(f"{self.asc[var][plr][alig]}x{alig}")
             if align_stats:
                 stats_parts.append(" ".join(align_stats))
 
@@ -2280,18 +2282,17 @@ class DeathBotProtocol(irc.IRCClient):
             gender_stats = []
             for gend in self.genders:
                 if gend in self.asc[var][plr]:
-                    gender_stats.append("{}x{}".format(self.asc[var][plr][gend], gend))
+                    gender_stats.append(f"{self.asc[var][plr][gend]}x{gend}")
             if gender_stats:
                 stats_parts.append(" ".join(gender_stats))
 
             stats = " " + ", ".join(stats_parts) + "."
-            self.msg(master, "#R# " + query + " " + self.displaytag(SERVERTAG)
-                             + " " + PLR
-                             + " has ascended " + self.variants[var][0][0] + " "
-                             + str(totasc) + " times in "
-                             + str(self.allgames[var][plr])
-                             + " games ({:0.2f}%):".format((100.0 * totasc)
-                                                   / self.allgames[var][plr])
+            self.msg(master, f"#R# {query} {self.displaytag(SERVERTAG)}"
+                             + f" {PLR}"
+                             + f" has ascended {self.variants[var][0][0]} "
+                             + f"{totasc} times in "
+                             + f"{self.allgames[var][plr]}"
+                             + f" games ({(100.0 * totasc) / self.allgames[var][plr]:0.2f}%):"
                              + stats)
             return
         # no variant. Do player stats across variants.
@@ -2304,16 +2305,14 @@ class DeathBotProtocol(irc.IRCClient):
                 varasc += self.asc[var][plr].get("Fem",0)
                 varasc += self.asc[var][plr].get("Nbn",0)
                 totasc += varasc
-                variant_stats.append("{}: {} ({:0.2f}%)".format(
-                    self.displaystring[var], varasc,
-                    (100.0 * varasc) / self.allgames[var][plr]))
+                variant_stats.append(f"{self.displaystring[var]}: {varasc} ({(100.0 * varasc) / self.allgames[var][plr]:0.2f}%)")
         if totasc:
             stats = ", ".join(variant_stats)
-            self.msg(master, "#R# " + query + " "
-                         + self.displaytag(SERVERTAG) + " " + PLR
-                         + " has ascended " + str(totasc) + " times in "
-                         + str(totgames)
-                         + " games ({:0.2f}%): ".format((100.0 * totasc) / totgames)
+            self.msg(master, f"#R# {query} "
+                         + f"{self.displaytag(SERVERTAG)} {PLR}"
+                         + f" has ascended {totasc} times in "
+                         + f"{totgames}"
+                         + f" games ({(100.0 * totasc) / totgames:0.2f}%): "
                          + stats)
             return
         if totgames:
@@ -2361,16 +2360,13 @@ class DeathBotProtocol(irc.IRCClient):
                 reply = reply + "No streaks for " + PLR + self.displaytag(var) + "."
                 self.msg(master,reply)
                 return
-            reply = "{} {} {} Max: {} ({} - {})".format(
-                reply, self.displaytag(SERVERTAG), PLR + self.displaytag(var),
-                llength, self.streakDate(lstart), self.streakDate(lend))
+            reply = f"{reply} {self.displaytag(SERVERTAG)} {PLR}{self.displaytag(var)} Max: {llength} ({self.streakDate(lstart)} - {self.streakDate(lend)})"
             if clength > 0:
                 if cstart == lstart:
-                    reply = reply + "(current)"
+                    reply = f"{reply}(current)"
                 else:
-                    reply = "{}. Current: {} (since {})".format(
-                        reply, clength, self.streakDate(cstart))
-            reply = reply + "."
+                    reply = f"{reply}. Current: {clength} (since {self.streakDate(cstart)})"
+            reply = f"{reply}."
             self.msg(master,reply)
             return
         (lmax,cmax) = (0,0)
@@ -2382,19 +2378,16 @@ class DeathBotProtocol(irc.IRCClient):
             if clength > cmax:
                 (cmax, cvar, csmax, cemax)  = (clength, var, cstart, cend)
         if lmax == 0:
-            reply = reply + "No streaks for " + PLR + "."
+            reply = f"{reply}No streaks for {PLR}."
             self.msg(master, reply)
             return
-        reply = "{} {} {} Max[{}]: {} ({} - {})".format(
-            reply, self.displaytag(SERVERTAG), PLR, self.displaystring[lvar],
-            lmax, self.streakDate(lsmax), self.streakDate(lemax))
+        reply = f"{reply} {self.displaytag(SERVERTAG)} {PLR} Max[{self.displaystring[lvar]}]: {lmax} ({self.streakDate(lsmax)} - {self.streakDate(lemax)})"
         if cmax > 0:
             if csmax == lsmax:
-                reply = reply + "(current)"
+                reply = f"{reply}(current)"
             else:
-                reply = "{}. Current[{}]: {} (since {})".format(
-                    reply, self.displaystring[cvar], cmax, self.streakDate(csmax))
-        reply = reply + "."
+                reply = f"{reply}. Current[{self.displaystring[cvar]}]: {cmax} (since {self.streakDate(csmax)})"
+        reply = f"{reply}."
         self.msg(master, reply)
 
     def getLastGame(self, master, sender, query, msgwords):
@@ -2649,8 +2642,12 @@ class DeathBotProtocol(irc.IRCClient):
         # First check if file exists locally
         if os.path.exists(dumpfile):
             # File exists locally, use regular URL
-            dumpurl = urllib.parse.quote(game["dumpfmt"].format(**game))
-            return self.dump_url_prefix.format(**game) + dumpurl
+            # Format the dumpfmt template with game data
+            formatted_dumpfmt = game["dumpfmt"].format(**game)
+            dumpurl = urllib.parse.quote(formatted_dumpfmt)
+            # Format the URL prefix template with game data
+            formatted_prefix = self.dump_url_prefix.format(**game)
+            return f"{formatted_prefix}{dumpurl}"
 
         # File doesn't exist locally - generate S3 URL
         # S3 URL structure differs by server
@@ -2664,9 +2661,11 @@ class DeathBotProtocol(irc.IRCClient):
 
         if s3_base:
             # Generate S3 URL
-            dumppath = urllib.parse.quote(game["dumpfmt"].format(**game))
+            # Format the dumpfmt template with game data
+            formatted_dumpfmt = game["dumpfmt"].format(**game)
+            dumppath = urllib.parse.quote(formatted_dumpfmt)
             # S3 path structure: dumplogs/{name[0]}/{name}/{variant}/dumplog/{filename}
-            s3_url = s3_base + "{name[0]}/{name}/".format(**game) + dumppath
+            s3_url = f"{s3_base}{game['name'][0]}/{game['name']}/{dumppath}"
             return s3_url
 
         # If we can't determine S3 location, return None
@@ -2685,20 +2684,26 @@ class DeathBotProtocol(irc.IRCClient):
         if dumplog and var != "dyn":
             game["dumplog"] = fixdump(dumplog)
         # Need to figure out the dump path before messing with the name below
-        dumpfile = (self.dump_file_prefix + game["dumpfmt"]).format(**game)
+        # Format the dump file path template with game data
+        dumpfile_template = self.dump_file_prefix + game["dumpfmt"]
+        dumpfile = dumpfile_template.format(**game)
 
         # Generate dumplog URL using new method that checks both local and S3
         if TEST:
             # In test mode, always generate a URL
-            dumpurl = urllib.parse.quote(game["dumpfmt"].format(**game))
-            dumpurl = self.dump_url_prefix.format(**game) + dumpurl
+            # Format the dumpfmt template with game data
+            formatted_dumpfmt = game["dumpfmt"].format(**game)
+            dumpurl = urllib.parse.quote(formatted_dumpfmt)
+            # Format the URL prefix template with game data
+            formatted_prefix = self.dump_url_prefix.format(**game)
+            dumpurl = f"{formatted_prefix}{dumpurl}"
         else:
             # In production, check both local and S3 locations
             generated_url = self.generate_dumplog_url(game, dumpfile)
             if generated_url:
                 dumpurl = generated_url
             else:
-                dumpurl = "(sorry, no dump exists for {variant}:{name})".format(**game)
+                dumpurl = f"(sorry, no dump exists for {game['variant']}:{game['name']})"
         # Kludge for nethack 1.3d -
         # populate race and align with dummy values.
         if "race" not in game: game["race"] = "###"
@@ -2708,7 +2713,7 @@ class DeathBotProtocol(irc.IRCClient):
             # append dump url to report for ascensions
             game["ascsuff"] = "\n" + dumpurl
             # !lastasc stats.
-            self.la["{variant}:{name}".format(**game).lower()] = dumpurl
+            self.la[f"{game['variant']}:{game['name']}".lower()] = dumpurl
             if (game["endtime"] > self.lae.get(lname, 0)):
                 self.lae[lname] = game["endtime"]
                 self.la[lname] = dumpurl
@@ -2750,7 +2755,7 @@ class DeathBotProtocol(irc.IRCClient):
 
         if self.startscummed(game): return
         # only populate "!lastgame" fields for non-scummed games
-        self.lg["{variant}:{name}".format(**game).lower()] = dumpurl
+        self.lg[f"{game['variant']}:{game['name']}".lower()] = dumpurl
         if (game["endtime"] > self.lge.get(lname, 0)):
             self.lge[lname] = game["endtime"]
             self.lg[lname] = dumpurl
@@ -2779,7 +2784,7 @@ class DeathBotProtocol(irc.IRCClient):
         if game.get("charname", False):
             if game.get("name", False):
                 if game["name"] != game["charname"]:
-                    game["name"] = "{charname} ({name})".format(**game)
+                    game["name"] = f"{game['charname']} ({game['name']})"
             else:
                 game["name"] = game["charname"]
 
@@ -2789,23 +2794,23 @@ class DeathBotProtocol(irc.IRCClient):
         if (game.get("mode", "normal") == "normal" and
               game.get("modes", "normal") == "normal"):
             if game.get("version","unknown") == "NH-1.3d":
-                yield ("[{displaystring}] {name} ({role} {gender}), "
-                       "{points} points, T:{turns}, {death}{ascsuff}").format(**game)
+                yield (f"[{game['displaystring']}] {game['name']} ({game['role']} {game['gender']}), "
+                       f"{game['points']} points, T:{game['turns']}, {game['death']}{game['ascsuff']}")
             elif var == "seed" and "duration_str" in game:
-                yield ("[{displaystring}] {name} ({role} {race} {gender} {align}), "
-                       "{points} points, T:{turns}, {duration_str}, {death}{ascsuff}").format(**game)
+                yield (f"[{game['displaystring']}] {game['name']} ({game['role']} {game['race']} {game['gender']} {game['align']}), "
+                       f"{game['points']} points, T:{game['turns']}, {game['duration_str']}, {game['death']}{game['ascsuff']}")
             else:
-                yield ("[{displaystring}] {name} ({role} {race} {gender} {align}), "
-                       "{points} points, T:{turns}, {death}{ascsuff}").format(**game)
+                yield (f"[{game['displaystring']}] {game['name']} ({game['role']} {game['race']} {game['gender']} {game['align']}), "
+                       f"{game['points']} points, T:{game['turns']}, {game['death']}{game['ascsuff']}")
         else:
             if "modes" in game:
                 if game["modes"].startswith("normal,"):
                     game["mode"] = game["modes"][7:]
                 else:
                     game["mode"] = game["modes"]
-            yield ("[{displaystring}] {name} ({role} {race} {gender} {align}), "
-                   "{points} points, T:{turns}, {death}, "
-                   "in {mode} mode{ascsuff}").format(**game)
+            yield (f"[{game['displaystring']}] {game['name']} ({game['role']} {game['race']} {game['gender']} {game['align']}), "
+                   f"{game['points']} points, T:{game['turns']}, {game['death']}, "
+                   f"in {game['mode']} mode{game['ascsuff']}")
 
     def livelogReport(self, event):
         # nh370 livelog uses name instead of player
@@ -2815,7 +2820,7 @@ class DeathBotProtocol(irc.IRCClient):
             if event.get("player", False):
                 if event["player"] != event["charname"]:
                     if self.plr_tc_notreached(event["player"], event["turns"]): return
-                    event["player"] = "{charname} ({player})".format(**event)
+                    event["player"] = f"{event['charname']} ({event['player']})"
             else:
                 event["player"] = event["charname"]
 
@@ -2837,51 +2842,51 @@ class DeathBotProtocol(irc.IRCClient):
         if "message" in event:
             if event["message"] == "entered the Dungeons of Doom":
                 if "user_seed" in event and "seed" in event and event["user_seed"]:
-                    yield("[{displaystring}] {player} ({role} {race} {gender} {align}) "
-                    "{message} [chosen seed: {seed}]".format(**event))
+                    yield(f"[{event['displaystring']}] {event['player']} ({event['role']} {event['race']} {event['gender']} {event['align']}) "
+                    f"{event['message']} [chosen seed: {event['seed']}]")
                 else:
-                    yield("[{displaystring}] {player} ({role} {race} {gender} {align}) "
-                    "{message} [random seed]".format(**event))
+                    yield(f"[{event['displaystring']}] {event['player']} ({event['role']} {event['race']} {event['gender']} {event['align']}) "
+                    f"{event['message']} [random seed]")
             elif "realtime" in event:
                 event["realtime_fmt"] = str(event["realtime"])
-                yield ("[{displaystring}] {player} ({role} {race} {gender} {align}) "
-                       "{message}, on T:{turns} ({realtime_fmt})").format(**event)
+                yield (f"[{event['displaystring']}] {event['player']} ({event['role']} {event['race']} {event['gender']} {event['align']}) "
+                       f"{event['message']}, on T:{event['turns']} ({event['realtime_fmt']})")
             else:
-                yield ("[{displaystring}] {player} ({role} {race} {gender} {align}) "
-                       "{message}, on T:{turns}").format(**event)
+                yield (f"[{event['displaystring']}] {event['player']} ({event['role']} {event['race']} {event['gender']} {event['align']}) "
+                       f"{event['message']}, on T:{event['turns']}")
         elif "wish" in event:
-            yield ("[{displaystring}] {player} ({role} {race} {gender} {align}) "
-                   'wished for "{wish}", on T:{turns}').format(**event)
+            yield (f"[{event['displaystring']}] {event['player']} ({event['role']} {event['race']} {event['gender']} {event['align']}) "
+                   f'wished for "{event["wish"]}", on T:{event["turns"]}')
         elif "shout" in event:
-            yield ("[{displaystring}] {player} ({role} {race} {gender} {align}) "
-                   'shouted "{shout}", on T:{turns}').format(**event)
+            yield (f"[{event['displaystring']}] {event['player']} ({event['role']} {event['race']} {event['gender']} {event['align']}) "
+                   f'shouted "{event["shout"]}", on T:{event["turns"]}')
         elif "bones_killed" in event:
             if not event.get("bones_rank",False): # fourk does not have bones rank so use role instead
                 event["bones_rank"] = event["bones_role"]
-            yield ("[{displaystring}] {player} ({role} {race} {gender} {align}) "
-                   "killed the {bones_monst} of {bones_killed}, "
-                   "the former {bones_rank}, on T:{turns}").format(**event)
+            yield (f"[{event['displaystring']}] {event['player']} ({event['role']} {event['race']} {event['gender']} {event['align']}) "
+                   f"killed the {event['bones_monst']} of {event['bones_killed']}, "
+                   f"the former {event['bones_rank']}, on T:{event['turns']}")
         elif "killed_uniq" in event:
-            yield ("[{displaystring}] {player} ({role} {race} {gender} {align}) "
-                   "killed {killed_uniq}, on T:{turns}").format(**event)
+            yield (f"[{event['displaystring']}] {event['player']} ({event['role']} {event['race']} {event['gender']} {event['align']}) "
+                   f"killed {event['killed_uniq']}, on T:{event['turns']}")
         elif "defeated" in event: # fourk uses this instead of killed_uniq.
-            yield ("[{displaystring}] {player} ({role} {race} {gender} {align}) "
-                   "defeated {defeated}, on T:{turns}").format(**event)
+            yield (f"[{event['displaystring']}] {event['player']} ({event['role']} {event['race']} {event['gender']} {event['align']}) "
+                   f"defeated {event['defeated']}, on T:{event['turns']}")
         # more 1.3d shite
         elif "genocided_monster" in event:
             if event.get("dungeon_wide","yes") == "yes":
                 event["genoscope"] = "dungeon wide";
             else:
                 event["genoscope"] = "locally";
-            yield ("[{displaystring}] {player} ({role} {race} {gender} {align}) "
-                   "genocided {genocided_monster} {genoscope} on T:{turns}").format(**event)
+            yield (f"[{event['displaystring']}] {event['player']} ({event['role']} {event['race']} {event['gender']} {event['align']}) "
+                   f"genocided {event['genocided_monster']} {event['genoscope']} on T:{event['turns']}")
         elif "shoplifted" in event:
-            yield ("[{displaystring}] {player} ({role} {race} {gender} {align}) "
-                   "stole {shoplifted} zorkmids of merchandise from the {shop} of"
-                   " {shopkeeper} on T:{turns}").format(**event)
+            yield (f"[{event['displaystring']}] {event['player']} ({event['role']} {event['race']} {event['gender']} {event['align']}) "
+                   f"stole {event['shoplifted']} zorkmids of merchandise from the {event['shop']} of"
+                   f" {event['shopkeeper']} on T:{event['turns']}")
         elif "killed_shopkeeper" in event:
-            yield ("[{displaystring}] {player} ({role} {race} {gender} {align}) "
-                   "killed {killed_shopkeeper} on T:{turns}").format(**event)
+            yield (f"[{event['displaystring']}] {event['player']} ({event['role']} {event['race']} {event['gender']} {event['align']}) "
+                   f"killed {event['killed_shopkeeper']} on T:{event['turns']}")
 
     def connectionLost(self, reason=None):
         if self.looping_calls is None: return
