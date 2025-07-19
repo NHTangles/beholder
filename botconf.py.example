@@ -28,6 +28,10 @@ PINOBOT = "Pinoclone"
 # Name of bot in our channel that bridges discord network
 DCBRIDGE = "rld"
 
+# Enable Reddit monitoring for r/nethack (optional, default False)
+# Set to True to enable monitoring and announcing new posts
+ENABLE_REDDIT = False
+
 
 # people allowed to do certain admin things.
 # This is not terribly secure, as it does not verify the nick is authenticated. 

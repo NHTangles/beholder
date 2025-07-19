@@ -52,6 +52,7 @@ import shelve   # for persistent !tell messages
 import random   # for !rng and friends
 import glob     # for matching in !whereis
 import requests # for !rumor
+import xml.etree.ElementTree as ET  # for RSS parsing
 
 # Configuration constants for timeouts and limits
 QUERY_TIMEOUT = 5  # Timeout for queries in seconds
@@ -92,6 +93,8 @@ try: from botconf import DCBRIDGE
 except: DCBRIDGE = None
 try: from botconf import TEST
 except: TEST = False
+try: from botconf import ENABLE_REDDIT
+except: ENABLE_REDDIT = False
 try:
     from botconf import REMOTES
 except:
@@ -1047,6 +1050,10 @@ class DeathBotProtocol(irc.IRCClient):
         except (OSError, IOError):
             self.plr_tc = shelve.open(BOTDIR + "/plrtc", writeback=False, protocol=2)
 
+        # for Reddit monitoring
+        self.seen_reddit_posts = set()
+        self.reddit_initialized = False
+
     def _initializeCommands(self):
         """Initialize command mappings"""
 
@@ -1324,6 +1331,11 @@ class DeathBotProtocol(irc.IRCClient):
         # Cleanup old data periodically (every hour)
         self.looping_calls["cleanup"] = task.LoopingCall(self.cleanupOldData)
         self.looping_calls["cleanup"].start(3600)
+
+        # Check Reddit for new posts (every 5 minutes)
+        if not SLAVE and ENABLE_REDDIT:
+            self.looping_calls["reddit"] = task.LoopingCall(self.checkReddit)
+            self.looping_calls["reddit"].start(300)  # 5 minutes
 
     def nickCheck(self):
         # also rejoin the channel here, in case we drop off for any reason
@@ -1812,6 +1824,11 @@ class DeathBotProtocol(irc.IRCClient):
         if abuse_penalty_count > 0:
             status_parts.append(f"AbusePenalty: {abuse_penalty_count}")
 
+        # Reddit monitoring status
+        if hasattr(self, 'seen_reddit_posts') and not SLAVE:
+            reddit_count = len(self.seen_reddit_posts)
+            status_parts.append(f"Reddit: {reddit_count} posts tracked")
+
         self.respond(replyto, sender, " | ".join(status_parts))
 
     # The following started as !tea resulting in the bot making a cup of tea.
@@ -1982,6 +1999,100 @@ class DeathBotProtocol(irc.IRCClient):
 
         self.msgLog(replyto, random.choice(rumors))
 
+    # Reddit monitoring via RSS
+    def checkReddit(self):
+        """Check r/nethack for new posts via RSS/Atom and announce them"""
+        if SLAVE:
+            return  # Only master bot monitors Reddit
+
+        try:
+            # Reddit RSS feed for r/nethack new posts (returns Atom format)
+            url = "https://www.reddit.com/r/nethack/new.rss"
+            headers = {"User-Agent": "Beholder IRC Bot/1.0"}
+
+            r = requests.get(url, headers=headers, timeout=10)
+            if r.status_code != 200:
+                print(f"Reddit RSS returned status {r.status_code}")
+                return
+
+            # Parse XML
+            root = ET.fromstring(r.text)
+
+            # Handle both RSS and Atom formats
+            items = []
+            if root.tag == "{http://www.w3.org/2005/Atom}feed":
+                # Atom format
+                items = root.findall(".//{http://www.w3.org/2005/Atom}entry")
+            else:
+                # RSS 2.0 format
+                items = root.findall(".//item")
+
+            for item in items:
+                # Extract post information based on format
+                if "{http://www.w3.org/2005/Atom}" in item.tag:
+                    # Atom format
+                    title_elem = item.find("{http://www.w3.org/2005/Atom}title")
+                    link_elem = item.find("{http://www.w3.org/2005/Atom}link")
+                    id_elem = item.find("{http://www.w3.org/2005/Atom}id")
+
+                    title = title_elem.text if title_elem is not None else ""
+                    link = link_elem.get("href", "") if link_elem is not None else ""
+
+                    # Extract post ID from Atom id (format: t3_postid)
+                    post_id = None
+                    if id_elem is not None and id_elem.text and "_" in id_elem.text:
+                        post_id = id_elem.text.split("_")[-1]
+                else:
+                    # RSS format
+                    title_elem = item.find("title")
+                    link_elem = item.find("link")
+                    guid_elem = item.find("guid")
+
+                    title = title_elem.text if title_elem is not None else ""
+                    link = link_elem.text if link_elem is not None else ""
+
+                    # Extract post ID from guid or link
+                    post_id = None
+                    if guid_elem is not None and guid_elem.text and "_" in guid_elem.text:
+                        post_id = guid_elem.text.split("_")[-1]
+
+                # If we couldn't get ID from feed elements, try extracting from URL
+                if not post_id and "/comments/" in link:
+                    parts = link.split("/comments/")
+                    if len(parts) > 1:
+                        post_id = parts[1].split("/")[0]
+
+                # Check if we've seen this post before
+                if post_id and title and post_id not in self.seen_reddit_posts:
+                    self.seen_reddit_posts.add(post_id)
+
+                    # Only announce if this is a recent check (not first run)
+                    if hasattr(self, "reddit_initialized") and self.reddit_initialized:
+                        # Sanitize title - remove format string placeholders
+                        title = sanitize_format_string(title)
+                        shortlink = f"https://redd.it/{post_id}"
+
+                        # Announce to channel
+                        self.msgLog(CHANNEL, f"Reddit: {title} {shortlink}")
+
+            # Mark as initialized after first check
+            self.reddit_initialized = True
+
+            # Clean up old posts to prevent memory growth
+            # Keep only the 100 most recent post IDs
+            if len(self.seen_reddit_posts) > 100:
+                # Convert to list, sort, and keep newest 100
+                post_list = list(self.seen_reddit_posts)
+                self.seen_reddit_posts = set(post_list[-100:])
+
+        except requests.exceptions.Timeout:
+            print("Timeout checking Reddit RSS")
+        except requests.exceptions.RequestException as e:
+            print(f"Error fetching Reddit RSS: {e}")
+        except ET.ParseError as e:
+            print(f"Error parsing Reddit RSS XML: {e}")
+        except Exception as e:
+            print(f"Unexpected error checking Reddit: {e}")
 
     def takeMessage(self, sender, replyto, msgwords):
         if len(msgwords) < 3:
