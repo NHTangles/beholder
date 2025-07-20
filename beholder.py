@@ -199,7 +199,7 @@ class DeathBotProtocol(irc.IRCClient):
         logday = time.strftime("%d")
         chanLogName = LOGROOT + CHANNEL + time.strftime("-%Y-%m-%d.log")
         chanLog = open(chanLogName,'a')
-        os.chmod(chanLogName,stat.S_IRUSR|stat.S_IWUSR)
+        os.chmod(chanLogName,stat.S_IRUSR|stat.S_IWUSR|stat.S_IRGRP|stat.S_IROTH)
 
     xlogfiles = {filepath.FilePath(FILEROOT+"nh343-hdf/var/xlogfile"): ("nh343", ":", "nh343/dumplog/{starttime}.nh343.txt"),
                  filepath.FilePath(FILEROOT+"nh363-hdf/var/xlogfile"): ("nh363", "\t", "nethack/dumplog/{starttime}.nh.html"),
