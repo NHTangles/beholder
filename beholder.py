@@ -2075,7 +2075,7 @@ class DeathBotProtocol(irc.IRCClient):
                         shortlink = f"https://redd.it/{post_id}"
 
                         # Announce to channel
-                        self.msgLog(CHANNEL, f"\x02\x0307Reddit\x03\x02: {title} {shortlink}")
+                        self.msgLog(CHANNEL, f"\x0307Reddit\x03: {title} {shortlink}")
 
             # Mark as initialized after first check
             self.reddit_initialized = True
