@@ -193,7 +193,10 @@ class DeathBotProtocol(irc.IRCClient):
     dump_file_prefix = FILEROOT + "dgldir/userdata/{name[0]}/{name}/"
 
     if not SLAVE:
-        scoresURL = WEBROOT + "nethack/scoreboard (HDF) or https://nethackscoreboard.org (ALL)"
+        scoresURL = "https://nethackscoreboard.org (ALL)"
+        ttyrecURL = WEBROOT + "nethack/ttyrecs"
+        dumplogURL = WEBROOT + "nethack/dumplogs"
+        irclogURL = WEBROOT + "nethack/irclogs/hardfought"
         rceditURL = WEBROOT + "nethack/rcedit"
         helpURL = WEBROOT + "nethack"
         logday = time.strftime("%d")
@@ -1088,6 +1091,9 @@ class DeathBotProtocol(irc.IRCClient):
                          "lastasc"  : self.multiServerCmd,
                          "scores"   : self.doScoreboard,
                          "sb"       : self.doScoreboard,
+                         "ttyrec"   : self.doTtyrec,
+                         "dumplog"  : self.doDumplog,
+                         "irclog"   : self.doIRClog,
                          "rcedit"   : self.doRCedit,
                          "commands" : self.doCommands,
                          "help"     : self.doHelp,
@@ -1588,6 +1594,15 @@ class DeathBotProtocol(irc.IRCClient):
     def doScoreboard(self, sender, replyto, msgwords):
         self.respond(replyto, sender, self.scoresURL )
 
+    def doTtyrec(self, sender, replyto, msgwords):
+        self.respond(replyto, sender, self.ttyrecURL )
+
+    def doDumplog(self, sender, replyto, msgwords):
+        self.respond(replyto, sender, self.dumplogURL )
+
+    def doIRClog(self, sender, replyto, msgwords):
+        self.respond(replyto, sender, self.irclogURL )
+
     def doRCedit(self, sender, replyto, msgwords):
         self.respond(replyto, sender, self.rceditURL )
 
@@ -1600,7 +1615,7 @@ class DeathBotProtocol(irc.IRCClient):
         self.respond(replyto, sender, msgwords[1] + " " + code + "TEST!" )
 
     def doCommands(self, sender, replyto, msgwords):
-        self.respond(replyto, sender, "available commands are !help !ping !time !pom !hello !booze !beer !potion !tea !coffee !whiskey !vodka !rum !tequila !scotch !goat !lotg !d(1-1000) !(1-50)d(1-1000) !8ball !rng !role !race !variant !tell !source !lastgame !lastasc !asc !streak !rcedit !scores !sb !setmintc !whereis !players !who !commands")
+        self.respond(replyto, sender, "available commands are !help !ping !time !pom !hello !booze !beer !potion !tea !coffee !whiskey !vodka !rum !tequila !scotch !goat !lotg !d(1-1000) !(1-50)d(1-1000) !8ball !rng !role !race !variant !tell !source !lastgame !lastasc !asc !streak !rcedit !scores !sb !setmintc !whereis !players !who !ttyrec !dumplog !irclog !commands")
 
     def getPom(self, dt):
         # this is a direct translation of the NetHack method of working out pom.
