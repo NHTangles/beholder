@@ -95,6 +95,8 @@ try: from botconf import TEST
 except: TEST = False
 try: from botconf import ENABLE_REDDIT
 except: ENABLE_REDDIT = False
+try: from botconf import PERMANENT_MINTC
+except: PERMANENT_MINTC = {}
 try:
     from botconf import REMOTES
 except:
@@ -2583,6 +2585,10 @@ class DeathBotProtocol(irc.IRCClient):
     def setPlrTC(self, master, sender, query, msgwords):
         if len(msgwords) == 2:
             if RE_DIGITS.match(msgwords[1]):
+                if sender.lower() in PERMANENT_MINTC:
+                    self.msg(sender, "Cannot modify minimum turncount for " + sender.lower())
+                    self.msg(master, "#R# " + query + " " + self.displaytag(SERVERTAG))
+                    return
                 self.plr_tc[sender.lower()] = int(msgwords[1])
                 self.plr_tc.sync()
                 self.msg(master, "#R# " + query + " " + self.displaytag(SERVERTAG)
@@ -2590,6 +2596,10 @@ class DeathBotProtocol(irc.IRCClient):
                                  + " set to " + msgwords[1])
                 return
         if len(msgwords) == 1:
+            if sender.lower() in PERMANENT_MINTC:
+                self.msg(sender, "Cannot modify minimum turncount for " + sender.lower())
+                self.msg(master, "#R# " + query + " " + self.displaytag(SERVERTAG))
+                return
             if sender.lower() in self.plr_tc:
                 del self.plr_tc[sender.lower()]
                 self.plr_tc.sync()
@@ -2602,6 +2612,10 @@ class DeathBotProtocol(irc.IRCClient):
         if sender in self.admin:
             if len(msgwords) == 3:
                 if RE_DIGITS.match(msgwords[2]):
+                    if msgwords[1].lower() in PERMANENT_MINTC:
+                        self.msg(sender, "Cannot modify minimum turncount for " + msgwords[1].lower())
+                        self.msg(master, "#R# " + query + " " + self.displaytag(SERVERTAG))
+                        return
                     self.plr_tc[msgwords[1].lower()] = int(msgwords[2])
                     self.plr_tc.sync()
                     self.msg(master, "#R# " + query + " " + self.displaytag(SERVERTAG)
@@ -2609,6 +2623,10 @@ class DeathBotProtocol(irc.IRCClient):
                                      + " set to " + msgwords[2])
                     return
             if len(msgwords) == 2:
+                if msgwords[1].lower() in PERMANENT_MINTC:
+                    self.msg(sender, "Cannot modify minimum turncount for " + msgwords[1].lower())
+                    self.msg(master, "#R# " + query + " " + self.displaytag(SERVERTAG))
+                    return
                 if msgwords[1].lower() in self.plr_tc:
                     del self.plr_tc[msgwords[1].lower()]
                     self.plr_tc.sync()
@@ -2759,8 +2777,11 @@ class DeathBotProtocol(irc.IRCClient):
 
     # players can request their deaths and other events not be reported if less than x turns
     def plr_tc_notreached(self, name, turns):
-        return (name.lower() in self.plr_tc
-           and turns < self.plr_tc[name.lower()])
+        lname = name.lower()
+        if lname in PERMANENT_MINTC:
+            return turns < PERMANENT_MINTC[lname]
+        return (lname in self.plr_tc
+           and turns < self.plr_tc[lname])
 
     def generate_dumplog_url(self, game, dumpfile):
         """Generate dumplog URL, checking local storage first, then S3.

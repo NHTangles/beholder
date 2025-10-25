@@ -32,9 +32,8 @@ DCBRIDGE = "rld"
 # Set to True to enable monitoring and announcing new posts
 ENABLE_REDDIT = False
 
-
 # people allowed to do certain admin things.
-# This is not terribly secure, as it does not verify the nick is authenticated. 
+# This is not terribly secure, as it does not verify the nick is authenticated.
 ADMIN = ["K2", "Tangles"]
 
 # OPTIONAL Minimum turncounts for livelogging different event types.
@@ -43,6 +42,12 @@ LL_TURNCOUNTS = {
       2: 500,  # Achievements
      32: 3000, # Conducts
 }
+
+# OPTIONAL Permanent minimum turncount filters for specific players.
+# Players in this dict cannot override their filter with !setmintc.
+# Format: {"playername": minimum_turns}
+# Example: PERMANENT_MINTC = {"bob": 100, "alice": 500}
+PERMANENT_MINTC = {}
 
 # Remote servers section:
 # If this bot is the "master", we need to tell it where the remote servers are,
