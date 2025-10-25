@@ -1884,7 +1884,6 @@ class DeathBotProtocol(irc.IRCClient):
             "degrees" :{"Kelvin": [0, 500], "degrees Celsius": [-20,95], "degrees Fahrenheit": [-20,200]}, #sane-ish ranges
             "suppress": ["coffee", "junk", "booze", "potion", "fictional"] } # do not append these to the random description
 
-
     def doTea(self, sender, replyto, msgwords):
         if len(msgwords) > 1: target = msgwords[1]
         else: target = sender
@@ -2332,7 +2331,6 @@ class DeathBotProtocol(irc.IRCClient):
         if not outmsg: outmsg = player + " is not playing."
         self.respond(q["replyto"],q["sender"],outmsg)
 
-
     def plrVar(self, sender, replyto, msgwords):
         # for !streak and !asc, work out what player and variant they want
         if len(msgwords) > 3:
@@ -2755,7 +2753,6 @@ class DeathBotProtocol(irc.IRCClient):
         user = user.split('!')[0]
         self.log("-!- " + user + " changed the topic on " + channel + " to: " + newTopic)
 
-
     ### Xlog/livelog event processing
     def startscummed(self, game):
         return game["death"] in ("quit", "escaped") and game["points"] < 1000
@@ -2806,6 +2803,12 @@ class DeathBotProtocol(irc.IRCClient):
         # Check if the game is in explore mode (flags & 0x2) and skip if so
         if "flags" in game and game["flags"] & 0x2:
             return  # Don't report explore mode games
+
+        # Check if this is a TNNT game outside tournament period (Nov 1-Dec 1 UTC)
+        if game["variant"] == "tnnt":
+            current_month = datetime.datetime.utcnow().month
+            if current_month != 11:
+                return  # Don't report TNNT games outside November
 
         var = game["variant"] # Make code less ugly
         # lowercased name is used for lookups
@@ -3083,7 +3086,6 @@ class DeathBotFactory(ReconnectingClientFactory):
 #    deathservice = internet.SSLClient(HOST, PORT, f,
 #                                      ssl.ClientContextFactory())
 #    deathservice.setServiceParent(application)
-
 
 if __name__ == '__main__':
     # initialize logging
