@@ -2666,6 +2666,7 @@ class DeathBotProtocol(irc.IRCClient):
             if (sender == DCBRIDGE):
                 message = message.partition("<")[2] #everything after the first <
                 sender,x,message = message.partition(">") #everything remaining before/after the first >
+                sender = sender.split(" ")[0] # Extract just username before space
                 message = RE_SPACE_COLOR.sub('', message) # everything after the first space and any colour codes
                 if len(sender) == 0: return
         else: #private msg
