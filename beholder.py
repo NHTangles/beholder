@@ -1556,14 +1556,65 @@ class DeathBotProtocol(irc.IRCClient):
             self.log("* " + self.nickname + " " + message)
         self.describe(replyto, message)
 
+    # Split long messages at semantic boundaries to avoid breaking player+variant pairs
+    # IRC has 512 byte limit; we use 400 to be safe (accounts for protocol overhead)
+    def splitMessage(self, message, maxlen=400):
+        if len(message) <= maxlen:
+            return [message]
+
+        parts = []
+        # Try to split at " :: " boundaries first (between servers)
+        chunks = message.split(" :: ")
+        current = ""
+
+        for i, chunk in enumerate(chunks):
+            separator = " :: " if i > 0 else ""
+            test = current + separator + chunk
+
+            if len(test) <= maxlen:
+                current = test
+            else:
+                # Current chunk is too big, need to split it further
+                if current:
+                    parts.append(current)
+                    current = ""
+
+                # Split at space boundaries (between player+variant pairs)
+                if len(chunk) > maxlen:
+                    words = chunk.split(" ")
+                    for word in words:
+                        if not current:
+                            current = word
+                        elif len(current + " " + word) <= maxlen:
+                            current = current + " " + word
+                        else:
+                            parts.append(current)
+                            current = word
+                else:
+                    current = chunk
+
+        if current:
+            parts.append(current)
+
+        return parts
+
     # construct and send response.
     # replyto is channel, or private nick
     # sender is original sender of query
     def respond(self, replyto, sender, message):
+        # Split long messages intelligently
+        parts = self.splitMessage(message)
+
         if (replyto.lower() == sender.lower()): #private
-            self.msg(replyto, message)
+            for part in parts:
+                self.msg(replyto, part)
         else: #channel - prepend "Nick: " to message
-            self.msgLog(replyto, sender + ": " + message)
+            # Only prepend sender to first part
+            for i, part in enumerate(parts):
+                if i == 0:
+                    self.msgLog(replyto, sender + ": " + part)
+                else:
+                    self.msgLog(replyto, part)
 
     # Query/Response handling
     def doQuery(self, sender, replyto, msgwords):
