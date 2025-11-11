@@ -2849,7 +2849,7 @@ class DeathBotProtocol(irc.IRCClient):
 
         if game["death"][0:8] in ("ascended"):
             # append dump url to report for ascensions
-            game["ascsuff"] = "\n" + dumpurl
+            game["ascsuff"] = " " + dumpurl
             # !lastasc stats.
             self.la["{variant}:{name}".format(**game).lower()] = dumpurl
             if (game["endtime"] > self.lae.get(lname, 0)):
