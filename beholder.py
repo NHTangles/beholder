@@ -2833,7 +2833,7 @@ class DeathBotProtocol(irc.IRCClient):
 
         # Check if this is a TNNT game outside tournament period (Nov 1-Dec 1 UTC)
         if game["variant"] == "tnnt":
-            current_month = datetime.datetime.utcnow().month
+            current_month = datetime.datetime.now(datetime.UTC).month
             if current_month != 11:
                 return  # Don't report TNNT games outside November
 
