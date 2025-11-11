@@ -313,6 +313,14 @@ class DeathBotProtocol(irc.IRCClient):
                     "hdf-au" : "\x1D\x0303hdf-au\x03\x0F",
                     "hdf-eu" : "\x1D\x0312hdf-eu\x03\x0F"}
 
+    # Override Twisted's msg() to disable automatic line splitting
+    # We handle splitting ourselves in splitMessage() to preserve semantic boundaries
+    def msg(self, user, message, length=None):
+        """Send a message to a user or channel, without Twisted's auto-splitting"""
+        # Use sendLine to send raw IRC PRIVMSG without length-based splitting
+        # Format: PRIVMSG <target> :<message>
+        self.sendLine(f"PRIVMSG {user} :{message}")
+
     # put the displaystring for a thing in square brackets
     def displaytag(self, thing):
        return '[' + self.displaystring.get(thing,thing) + ']'
@@ -1569,8 +1577,8 @@ class DeathBotProtocol(irc.IRCClient):
         self.describe(replyto, message)
 
     # Split long messages at semantic boundaries to avoid breaking player+variant pairs
-    # IRC has 512 byte limit; we use 400 to be safe (accounts for protocol overhead)
-    def splitMessage(self, message, maxlen=400):
+    # IRC has 512 byte limit; we use 350 to be very safe and avoid Twisted's auto-splitting
+    def splitMessage(self, message, maxlen=350):
         if len(message) <= maxlen:
             return [message]
 
@@ -1614,19 +1622,18 @@ class DeathBotProtocol(irc.IRCClient):
     # replyto is channel, or private nick
     # sender is original sender of query
     def respond(self, replyto, sender, message):
-        # Split long messages intelligently
-        parts = self.splitMessage(message)
-
         if (replyto.lower() == sender.lower()): #private
+            # Split and send all parts to private message
+            parts = self.splitMessage(message)
             for part in parts:
                 self.msg(replyto, part)
         else: #channel - prepend "Nick: " to message
-            # Only prepend sender to first part
-            for i, part in enumerate(parts):
-                if i == 0:
-                    self.msgLog(replyto, sender + ": " + part)
-                else:
-                    self.msgLog(replyto, part)
+            # Prepend sender BEFORE splitting so we account for the prefix length
+            prefixed_message = sender + ": " + message
+            parts = self.splitMessage(prefixed_message)
+            # Send all parts to channel (first already has sender prefix)
+            for part in parts:
+                self.msgLog(replyto, part)
 
     # Query/Response handling
     def doQuery(self, sender, replyto, msgwords):
