@@ -108,6 +108,11 @@ except:
     SLAVE = False #if we have no master we (definitely) are the master
     MASTERS = []
 
+def tlog(message):
+    """Print a log message with timestamp in format [YYYY-MM-DD HH:MM:SS]"""
+    timestamp = datetime.datetime.now().strftime("[%Y-%m-%d %H:%M:%S]")
+    print(f"{timestamp} {message}")
+
 def fromtimestamp_int(s):
     return datetime.datetime.fromtimestamp(int(s))
 
@@ -184,7 +189,7 @@ class DeathBotProtocol(irc.IRCClient):
         with open(PWFILE, "r") as f:
             password = f.read().strip()
     except (IOError, FileNotFoundError) as e:
-        print(f"Warning: Could not read password file {PWFILE}: {e}")
+        tlog(f"Warning: Could not read password file {PWFILE}: {e}")
         password = "NotTHEPassword"
 
     sourceURL = "https://github.com/NHTangles/beholder"
@@ -955,7 +960,7 @@ class DeathBotProtocol(irc.IRCClient):
 
     def irc_CAP(self, prefix, params):
         if params[1] != 'ACK' or params[2].split() != ['sasl']:
-            print('sasl not available')
+            tlog('sasl not available')
             self.quit('')
         sasl_string = f'{self.nickname}\0{self.nickname}\0{self.password}'
         sasl_b64_bytes = base64.b64encode(sasl_string.encode(encoding='UTF-8',errors='strict'))
@@ -966,7 +971,7 @@ class DeathBotProtocol(irc.IRCClient):
         self.sendLine('CAP END')
 
     def irc_904(self, prefix, params):
-        print('sasl auth failed', params)
+        tlog(f'sasl auth failed {params}')
         self.quit('')
     irc_905 = irc_904
 
@@ -1163,9 +1168,9 @@ class DeathBotProtocol(irc.IRCClient):
             # Burst protection: prevent multiple commands per second
             self.last_command_time = {}  # user -> timestamp of last command
 
-            print("Rate limiting initialized successfully")
+            tlog("Rate limiting initialized successfully")
         except Exception as e:
-            print(f"Warning: Rate limiting initialization failed: {e}")
+            tlog(f"Warning: Rate limiting initialization failed: {e}")
             # Ensure safe defaults even if initialization fails
             self.rate_limits = {}
             self.abuse_penalties = {}
@@ -1240,7 +1245,7 @@ class DeathBotProtocol(irc.IRCClient):
             return True  # Allow command
 
         except Exception as e:
-            print(f"Rate limiting error for {sender}: {e}")
+            tlog(f"Rate limiting error for {sender}: {e}")
             # Fail-safe: allow command if rate limiting breaks
             return True
 
@@ -1271,7 +1276,7 @@ class DeathBotProtocol(irc.IRCClient):
             return True  # Send penalty message
 
         except Exception as e:
-            print(f"Penalty response rate limiting error for {sender}: {e}")
+            tlog(f"Penalty response rate limiting error for {sender}: {e}")
             # Fail-safe: allow penalty message if checking breaks
             return True
 
@@ -1297,7 +1302,7 @@ class DeathBotProtocol(irc.IRCClient):
             return True  # Allow command
 
         except Exception as e:
-            print(f"Burst protection error for {sender}: {e}")
+            tlog(f"Burst protection error for {sender}: {e}")
             # Fail-safe: allow command if burst protection breaks
             return True
 
@@ -1380,9 +1385,9 @@ class DeathBotProtocol(irc.IRCClient):
 
             if old_recipients:
                 self.tellbuf.sync()
-                print(f"Cleaned up old messages for {len(old_recipients)} recipients")
+                tlog(f"Cleaned up old messages for {len(old_recipients)} recipients")
         except Exception as e:
-            print(f"Error cleaning up tellbuf: {e}")
+            tlog(f"Error cleaning up tellbuf: {e}")
 
         # Clean up stale queries older than 1 hour (in case timeoutQuery failed)
         try:
@@ -1398,16 +1403,16 @@ class DeathBotProtocol(irc.IRCClient):
                 self.queries.pop(query_id, None)
 
             if stale_queries:
-                print(f"Cleaned up {len(stale_queries)} stale queries")
+                tlog(f"Cleaned up {len(stale_queries)} stale queries")
         except Exception as e:
-            print(f"Error cleaning up queries: {e}")
+            tlog(f"Error cleaning up queries: {e}")
 
         # Limit rumor cache to 50 most recent entries
         if len(self.rumorCache) > 50:
             # Sort by timestamp and keep newest 50
             sorted_items = sorted(self.rumorCache.items(), key=lambda x: x[1][0], reverse=True)
             self.rumorCache = dict(sorted_items[:50])
-            print(f"Trimmed rumor cache to 50 entries")
+            tlog(f"Trimmed rumor cache to 50 entries")
 
         # Clean up old rate limiting entries
         try:
@@ -1426,9 +1431,9 @@ class DeathBotProtocol(irc.IRCClient):
                 del self.rate_limits[user]
 
             if users_to_clean:
-                print(f"Cleaned up rate limiting for {len(users_to_clean)} users")
+                tlog(f"Cleaned up rate limiting for {len(users_to_clean)} users")
         except Exception as e:
-            print(f"Error cleaning up rate limits: {e}")
+            tlog(f"Error cleaning up rate limits: {e}")
 
         # Clean up expired abuse penalties and reset old consecutive counters
         try:
@@ -1466,9 +1471,9 @@ class DeathBotProtocol(irc.IRCClient):
                 self.consecutive_commands.pop(user, None)
 
             if expired_penalties or old_consecutive:
-                print(f"Cleaned up abuse tracking: {len(expired_penalties)} expired penalties, {len(old_consecutive)} old counters")
+                tlog(f"Cleaned up abuse tracking: {len(expired_penalties)} expired penalties, {len(old_consecutive)} old counters")
         except Exception as e:
-            print(f"Error cleaning up abuse tracking: {e}")
+            tlog(f"Error cleaning up abuse tracking: {e}")
 
         # Clean up old penalty response tracking and burst protection data
         try:
@@ -1495,10 +1500,10 @@ class DeathBotProtocol(irc.IRCClient):
                     cleaned_burst += 1
 
             if cleaned_responses or cleaned_burst:
-                print(f"Cleaned up rate limiting: {cleaned_responses} penalty responses, {cleaned_burst} burst data")
+                tlog(f"Cleaned up rate limiting: {cleaned_responses} penalty responses, {cleaned_burst} burst data")
 
         except Exception as e:
-            print(f"Error cleaning up penalty/burst data: {e}")
+            tlog(f"Error cleaning up penalty/burst data: {e}")
 
     def nickChanged(self, nn):
         # catch successful changing of nick from above and identify with nickserv
@@ -1568,7 +1573,7 @@ class DeathBotProtocol(irc.IRCClient):
             # sender is passed to master; msgwords[2] is passed tp sender
             self.qCommands[msgwords[3]](sender,msgwords[2],msgwords[1],msgwords[3:])
         else:
-            print("Bogus slave query from " + sender + ": " + " ".join(msgwords));
+            tlog("Bogus slave query from " + sender + ": " + " ".join(msgwords));
 
     def doResponse(self, sender, replyto, msgwords):
         # called when slave returns query response to master
@@ -1579,7 +1584,7 @@ class DeathBotProtocol(irc.IRCClient):
                 #all slaves have responded
                 self.queries[msgwords[1]]["callback"](self.queries.pop(msgwords[1]))
         else:
-            print("Bogus slave response from " + sender + ": " + " ".join(msgwords));
+            tlog("Bogus slave response from " + sender + ": " + " ".join(msgwords));
 
     def timeoutQuery(self, query):
         if query not in self.queries: return # query was completed before timeout
@@ -1918,24 +1923,24 @@ class DeathBotProtocol(irc.IRCClient):
     def rumorCacheGet(self, url):
         now = time.time()
         if not url in self.rumorCache or now > self.rumorCache[url][0] + 3600:
-            print("url", url, "not found or expired in rumor cache, downloading...")
+            tlog(f"url {url} not found or expired in rumor cache, downloading...")
             try:
                 r = requests.get(url, timeout=10)
                 if r.status_code != requests.codes.ok:
-                    print(f"Failed to fetch {url}: HTTP {r.status_code}")
+                    tlog(f"Failed to fetch {url}: HTTP {r.status_code}")
                     return False
 
                 # filter out comments (# at start of line) and blanks, no point saving them
                 rumors = [r for r in filter(lambda r : len(r) > 0 and r[0] != '#', r.text.splitlines())]
                 self.rumorCache[url] = (now, rumors)
             except requests.exceptions.Timeout:
-                print(f"Timeout fetching {url}")
+                tlog(f"Timeout fetching {url}")
                 return False
             except requests.exceptions.ConnectionError as e:
-                print(f"Connection error fetching {url}: {e}")
+                tlog(f"Connection error fetching {url}: {e}")
                 return False
             except requests.exceptions.RequestException as e:
-                print(f"Error fetching {url}: {e}")
+                tlog(f"Error fetching {url}: {e}")
                 return False
 
         return self.rumorCache[url][1]
@@ -2033,7 +2038,7 @@ class DeathBotProtocol(irc.IRCClient):
 
             r = requests.get(url, headers=headers, timeout=10)
             if r.status_code != 200:
-                print(f"Reddit RSS returned status {r.status_code}")
+                tlog(f"Reddit RSS returned status {r.status_code}")
                 return
 
             # Parse XML
@@ -2107,13 +2112,13 @@ class DeathBotProtocol(irc.IRCClient):
                 self.seen_reddit_posts = set(post_list[-100:])
 
         except requests.exceptions.Timeout:
-            print("Timeout checking Reddit RSS")
+            tlog("Timeout checking Reddit RSS")
         except requests.exceptions.RequestException as e:
-            print(f"Error fetching Reddit RSS: {e}")
+            tlog(f"Error fetching Reddit RSS: {e}")
         except ET.ParseError as e:
-            print(f"Error parsing Reddit RSS XML: {e}")
+            tlog(f"Error parsing Reddit RSS XML: {e}")
         except Exception as e:
-            print(f"Unexpected error checking Reddit: {e}")
+            tlog(f"Unexpected error checking Reddit: {e}")
 
     def takeMessage(self, sender, replyto, msgwords):
         if len(msgwords) < 3:
@@ -2223,7 +2228,7 @@ class DeathBotProtocol(irc.IRCClient):
         message = "#Q# " + " ".join([q,sender] + msgwords)
 
         for sl in self.slaves:
-            print("forwardQuery: " + sl)
+            tlog("forwardQuery: " + sl)
             self.msg(sl,message)
         # set up the timeout in 5 seconds.
         reactor.callLater(QUERY_TIMEOUT, self.timeoutQuery, q)
@@ -3082,22 +3087,22 @@ class DeathBotProtocol(irc.IRCClient):
 
 class DeathBotFactory(ReconnectingClientFactory):
     def startedConnecting(self, connector):
-        print('Started to connect.')
+        tlog('Started to connect.')
 
     def buildProtocol(self, addr):
-        print('Connected.')
-        print('Resetting reconnection delay')
+        tlog('Connected.')
+        tlog('Resetting reconnection delay')
         self.resetDelay()
         p = DeathBotProtocol()
         p.factory = self
         return p
 
     def clientConnectionLost(self, connector, reason):
-        print('Lost connection.  Reason:', reason)
+        tlog(f'Lost connection.  Reason: {reason}')
         ReconnectingClientFactory.clientConnectionLost(self, connector, reason)
 
     def clientConnectionFailed(self, connector, reason):
-        print('Connection failed. Reason:', reason)
+        tlog(f'Connection failed. Reason: {reason}')
         ReconnectingClientFactory.clientConnectionFailed(self, connector,
                                                          reason)
 
