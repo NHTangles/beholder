@@ -3137,7 +3137,8 @@ class DeathBotProtocol(irc.IRCClient):
                 game["displaystring"] = self.displaystring.get(game["variant"],game["variant"])
                 game["dumpfmt"] = self.logs[filepath][3]
                 for line in self.logs[filepath][0](game):
-                    line = self.displaytag(SERVERTAG) + " " + line
+                    if not line.startswith(("http://", "https://")):
+                        line = self.displaytag(SERVERTAG) + " " + line
                     if SLAVE:
                         for master in MASTERS:
                             self.msg(master, line)
