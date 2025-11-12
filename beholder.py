@@ -2933,8 +2933,9 @@ class DeathBotProtocol(irc.IRCClient):
         if "align" not in game: game["align"] = "###"
 
         if game["death"][0:8] in ("ascended"):
-            # append dump url to report for ascensions
-            game["ascsuff"] = " " + dumpurl
+            # no suffix on ascension line - URL sent separately
+            game["ascsuff"] = ""
+            game["asc_dumpurl"] = dumpurl
             # !lastasc stats.
             self.la[f"{game['variant']}:{game['name']}".lower()] = dumpurl
             if (game["endtime"] > self.lae.get(lname, 0)):
@@ -3034,6 +3035,10 @@ class DeathBotProtocol(irc.IRCClient):
             yield (f"[{game['displaystring']}] {game['name']} ({game['role']} {game['race']} {game['gender']} {game['align']}), "
                    f"{game['points']} points, T:{game['turns']}, {game['death']}, "
                    f"in {game['mode']} mode{game['ascsuff']}")
+
+        # For ascensions, yield dumplog URL as separate message
+        if "asc_dumpurl" in game:
+            yield game["asc_dumpurl"]
 
     def livelogReport(self, event):
         # nh370 livelog uses name instead of player
