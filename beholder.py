@@ -3081,6 +3081,15 @@ class DeathBotProtocol(irc.IRCClient):
                 else:
                     yield(f"[{event['displaystring']}] {event['player']} ({event['role']} {event['race']} {event['gender']} {event['align']}) "
                     f"{event['message']} [random seed]")
+            elif event["message"].startswith("pet "):
+                # Pet kill messages: use possessive form "player's pet X killed Y"
+                if "realtime" in event:
+                    event["realtime_fmt"] = str(event["realtime"])
+                    yield (f"[{event['displaystring']}] {event['player']}'s ({event['role']} {event['race']} {event['gender']} {event['align']}) "
+                           f"{event['message']}, on T:{event['turns']} ({event['realtime_fmt']})")
+                else:
+                    yield (f"[{event['displaystring']}] {event['player']}'s ({event['role']} {event['race']} {event['gender']} {event['align']}) "
+                           f"{event['message']}, on T:{event['turns']}")
             elif "realtime" in event:
                 event["realtime_fmt"] = str(event["realtime"])
                 yield (f"[{event['displaystring']}] {event['player']} ({event['role']} {event['race']} {event['gender']} {event['align']}) "
