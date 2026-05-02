@@ -216,6 +216,7 @@ class DeathBotProtocol(irc.IRCClient):
     xlogfiles = {filepath.FilePath(FILEROOT+"nh343-hdf/var/xlogfile"): ("nh343", ":", "nh343/dumplog/{starttime}.nh343.txt"),
                  filepath.FilePath(FILEROOT+"nh363-hdf/var/xlogfile"): ("nh363", "\t", "nethack/dumplog/{starttime}.nh.html"),
                  filepath.FilePath(FILEROOT+"nh370.137-hdf/var/xlogfile"): ("nh370", "\t", "nethack/dumplog/{starttime}.nh.html"),
+                 filepath.FilePath(FILEROOT+"nh500.0-hdf/var/xlogfile"): ("nh500", "\t", "nethack/dumplog/{starttime}.nh.html"),
                  filepath.FilePath(FILEROOT+"grunthack-0.3.0/var/xlogfile"): ("gh", ":", "gh/dumplog/{starttime}.gh.txt"),
                  filepath.FilePath(FILEROOT+"dnethack-3.25.0/xlogfile"): ("dnh", ":", "dnethack/dumplog/{starttime}.dnh.txt"),
                  filepath.FilePath(FILEROOT+"fiqhackdir/data/xlogfile"): ("fh", ":", "fiqhack/dumplog/{dumplog}"),
@@ -242,6 +243,7 @@ class DeathBotProtocol(irc.IRCClient):
     livelogs  = {filepath.FilePath(FILEROOT+"nh343-hdf/var/livelog"): ("nh343", ":"),
                  filepath.FilePath(FILEROOT+"nh363-hdf/var/livelog"): ("nh363", "\t"),
                  filepath.FilePath(FILEROOT+"nh370.137-hdf/var/livelog"): ("nh370", "\t"),
+                 filepath.FilePath(FILEROOT+"nh500.0-hdf/var/livelog"): ("nh500", "\t"),
                  filepath.FilePath(FILEROOT+"grunthack-0.3.0/var/livelog"): ("gh", ":"),
                  filepath.FilePath(FILEROOT+"dnethack-3.25.0/livelog"): ("dnh", ":"),
                  filepath.FilePath(FILEROOT+"fourkdir-4.3.0.5/save/livelog"): ("4k", "\t"),
@@ -266,6 +268,7 @@ class DeathBotProtocol(irc.IRCClient):
     forwards = {"nh343" : [],
                 "nh363" : [],
                 "nh370" : [],
+                "nh500" : [],
                  "zapm" : [],
                    "gh" : [],
                   "dnh" : [],
@@ -295,6 +298,7 @@ class DeathBotProtocol(irc.IRCClient):
     displaystring = {"nh343" : "\x0315nh343\x03",
                      "nh363" : "\x0307nh363\x03",
                      "nh370" : "\x0307nh370\x03",
+                     "nh500" : "\x0307nh500\x03",
                       "zapm" : "\x0303zapm\x03",
                         "gh" : "\x0304gh\x03",
                        "dnh" : "\x0313dnh\x03",
@@ -376,6 +380,7 @@ class DeathBotProtocol(irc.IRCClient):
                           INPR+"nh370.128-hdf/", INPR+"nh370.130-hdf/",
                           INPR+"nh370.132-hdf/", INPR+"nh370.134-hdf/",
                           INPR+"nh370.137-hdf/"],
+               "nh500" : [INPR+"nh500.0-hdf/"],
                 "zapm" : [INPR+"zapm/"],
                   "gh" : [INPR+"gh024/", INPR+"gh030/"],
                   "un" : [INPR+"un531/", INPR+"un532/",
@@ -528,6 +533,7 @@ class DeathBotProtocol(irc.IRCClient):
                          FILEROOT+"nh370.132-hdf/var/whereis/",
                          FILEROOT+"nh370.134-hdf/var/whereis/",
                          FILEROOT+"nh370.137-hdf/var/whereis/"],
+               "nh500": [FILEROOT+"nh500.0-hdf/var/whereis/"],
                   "gh": [FILEROOT+"grunthack-0.2.4/var/whereis/",
                          FILEROOT+"grunthack-0.3.0/var/whereis/"],
                  "dnh": [FILEROOT+"dnethack-3.17.1/whereis/",
@@ -664,6 +670,9 @@ class DeathBotProtocol(irc.IRCClient):
                 "nh363": ["The Dungeons of Doom","Gehennom","The Gnomish Mines","The Quest",
                           "Sokoban","Fort Ludios","Vlad's Tower","The Elemental Planes"],
                 "nh370": ["The Dungeons of Doom","Gehennom","The Gnomish Mines","The Quest",
+                          "Sokoban","Fort Ludios","Vlad's Tower","The Elemental Planes",
+                          "The Tutorial"],
+                "nh500": ["The Dungeons of Doom","Gehennom","The Gnomish Mines","The Quest",
                           "Sokoban","Fort Ludios","Vlad's Tower","The Elemental Planes",
                           "The Tutorial"],
                    "gh": ["The Dungeons of Doom","Gehennom","The Gnomish Mines","The Quest",
@@ -879,6 +888,9 @@ class DeathBotProtocol(irc.IRCClient):
                 "nh370": (["nh370", "370", "370-hdf"],
                           vanilla_roles, vanilla_races,
                           "NetHack/NetHack/NetHack-3.7"),
+                "nh500": (["nh500", "500", "500-hdf"],
+                          vanilla_roles, vanilla_races,
+                          "NetHack/NetHack/NetHack-5.0"),
                 "nh13d": (["nh13d", "13d"],
                           vanilla_roles + ["elf", "fig", "nin"], None,
                           None), # special hardcoded case because it doesn't behave like the rest
@@ -968,7 +980,7 @@ class DeathBotProtocol(irc.IRCClient):
                           "hyvanmielenpelit/GnollHack/master")}
 
     # variants which support streaks.
-    streakvars = ["nh343", "nh363", "nh370", "nh13d", "gh", "dnh", "un", "sp", "xnh", "spl", "slshm", "tnnt", "nhthon", "ndnh", "evil", "slth", "ace", "gnoll", "hackm", "nndnh", "nerf", "cre"]
+    streakvars = ["nh343", "nh363", "nh370", "nh500", "nh13d", "gh", "dnh", "un", "sp", "xnh", "spl", "slshm", "tnnt", "nhthon", "ndnh", "evil", "slth", "ace", "gnoll", "hackm", "nndnh", "nerf", "cre"]
     # for !asc statistics - assume these are the same for all variants, or at least the sane ones.
     aligns = ["Law", "Neu", "Cha", "Una", "Non"]
     genders = ["Mal", "Fem", "Nbn"]
@@ -2053,7 +2065,7 @@ class DeathBotProtocol(irc.IRCClient):
 
         # defaults if unspecified
         if variant is None:
-            variant = 'nh370'
+            variant = 'nh500'
         if suffix is None:
             if match is None:
                 suffix = random.choice(['tru','fal'])
@@ -3086,7 +3098,7 @@ class DeathBotProtocol(irc.IRCClient):
             yield game["asc_dumpurl"]
 
     def livelogReport(self, event):
-        # nh370 livelog uses name instead of player
+        # nh500 livelog uses name instead of player
         if "name" in event and "player" not in event:
             event["player"] = event["name"]
         if event.get("charname", False):
