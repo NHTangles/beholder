@@ -214,7 +214,7 @@ class DeathBotProtocol(irc.IRCClient):
         os.chmod(chanLogName,stat.S_IRUSR|stat.S_IWUSR|stat.S_IRGRP|stat.S_IROTH)
 
     xlogfiles = {filepath.FilePath(FILEROOT+"nh343-hdf/var/xlogfile"): ("nh343", ":", "nh343/dumplog/{starttime}.nh343.txt"),
-                 filepath.FilePath(FILEROOT+"nh363-hdf/var/xlogfile"): ("nh363", "\t", "nethack/dumplog/{starttime}.nh.html"),
+                 filepath.FilePath(FILEROOT+"nh367-hdf/var/xlogfile"): ("nh367", "\t", "nethack/dumplog/{starttime}.nh.html"),
                  filepath.FilePath(FILEROOT+"nh370.137-hdf/var/xlogfile"): ("nh370", "\t", "nethack/dumplog/{starttime}.nh.html"),
                  filepath.FilePath(FILEROOT+"nh500.0-hdf/var/xlogfile"): ("nh500", "\t", "nethack/dumplog/{starttime}.nh.html"),
                  filepath.FilePath(FILEROOT+"grunthack-0.3.0/var/xlogfile"): ("gh", ":", "gh/dumplog/{starttime}.gh.txt"),
@@ -241,7 +241,7 @@ class DeathBotProtocol(irc.IRCClient):
                  filepath.FilePath(FILEROOT+"crecellehack-1.5.0/var/xlogfile"): ("cre", "\t", "crecellehack/dumplog/{starttime}.cre.html"),
                  filepath.FilePath(FILEROOT+"unnethack-6.0.15/var/xlogfile"): ("un", "\t", "unnethack/dumplog/{starttime}.un.txt.html")}
     livelogs  = {filepath.FilePath(FILEROOT+"nh343-hdf/var/livelog"): ("nh343", ":"),
-                 filepath.FilePath(FILEROOT+"nh363-hdf/var/livelog"): ("nh363", "\t"),
+                 filepath.FilePath(FILEROOT+"nh367-hdf/var/livelog"): ("nh367", "\t"),
                  filepath.FilePath(FILEROOT+"nh370.137-hdf/var/livelog"): ("nh370", "\t"),
                  filepath.FilePath(FILEROOT+"nh500.0-hdf/var/livelog"): ("nh500", "\t"),
                  filepath.FilePath(FILEROOT+"grunthack-0.3.0/var/livelog"): ("gh", ":"),
@@ -266,7 +266,7 @@ class DeathBotProtocol(irc.IRCClient):
 
     # Forward events to other bots at the request of maintainers of other variant-specific channels
     forwards = {"nh343" : [],
-                "nh363" : [],
+                "nh367" : [],
                 "nh370" : [],
                 "nh500" : [],
                  "zapm" : [],
@@ -296,7 +296,7 @@ class DeathBotProtocol(irc.IRCClient):
 
     # for displaying variants and server tags in colour
     displaystring = {"nh343" : "\x0315nh343\x03",
-                     "nh363" : "\x0307nh363\x03",
+                     "nh367" : "\x0307nh367\x03",
                      "nh370" : "\x0307nh370\x03",
                      "nh500" : "\x0307nh500\x03",
                       "zapm" : "\x0303zapm\x03",
@@ -344,7 +344,7 @@ class DeathBotProtocol(irc.IRCClient):
     DGLD=FILEROOT+"dgldir/"
     INPR=DGLD+"inprogress-"
     inprog = { "nh343" : [INPR+"nh343-hdf/"],
-               "nh363" : [INPR+"nh363-hdf/"],
+               "nh367" : [INPR+"nh363-hdf/", INPR+"nh367-hdf/"],
                "nh370" : [INPR+"nh370.16-hdf/", INPR+"nh370.17-hdf/",
                           INPR+"nh370.18-hdf/", INPR+"nh370.20-hdf/",
                           INPR+"nh370.22-hdf/", INPR+"nh370.23-hdf/",
@@ -465,7 +465,8 @@ class DeathBotProtocol(irc.IRCClient):
 
     # for !whereis
     whereis = {"nh343": [FILEROOT+"nh343-hdf/var/whereis/"],
-               "nh363": [FILEROOT+"nh363-hdf/var/whereis/"],
+               "nh367": [FILEROOT+"nh363-hdf/var/whereis/",
+                         FILEROOT+"nh367-hdf/var/whereis/"],
                "nh370": [FILEROOT+"nh370.16-hdf/var/whereis/",
                          FILEROOT+"nh370.17-hdf/var/whereis/",
                          FILEROOT+"nh370.18-hdf/var/whereis/",
@@ -675,7 +676,7 @@ class DeathBotProtocol(irc.IRCClient):
 
     dungeons = {"nh343": ["The Dungeons of Doom","Gehennom","The Gnomish Mines","The Quest",
                           "Sokoban","Fort Ludios","Vlad's Tower","The Elemental Planes"],
-                "nh363": ["The Dungeons of Doom","Gehennom","The Gnomish Mines","The Quest",
+                "nh367": ["The Dungeons of Doom","Gehennom","The Gnomish Mines","The Quest",
                           "Sokoban","Fort Ludios","Vlad's Tower","The Elemental Planes"],
                 "nh370": ["The Dungeons of Doom","Gehennom","The Gnomish Mines","The Quest",
                           "Sokoban","Fort Ludios","Vlad's Tower","The Elemental Planes",
@@ -890,7 +891,7 @@ class DeathBotProtocol(irc.IRCClient):
     variants = {"nh343": (["nh343", "nethack", "343"],
                           vanilla_roles, vanilla_races,
                           "NHTangles/NetHack/hardfought"),
-                "nh363": (["nh363", "363", "363-hdf"],
+                "nh367": (["nh367", "367", "367-hdf"],
                           vanilla_roles, vanilla_races,
                           None),
                 "nh370": (["nh370", "370", "370-hdf"],
@@ -988,7 +989,7 @@ class DeathBotProtocol(irc.IRCClient):
                           "hyvanmielenpelit/GnollHack/master")}
 
     # variants which support streaks.
-    streakvars = ["nh343", "nh363", "nh370", "nh500", "nh13d", "gh", "dnh", "un", "sp", "xnh", "spl", "slshm", "tnnt", "nhthon", "ndnh", "evil", "slth", "ace", "gnoll", "hackm", "nndnh", "nerf", "cre"]
+    streakvars = ["nh343", "nh367", "nh370", "nh500", "nh13d", "gh", "dnh", "un", "sp", "xnh", "spl", "slshm", "tnnt", "nhthon", "ndnh", "evil", "slth", "ace", "gnoll", "hackm", "nndnh", "nerf", "cre"]
     # for !asc statistics - assume these are the same for all variants, or at least the sane ones.
     aligns = ["Law", "Neu", "Cha", "Una", "Non"]
     genders = ["Mal", "Fem", "Nbn"]
