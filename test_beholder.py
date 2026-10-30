@@ -3041,6 +3041,8 @@ class DeathBotProtocol(irc.IRCClient):
                    "killed {killed_shopkeeper} on T:{turns}").format(**event)
 
     def connectionLost(self, reason=None):
+        # stops the PING heartbeat, which otherwise outlives this connection
+        irc.IRCClient.connectionLost(self, reason)
         if self.looping_calls is None: return
         for call in self.looping_calls.values():
             call.stop()
